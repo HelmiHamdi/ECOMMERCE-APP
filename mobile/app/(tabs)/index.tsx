@@ -141,7 +141,7 @@ export default function Home() {
             Join the Revolution
           </Text>
           <Text className="text-secondary text-center mb-4">
-            Subscribe to our newsletter and get 20% off your first purchase.
+            Subscribe to our newsletter and get 10% off your first purchase.
           </Text>
           <TouchableOpacity className="bg-primary w-4/5 py-3 rounded-full items-center">
             <Text className="text-white font-medium text-base">Subscribe Now</Text>
