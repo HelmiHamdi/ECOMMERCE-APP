@@ -62,14 +62,13 @@ export default function Home() {
                   className="w-full h-full"
                   resizeMode="cover"
                 />
+                <View className="absolute inset-0 bg-black/40" />
                 <View className="absolute bottom-4 left-4 z-10">
                   <Text className="text-white text-2xl font-bold">
-                    {" "}
-                    {banner.title}{" "}
+                    {banner.title}
                   </Text>
                   <Text className="text-white text-sm font-medium">
-                    {" "}
-                    {banner.subtitle}{" "}
+                    {banner.subtitle}
                   </Text>
                   <TouchableOpacity className="mt-2 bg-white px-4 py-2 rounded-full self-start">
                     <Text className="text-primary font-bold text-xs">
@@ -77,7 +76,7 @@ export default function Home() {
                     </Text>
                   </TouchableOpacity>
                 </View>
-                <View className="absolute inset-0 bg-black/40" />
+                
               </View>
             ))}
           </ScrollView>
