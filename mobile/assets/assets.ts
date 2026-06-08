@@ -42,6 +42,7 @@ export const dummyProducts = [
         isActive: true,
         createdAt: "2026-02-05T07:12:15.825Z",
     },
+    
     {
         ratings: {
             average: 0,
