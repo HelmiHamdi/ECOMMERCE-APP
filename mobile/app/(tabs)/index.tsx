@@ -17,6 +17,13 @@ import CategoryItem from "@/components/CategoryItem";
 import { Product } from "@/constants/types";
 import ProductCard from "@/components/ProductCard";
 const { width } = Dimensions.get("window");
+/**
+ * Render the app's home screen with a banner carousel, category scroller, popular products grid, and newsletter signup.
+ *
+ * Populates the product list from local dummy data on mount and tracks the active banner slide for the carousel indicator.
+ *
+ * @returns The rendered Home screen JSX element.
+ */
 export default function Home() {
   const router = useRouter();
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
