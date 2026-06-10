@@ -87,7 +87,7 @@ export default function Page() {
 
                     {/* Header */}
                     <View className="items-center mb-8">
-                        <Text className="text-3xl font-bold text-primary mb-2">Welcome Back</Text>
+                        <Text className="text-3xl font-bold text-primary mb-2" numberOfLines={1} adjustsFontSizeToFit>Welcome Back</Text>
                         <Text className="text-secondary">Sign in to continue</Text>
                     </View>
 
