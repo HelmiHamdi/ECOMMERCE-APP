@@ -9,6 +9,8 @@ export default function ProductsLayout() {
                 headerTintColor: COLORS.primary,
                 headerTitleStyle: { fontWeight: "bold" },
                 headerShadowVisible: false,
+                
+                
             }}
         >
             <Stack.Screen name="index" options={{ title: "Manage Products", headerShown: false }} />
