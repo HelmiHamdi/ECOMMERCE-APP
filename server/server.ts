@@ -10,6 +10,7 @@ import CartRouter from "./routers/cartRoute.js";
 import OrderRouter from "./routers/orderRoute.js";
 import AddressRouter from "./routers/addressRoute.js";
 import AdminRouter from "./routers/adminRoute.js";
+import { seedProducts } from "./scripts/seedProducts.js";
 
 
 const app = express();
@@ -32,11 +33,14 @@ app.get('/', (req: Request, res: Response) => {
 });
 app.use("/api/products",ProductRouter)
 app.use("/api/cart",CartRouter)
-app.use("/api/order",OrderRouter)
+app.use("/api/orders",OrderRouter)
 app.use("/api/addresses",AddressRouter)
 app.use("/api/admin",AdminRouter)
-await makeAdmin();
 
+await makeAdmin();
+ //Seed dummy products if no products are present
+
+ //await seedProducts()
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 });

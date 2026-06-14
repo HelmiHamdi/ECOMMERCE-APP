@@ -17,6 +17,7 @@ import { dummyProducts } from "@/assets/assets";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
+import api from "@/constants/api";
 
 const { width } = Dimensions.get("window");
 export default function ProductDetail() {
@@ -30,9 +31,19 @@ export default function ProductDetail() {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const fetchProduct = async () => {
-    const found: any = dummyProducts.find((product)=> product._id === id);
-    setProduct(found ?? null);
-    setLoading(false);
+
+   try {
+    const {data} = await api.get(`/products/${id}`)
+    setProduct(data.data)
+   } catch (error: any) {
+      Toast.show({
+          type: 'error',
+          text1: 'Failed to Fetch Product',
+          text2: error.response?.data?.message ||'Product created'
+      })
+   }finally{
+    setLoading(false)
+   }
   };
   useEffect(() => {
     fetchProduct();

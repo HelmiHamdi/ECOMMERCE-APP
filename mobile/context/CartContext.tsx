@@ -6,7 +6,10 @@ import {
   useEffect,
   useState,
 } from "react";
-import { dummyCart } from "@/assets/assets";
+
+import { useAuth } from "@clerk/clerk-expo";
+import api from "@/constants/api";
+import Toast from "react-native-toast-message";
 
 export type CartItem = {
   id: string;
@@ -33,39 +36,157 @@ type CartContextType = {
 };
 const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { getToken, isSignedIn } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isloading, setIsLoading] = useState(false);
   const [cartTotal, setCartTotal] = useState(0);
   const fetchCart = async () => {
-    setIsLoading(true);
-    const serverCart = dummyCart;
-    const mappedItems: CartItem[] = serverCart.items.map((item: any) => ({
-      id: item._id,
-      productId: item.product._id,
-      product: item.product,
-      quantity: item.quantity,
-      size: item?.size || "M",
-      price: item.price,
-    }));
-    setCartItems(mappedItems);
-    setCartTotal(serverCart.totalAmount);
-    setIsLoading(false);
+    try {
+      setIsLoading(true);
+      const token = await getToken();
+      const { data } = await api.get("/cart", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (data.success && data.data) {
+        const serverCart = data.data;
+        const mappedItems: CartItem[] = serverCart.items.map((item: any) => ({
+          id: item._id,
+          productId: item.product._id,
+          product: item.product,
+          quantity: item.quantity,
+          size: item?.size || "M",
+          price: item.price,
+        }));
+        setCartItems(mappedItems);
+        setCartTotal(serverCart.totalAmount);
+      }
+    } catch (error) {
+      console.error("Failed to fetch cart:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
-  const addToCart = async (product: Product, size: string) => {};
-  const removeFromCart = async (itemId: string) => {};
+  const addToCart = async (product: Product, size: string) => {
+    if (!isSignedIn) {
+      return Toast.show({
+        text1: "Please login to add to cart",
+        type: "error",
+      });
+    }
+    try {
+      setIsLoading(true);
+      const token = await getToken();
+      const { data } = await api.post(
+        "/cart/add",
+        {
+          productId: product._id,
+          quantity: 1,
+          size,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      if (data.success) {
+        await fetchCart();
+      }
+    } catch (error) {
+      console.error("Failed to add to cart:", error);
+      Toast.show({
+        text1: "Failed to add to cart",
+        type: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const removeFromCart = async (productId: string, size: string) => {
+    if (!isSignedIn) return;
+
+    try {
+      setIsLoading(true);
+      const token = await getToken();
+      const { data } = await api.delete(
+        `/cart/item/${productId}?size=${size}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      if (data.success) {
+        await fetchCart();
+      }
+    } catch (error) {
+      console.error("Failed to remove from cart:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const updateCartItemQuantity = async (
-    itemId: string,
+    productId: string,
     quantity: number,
     size: string = "M",
-  ) => {};
+  ) => {
+    if (!isSignedIn) return;
+    if (quantity < 1) return;
+    try {
+      setIsLoading(true);
+      const token = await getToken();
+      const { data } = await api.put(
+        `/cart/item/${productId}`,
+        { quantity, size },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      if (data.success) {
+        await fetchCart();
+      }
+    } catch (error) {
+      console.error("Failed to update quantity:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const clearCart = async () => {};
+  const clearCart = async () => {
+    if (!isSignedIn) return;
+    try {
+      setIsLoading(true);
+      const token = await getToken();
+      const { data } = await api.delete(`/cart`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (data.success) {
+        setCartItems([]);
+        setCartTotal(0);
+      }
+    } catch (error) {
+      console.error("Failed to clear cart :", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   useEffect(() => {
-    fetchCart();
-  }, []);
+    if (isSignedIn) {
+      fetchCart();
+    } else {
+      setCartItems([]);
+      setCartTotal(0);
+    }
+  }, [isSignedIn]);
 
   return (
     <CartContext.Provider

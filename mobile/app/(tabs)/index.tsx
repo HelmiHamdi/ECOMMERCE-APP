@@ -11,11 +11,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
-import { BANNERS, dummyProducts } from "@/assets/assets";
+import { BANNERS } from "@/assets/assets";
 import { CATEGORIES } from "@/constants";
 import CategoryItem from "@/components/CategoryItem";
 import { Product } from "@/constants/types";
 import ProductCard from "@/components/ProductCard";
+import api from "@/constants/api";
 const { width } = Dimensions.get("window");
 export default function Home() {
   const router = useRouter();
@@ -24,8 +25,14 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const fetchProducts = async () => {
-    setProducts(dummyProducts);
-    setLoading(false);
+   try {
+     const { data } = await api.get("products")
+     setProducts(data.data)
+   } catch (error) {
+     console.error("Error fetching products:",error)
+   }finally{
+    setLoading(false)
+   }
   };
   useEffect(() => {
     fetchProducts();
