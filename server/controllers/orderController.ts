@@ -20,23 +20,20 @@ export const getOrders = async (req: Request, res: Response) => {
 
 export const getOrder = async (req: Request, res: Response) => {
   try {
+    console.log("🔍 Recherche order avec ID:", req.params.id);
     const order = await Order.findById(req.params.id)
-      .populate("items.product", "name images")
-      .sort("-createdAt");
+      .populate("items.product", "name images");
+console.log("📄 Order trouvé:", order ? "OUI" : "NON");
     if (!order) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Order not found" });
+      return res.status(404).json({ success: false, message: "Order not found" });
     }
     if (
       order.user.toString() !== req.user._id.toString() &&
       req.user.role !== "admin"
     ) {
-      return res
-        .status(403)
-        .json({ success: false, message: "Not authorized" });
+      return res.status(403).json({ success: false, message: "Not authorized" });
     }
-    res.status(404).json({ success: true, data: order });
+    res.json({ success: true, data: order }); 
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

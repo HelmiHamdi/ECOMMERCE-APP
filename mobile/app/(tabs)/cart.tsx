@@ -25,9 +25,9 @@ export default function Cart() {
               <CartItem
                 key={index}
                 item={item}
-                onRemove={() => removeFromCart(item.id, item.size)}
+                onRemove={() => removeFromCart(item.productId, item.size)}
                 onUpdateQuantity={(q) =>
-                  updateCartItemQuantity(item.id, q, item.size)
+                  updateCartItemQuantity(item.productId, q, item.size)
                 }
               />
             ))}
