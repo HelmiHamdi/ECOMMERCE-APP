@@ -81,7 +81,7 @@ export default function TabLayout() {
           ),
         }}
       />
-      {/* 👇 Cache "settings" de la tab bar */}
+     
       <Tabs.Screen
         name="settings"
         options={{
