@@ -11,10 +11,9 @@ import {
   Modal,
   FlatList,
   TouchableWithoutFeedback,
-
 } from "react-native";
 import Toast from "react-native-toast-message";
-import { COLORS,CATEGORIES } from "@/constants";
+import { COLORS, CATEGORIES } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 
@@ -22,10 +21,12 @@ import { Stack, useRouter } from "expo-router";
 import Header from "@/components/Header";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function AddProduct() {
   const router = useRouter();
   const { getToken } = useAuth();
+  const { t } = useLanguage();
   const [submitting, setSubmitting] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -33,14 +34,14 @@ export default function AddProduct() {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
-  const [category, setCategory] = useState("Men");
+  const [category, setCategory] = useState("men");
   const [sizes, setSizes] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [isFeatured, setIsFeatured] = useState(false);
 
   const pickImages = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"] as any,
       allowsMultipleSelection: true,
       selectionLimit: 5,
       quality: 0.8,
@@ -55,8 +56,8 @@ export default function AddProduct() {
     if (!name || !price || !category || sizes.length < 1) {
       Toast.show({
         type: "error",
-        text1: "Missing Fields",
-        text2: "Please fill in all required fields",
+        text1: t("missingFields"),
+        text2: t("fillRequiredFields"),
       });
       return;
     }
@@ -87,63 +88,70 @@ export default function AddProduct() {
           type: "image/jpeg",
         } as any);
       }
-      const {data } = await api.post("/products",formData,{headers:{
-                Authorization: `Bearer ${token}`},})
-    if(!data?.success) throw new Error('Upload failed')
-        Toast.show({
-        type: 'success',
-        text1: 'success',
-        text2: 'Product created'
-    })
-    router.replace("/admin/products")
-    } catch (error : any) {
-            console.error(error)
-   Toast.show({
-        type: 'error',
-        text1: 'Failed to create product',
-        text2: error.response?.data?.message || 'Product created'
-    })
-    } finally{
-        setSubmitting(false)
+
+      // ✅ No Content-Type header — let Axios set it with the correct boundary
+      const { data } = await api.post("/products", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!data?.success) throw new Error("Upload failed");
+
+      Toast.show({
+        type: "success",
+        text1: t("success"),
+        text2: t("productCreated"),
+      });
+      router.replace("/admin/products");
+    } catch (error: any) {
+      console.error(error);
+      Toast.show({
+        type: "error",
+        text1: t("failedToCreateProduct"),
+        text2: error.response?.data?.message || t("somethingWrong"),
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <Header title="Add Product" showBack />
+      <Header title={t("addProduct")} showBack />
 
       <ScrollView className="flex-1 bg-surface p-4">
         <View className="bg-white p-4 rounded-xl shadow-sm mb-20">
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            Product Name *
+            {t("productName")} *
           </Text>
           <TextInput
             className="bg-surface p-3 rounded-lg mb-4 text-primary"
-            placeholder="e.g. Wireless Headphones"
+            placeholder={t("productNamePlaceholder")}
             value={name}
             onChangeText={setName}
           />
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            Price ($) *
+            {t("price")} ($) *
           </Text>
           <TextInput
             className="bg-surface p-3 rounded-lg mb-4 text-primary"
-            placeholder="0.00"
+            placeholder={t("pricePlaceholder")}
             keyboardType="decimal-pad"
             value={price}
             onChangeText={setPrice}
           />
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            Category
+            {t("category")}
           </Text>
           <TouchableOpacity
             onPress={() => setModalVisible(true)}
             className="bg-surface p-3 rounded-lg mb-4 flex-row justify-between items-center"
           >
-            <Text className="text-primary">{category}</Text>
+            <Text className="text-primary">{t(category)}</Text>
             <Ionicons name="chevron-down" size={20} color={COLORS.secondary} />
           </TouchableOpacity>
 
@@ -152,26 +160,26 @@ export default function AddProduct() {
               <View className="flex-1 justify-end bg-black/50">
                 <View className="bg-white rounded-t-2xl p-4 max-h-[50%]">
                   <Text className="text-lg font-bold text-center mb-4">
-                    Select Category
+                    {t("selectCategory")}
                   </Text>
                   <FlatList
                     data={CATEGORIES}
                     keyExtractor={(item) => String(item.id)}
                     renderItem={({ item }) => (
                       <TouchableOpacity
-                        className={`p-4 border-b ${category === item.name ? "bg-primary/5" : ""}`}
+                        className={`p-4 border-b ${category === item.nameKey ? "bg-primary/5" : ""}`}
                         onPress={() => {
-                          setCategory(item.name);
+                          setCategory(item.nameKey);
                           setModalVisible(false);
                         }}
                       >
                         <View className="flex-row justify-between">
                           <Text
-                            className={`${category === item.name ? "font-bold text-primary" : ""}`}
+                            className={`${category === item.nameKey ? "font-bold text-primary" : ""}`}
                           >
-                            {item.name}
+                            {t(item.nameKey)}
                           </Text>
-                          {category === item.name && (
+                          {category === item.nameKey && (
                             <Ionicons
                               name="checkmark"
                               size={20}
@@ -188,28 +196,28 @@ export default function AddProduct() {
           </Modal>
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            Stock Level
+            {t("stockLevel")}
           </Text>
           <TextInput
             className="bg-surface p-3 rounded-lg mb-4 text-primary"
-            placeholder="0"
+            placeholder={t("stockPlaceholder")}
             keyboardType="number-pad"
             value={stock}
             onChangeText={setStock}
           />
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            Sizes (comma separated)
+            {t("sizesCommaSeparated")}
           </Text>
           <TextInput
             className="bg-surface p-3 rounded-lg mb-4 text-primary"
-            placeholder="e.g. S, M, L, XL"
+            placeholder={t("sizesPlaceholderAdd")}
             value={sizes}
             onChangeText={setSizes}
           />
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            Product Images (max 5)
+            {t("productImagesMax5")}
           </Text>
           <TouchableOpacity onPress={pickImages} className="mb-4">
             {images.length > 0 ? (
@@ -230,14 +238,14 @@ export default function AddProduct() {
                   color={COLORS.secondary}
                 />
                 <Text className="text-secondary text-xs mt-2">
-                  Tap to upload images
+                  {t("tapToUploadImages")}
                 </Text>
               </View>
             )}
           </TouchableOpacity>
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            Description
+            {t("description")}
           </Text>
           <TextInput
             className="bg-surface p-3 rounded-lg mb-6 text-primary h-24"
@@ -248,7 +256,7 @@ export default function AddProduct() {
           />
 
           <View className="flex-row justify-between items-center mb-6">
-            <Text className="text-primary font-bold">Featured Product</Text>
+            <Text className="text-primary font-bold">{t("featuredProduct")}</Text>
             <Switch
               value={isFeatured}
               onValueChange={setIsFeatured}
@@ -265,7 +273,7 @@ export default function AddProduct() {
               <ActivityIndicator color="white" />
             ) : (
               <Text className="text-white font-bold text-lg">
-                Create Product
+                {t("createProduct")}
               </Text>
             )}
           </TouchableOpacity>

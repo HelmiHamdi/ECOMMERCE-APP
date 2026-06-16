@@ -5,10 +5,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants";
 
 import { useUser } from "@clerk/clerk-expo";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function AdminLayout() {
     const { user,isLoaded  } = useUser()
-   
+    const { t } = useLanguage();
+
     const router = useRouter();
 
     useEffect(() => {
@@ -46,7 +48,7 @@ export default function AdminLayout() {
                         className="mr-4 flex-row items-center"
                     >
                         <Ionicons name="log-out-outline" size={24} color={COLORS.primary} />
-                        <Text className="ml-1 text-primary font-medium">Exit</Text>
+                        <Text className="ml-1 text-primary font-medium">{t("exit")}</Text>
                     </TouchableOpacity>
                 ),
             }}
@@ -54,7 +56,7 @@ export default function AdminLayout() {
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: "Dashboard",
+                    title: t("dashboard"),
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="grid-outline" size={size} color={color} />
                     )
@@ -63,7 +65,7 @@ export default function AdminLayout() {
             <Tabs.Screen
                 name="products"
                 options={{
-                    title: "Products",
+                    title: t("products"),
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="cube-outline" size={size} color={color} />
                     )
@@ -72,7 +74,7 @@ export default function AdminLayout() {
             <Tabs.Screen
                 name="orders"
                 options={{
-                    title: "Orders",
+                    title: t("orders"),
                     tabBarIcon: ({ color, size }) => (
                         <Ionicons name="receipt-outline" size={size} color={color} />
                     )

@@ -5,16 +5,18 @@ import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/Header";
 import CartItem from "@/components/CartItem";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Cart() {
   const { cartItems, cartTotal, removeFromCart, updateCartItemQuantity } =
     useCart();
   const router = useRouter();
+  const { t } = useLanguage();
   const shipping = 2.0;
   const total = cartTotal + shipping;
   return (
     <SafeAreaView className="flex-1 bg-surface" edges={["top"]}>
-      <Header title="My Cart" showBack />
+      <Header title={t("myCart")} showBack />
       {cartItems.length > 0 ? (
         <>
           <ScrollView
@@ -35,14 +37,14 @@ export default function Cart() {
           <View className="p-4 bg-white rounded-t-3xl shadow-sm">
             {/* Subtotal */}
             <View className="flex-row justify-between mb-2">
-              <Text className="text-secondary">Subtotal</Text>
+              <Text className="text-secondary">{t("subtotal")}</Text>
               <Text className="text-primary font-bold">
                 ${cartTotal.toFixed(2)}
               </Text>
             </View>
             {/* Shipping */}
             <View className="flex-row justify-between mb-2">
-              <Text className="text-secondary">Shipping</Text>
+              <Text className="text-secondary">{t("shipping")}</Text>
               <Text className="text-primary font-bold">
                 ${shipping.toFixed(2)}
               </Text>
@@ -51,22 +53,22 @@ export default function Cart() {
             <View className="h-[1px] bg-border mb-4"/>
               {/* Total */}
               <View className="flex-row justify-between mb-6">
-                <Text className="text-primary font-bold text-lg">Total</Text>
+                <Text className="text-primary font-bold text-lg">{t("total")}</Text>
                 <Text className="text-primary font-bold text-lg">
                   ${total.toFixed(2)}
                 </Text>
               </View>
              {/* Checkout button */}
              <TouchableOpacity className="bg-primary py-4 rounded-full items-center" onPress={()=>router.push('/checkout')}>
-              <Text className="text-white font-bold text-base">Checkout</Text>
+              <Text className="text-white font-bold text-base">{t("checkout")}</Text>
              </TouchableOpacity>
           </View>
         </>
       ) : (
         <View className="flex-1 items-center justify-center">
-          <Text> Your cart is empty</Text>
+          <Text>{t("cartEmpty")}</Text>
           <TouchableOpacity onPress={() => router.push("/")} className="mt-4">
-            <Text className="text-primary font-bold"> Start Shopping</Text>
+            <Text className="text-primary font-bold">{t("startShopping")}</Text>
           </TouchableOpacity>
         </View>
       )}

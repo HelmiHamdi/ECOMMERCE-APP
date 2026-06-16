@@ -14,13 +14,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/Header";
 import { COLORS } from "@/constants";
 import type { Address } from "@/constants/types";
-
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import Toast from "react-native-toast-message";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Addresses() {
   const { getToken } = useAuth();
+  const { t } = useLanguage();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -53,8 +54,8 @@ export default function Addresses() {
     } catch (error: any) {
       Toast.show({
         type: "error",
-        text1: "Failed to Fech Addresses",
-        text2: error.response?.data?.message || "Something went wrong",
+        text1: t("failedToFetchAddresses"),
+        text2: error.response?.data?.message || t("somethingWrong"),
       });
     } finally {
       setLoading(false);
@@ -78,8 +79,8 @@ export default function Addresses() {
     if (!street || !city || !state || !zipCode || !country) {
       Toast.show({
         type: "error",
-        text1: "Missing Fields",
-        text2: "Please fill in all required fields",
+        text1: t("missingFields"),
+        text2: t("fillAllFields"),
       });
       return;
     }
@@ -88,11 +89,11 @@ export default function Addresses() {
       const token = await getToken();
       const data = { type, street, city, state, zipCode, country, isDefault };
       if (isEditing && editingId) {
-        await api.put(`/addresses/${editingId}`,data, {
+        await api.put(`/addresses/${editingId}`, data, {
           headers: { Authorization: `Bearer ${token}` },
         });
       } else {
-        await api.post("/addresses",data, {
+        await api.post("/addresses", data, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
@@ -102,8 +103,8 @@ export default function Addresses() {
     } catch (error: any) {
       Toast.show({
         type: "error",
-        text1: "Failed to save Addresses",
-        text2: error.response?.data?.message || "Something went wrong",
+        text1: t("failedToSaveAddress"),
+        text2: error.response?.data?.message || t("somethingWrong"),
       });
     } finally {
       setSubmitting(false);
@@ -111,34 +112,28 @@ export default function Addresses() {
   };
 
   const handleDeleteAddress = async (id: string) => {
-    Alert.alert(
-      "Delete Address",
-      "Are you sure you want to delete this address?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const token = await getToken();
-
-              await api.delete(`/addresses/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-
-              fetchAddresses();
-            } catch (error: any) {
-              Toast.show({
-                type: "error",
-                text1: "Failed to delete Address",
-                text2: error.response?.data?.message || "Something went wrong",
-              });
-            }
-          },
+    Alert.alert(t("deleteAddress"), t("deleteAddressConfirm"), [
+      { text: t("cancel"), style: "cancel" },
+      {
+        text: t("delete"),
+        style: "destructive",
+        onPress: async () => {
+          try {
+            const token = await getToken();
+            await api.delete(`/addresses/${id}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            fetchAddresses();
+          } catch (error: any) {
+            Toast.show({
+              type: "error",
+              text1: t("failedToDeleteAddress"),
+              text2: error.response?.data?.message || t("somethingWrong"),
+            });
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   const resetForm = () => {
@@ -160,7 +155,7 @@ export default function Addresses() {
 
   return (
     <SafeAreaView className="flex-1 bg-surface" edges={["top"]}>
-      <Header title="Shipping Addresses" showBack />
+      <Header title={t("shippingAddresses")} showBack />
 
       {loading ? (
         <View className="flex-1 justify-center items-center">
@@ -170,7 +165,7 @@ export default function Addresses() {
         <ScrollView className="flex-1 px-4 pt-4">
           {addresses.length === 0 ? (
             <Text className="text-center text-secondary mt-10">
-              No addresses found
+              {t("noAddressesFound")}
             </Text>
           ) : (
             addresses.map((item) => (
@@ -195,7 +190,7 @@ export default function Addresses() {
                     {item.isDefault && (
                       <View className="bg-primary/10 px-2 py-1 rounded ml-2">
                         <Text className="text-primary text-xs font-bold">
-                          Default
+                          {t("default")}
                         </Text>
                       </View>
                     )}
@@ -233,7 +228,7 @@ export default function Addresses() {
           >
             <Ionicons name="add" size={24} color={COLORS.secondary} />
             <Text className="text-secondary font-medium ml-2">
-              Add New Address
+              {t("addNewAddress")}
             </Text>
           </TouchableOpacity>
         </ScrollView>
@@ -250,7 +245,7 @@ export default function Addresses() {
           <View className="bg-white rounded-t-3xl p-6 h-[85%]">
             <View className="flex-row justify-between items-center mb-6">
               <Text className="text-xl font-bold text-primary">
-                {isEditing ? "Edit Address" : "Add New Address"}
+                {isEditing ? t("editAddress") : t("addNewAddress")}
               </Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
                 <Ionicons name="close" size={24} color={COLORS.primary} />
@@ -258,25 +253,29 @@ export default function Addresses() {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              <Text className="text-primary font-medium mb-2">Label</Text>
+              <Text className="text-primary font-medium mb-2">
+                {t("label")}
+              </Text>
               <View className="flex-row gap-3 mb-4">
-                {["Home", "Work", "Other"].map((t) => (
+                {["Home", "Work", "Other"].map((typeOption) => (
                   <TouchableOpacity
-                    key={t}
-                    onPress={() => setType(t)}
-                    className={`px-4 py-2 rounded-full border ${type === t ? "bg-primary border-primary" : "bg-white border-gray-300"}`}
+                    key={typeOption}
+                    onPress={() => setType(typeOption)}
+                    className={`px-4 py-2 rounded-full border ${type === typeOption ? "bg-primary border-primary" : "bg-white border-gray-300"}`}
                   >
                     <Text
-                      className={type === t ? "text-white" : "text-primary"}
+                      className={
+                        type === typeOption ? "text-white" : "text-primary"
+                      }
                     >
-                      {t}
+                      {t(typeOption.toLowerCase())}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
 
               <Text className="text-primary font-medium mb-2">
-                Street Address
+                {t("streetAddress")}
               </Text>
               <TextInput
                 className="bg-surface p-4 rounded-xl text-primary mb-4"
@@ -287,7 +286,9 @@ export default function Addresses() {
 
               <View className="flex-row gap-4 mb-4">
                 <View className="flex-1">
-                  <Text className="text-primary font-medium mb-2">City</Text>
+                  <Text className="text-primary font-medium mb-2">
+                    {t("city")}
+                  </Text>
                   <TextInput
                     className="bg-surface p-4 rounded-xl text-primary"
                     placeholder="New York"
@@ -296,7 +297,9 @@ export default function Addresses() {
                   />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-primary font-medium mb-2">State</Text>
+                  <Text className="text-primary font-medium mb-2">
+                    {t("state")}
+                  </Text>
                   <TextInput
                     className="bg-surface p-4 rounded-xl text-primary"
                     placeholder="NY"
@@ -309,7 +312,7 @@ export default function Addresses() {
               <View className="flex-row gap-4 mb-4">
                 <View className="flex-1">
                   <Text className="text-primary font-medium mb-2">
-                    Zip Code
+                    {t("zipCode")}
                   </Text>
                   <TextInput
                     className="bg-surface p-4 rounded-xl text-primary"
@@ -320,7 +323,9 @@ export default function Addresses() {
                   />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-primary font-medium mb-2">Country</Text>
+                  <Text className="text-primary font-medium mb-2">
+                    {t("country")}
+                  </Text>
                   <TextInput
                     className="bg-surface p-4 rounded-xl text-primary"
                     placeholder="USA"
@@ -341,7 +346,7 @@ export default function Addresses() {
                     <Ionicons name="checkmark" size={14} color="white" />
                   )}
                 </View>
-                <Text className="text-primary">Set as default address</Text>
+                <Text className="text-primary">{t("setAsDefault")}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -353,7 +358,7 @@ export default function Addresses() {
                   <ActivityIndicator color="white" />
                 ) : (
                   <Text className="text-white font-bold text-lg">
-                    Save Address
+                    {t("saveAddress")}
                   </Text>
                 )}
               </TouchableOpacity>

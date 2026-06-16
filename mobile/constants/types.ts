@@ -55,11 +55,10 @@ export type CartItemProps = {
 };
 
 export type CategoryItemProps = {
-    item: { id: string | number; name: string; icon: string };
-    isSelected?: boolean;
-    onPress?: () => void;
+  item: { id: string | number; name?: string; nameKey?: string; icon: string };
+  isSelected?: boolean;
+  onPress?: () => void;
 };
-
 export type HeaderProps = {
     title?: string;
     showBack?: boolean;
@@ -115,8 +114,9 @@ export interface Order {
 }
 
 export type WishlistContextType = {
-    wishlist: Product[];
-    toggleWishlist: (product: Product) => void;
-    isInWishlist: (productId: string) => boolean;
-    loading: boolean;
+  wishlist: Product[];
+  loading: boolean;
+  toggleWishlist: (product: Product) => Promise<void>;
+  isInWishlist: (productId: string) => boolean;
+  fetchWishlist: () => Promise<void>; // ← ajouter
 };

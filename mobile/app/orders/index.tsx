@@ -9,12 +9,15 @@ import type { Order } from "@/constants/types";
 import { formatDate } from "@/assets/assets";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Orders() {
     const router = useRouter();
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
-   const {getToken} = useAuth()
+    const {getToken} = useAuth()
+    const { t } = useLanguage();
+
     const fetchOrders = async () => {
         try {
       const token = await getToken();
@@ -33,9 +36,40 @@ export default function Orders() {
         fetchOrders();
     }, []);
 
+    const getStatusLabel = (status: string) => {
+        switch (status) {
+            case "placed": return t("statusPlaced");
+            case "processing": return t("statusProcessing");
+            case "shipped": return t("statusShipped");
+            case "delivered": return t("statusDelivered");
+            case "cancelled": return t("statusCancelled");
+            default: return status;
+        }
+    };
+
+    const getPaymentStatusLabel = (status: string) => {
+        switch (status) {
+            case "paid": return t("paymentStatusPaid");
+            case "pending": return t("paymentStatusPending");
+            case "failed": return t("paymentStatusFailed");
+            case "refunded": return t("paymentStatusRefunded");
+            default: return status;
+        }
+    };
+
+    const getPaymentMethodLabel = (method: string) => {
+        switch (method) {
+            case "cod": return t("paymentMethodCod");
+            case "card": return t("paymentMethodCard");
+            case "stripe": return t("paymentMethodCard");
+            case "paypal": return t("paymentMethodPaypal");
+            default: return method;
+        }
+    };
+
     return (
         <SafeAreaView className="flex-1 bg-surface" edges={['top']}>
-            <Header title="My Orders" showBack />
+            <Header title={t("myOrders")} showBack />
 
             {loading ? (
                 <View className="flex-1 justify-center items-center">
@@ -43,7 +77,7 @@ export default function Orders() {
                 </View>
             ) : orders.length === 0 ? (
                 <View className="flex-1 justify-center items-center">
-                    <Text className="text-secondary text-lg">No orders found</Text>
+                    <Text className="text-secondary text-lg">{t("noOrdersFound")}</Text>
                 </View>
             ) : (
                 <FlatList
@@ -56,29 +90,29 @@ export default function Orders() {
                             onPress={() => router.push(`/orders/${item._id}`)}
                         >
                             <View className="flex-row justify-between mb-2">
-                                <Text className="text-primary font-bold">Order #{item.orderNumber}</Text>
+                                <Text className="text-primary font-bold">{t("order")} #{item.orderNumber}</Text>
                                 <Text className="text-secondary text-sm">{formatDate(item.createdAt)}</Text>
                             </View>
 
                             {/* Status Badges */}
                             <View className="flex-row gap-2 mb-3">
                                 <View className={`px-2 py-1 rounded-full ${getStatusColor(item.orderStatus)}`}>
-                                    <Text className={`text-xs font-bold capitalize`}>
-                                        {item.orderStatus}
+                                    <Text className={`text-xs font-bold`}>
+                                        {getStatusLabel(item.orderStatus)}
                                     </Text>
                                 </View>
 
                                 <View className={`px-2 py-1 rounded-full ${item.paymentStatus === 'paid' ? 'bg-green-100' : 'bg-gray-100'
                                     }`}>
-                                    <Text className={`text-xs font-bold capitalize ${item.paymentStatus === 'paid' ? 'text-green-700' : 'text-gray-700'
+                                    <Text className={`text-xs font-bold ${item.paymentStatus === 'paid' ? 'text-green-700' : 'text-gray-700'
                                         }`}>
-                                        {item.paymentStatus}
+                                        {getPaymentStatusLabel(item.paymentStatus)}
                                     </Text>
                                 </View>
                             </View>
 
                             <View className="flex-row justify-between items-center mb-2">
-                                <Text className="text-secondary text-xs">Payment Method: <Text className="text-primary font-medium capitalize">{item.paymentMethod}</Text></Text>
+                                <Text className="text-secondary text-xs">{t("paymentMethod")}: <Text className="text-primary font-medium">{getPaymentMethodLabel(item.paymentMethod)}</Text></Text>
                             </View>
 
                             {/* Product Images */}
@@ -104,7 +138,7 @@ export default function Orders() {
                             </ScrollView>
 
                             <View className="flex-row justify-between items-center mt-2 pt-3 border-t border-gray-100">
-                                <Text className="text-secondary">Items: {item.items.length}</Text>
+                                <Text className="text-secondary">{t("itemsLabel")}: {item.items.length}</Text>
                                 <Text className="text-primary font-bold text-lg">${item.totalAmount.toFixed(2)}</Text>
                             </View>
                         </TouchableOpacity>

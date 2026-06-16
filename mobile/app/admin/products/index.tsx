@@ -15,10 +15,12 @@ import { COLORS } from "@/constants";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import Toast from "react-native-toast-message";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function AdminProducts() {
   const { getToken } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [products, setProducts] = useState([]);
@@ -35,8 +37,8 @@ export default function AdminProducts() {
       console.error("Failed to fetch products : ", error);
       Toast.show({
         type: "error",
-        text1: "Failed to fetch Products",
-        text2: error.response?.data?.message || "Something went wrong",
+        text1: t("failedToFetchProducts"),
+        text2: error.response?.data?.message || t("somethingWentWrong"),
       });
     }finally{
         setLoading(false)
@@ -61,8 +63,8 @@ export default function AdminProducts() {
           if(data.success){
                 Toast.show({
                 type: 'success',
-                text1: 'success',
-                text2: 'Product deleted'
+                text1: t("success"),
+                text2: t("productDeleted")
             })
          fetchProducts();
         }
@@ -70,20 +72,20 @@ export default function AdminProducts() {
          console.error("Failed to delete product :",error)
            Toast.show({
                 type: 'error',
-                text1: 'Failed to dalete product',
-                text2: error.response?.data?.message || 'Something went wrong'
+                text1: t("failedToDeleteProduct"),
+                text2: error.response?.data?.message || t("somethingWentWrong")
             })
     }
   };
 
   const deleteProduct = async (id: string) => {
     Alert.alert(
-      "Delete Product",
-      "Are you sure you want to delete this product?",
+      t("deleteProductTitle"),
+      t("deleteProductConfirm"),
       [
-        { text: "Cancel", style: "cancel" as const },
+        { text: t("cancel"), style: "cancel" as const },
         {
-          text: "Delete",
+          text: t("delete"),
           style: "destructive" as const,
           onPress: () => performDelete(id),
         },
@@ -103,14 +105,14 @@ export default function AdminProducts() {
     <View className="flex-1 bg-surface">
       <View className="p-4 bg-white border border-gray-100 flex-row justify-between items-center">
         <Text className="text-lg font-semibold text-primary">
-          Total Products ({products.length})
+          {t("totalProducts")} ({products.length})
         </Text>
         <TouchableOpacity
           onPress={() => router.push("/admin/products/add")}
           className="bg-gray-800 px-4 py-2 rounded-full flex-row items-center"
         >
           <Ionicons name="add" size={20} color="white" />
-          <Text className="text-white font-medium ml-1">Add Product</Text>
+          <Text className="text-white font-medium ml-1">{t("addProduct")}</Text>
         </TouchableOpacity>
       </View>
 
@@ -122,7 +124,7 @@ export default function AdminProducts() {
       >
         {products.length === 0 ? (
           <View className="flex-1 justify-center items-center mt-20">
-            <Text className="text-secondary">No products found</Text>
+            <Text className="text-secondary">{t("noProductsFound")}</Text>
           </View>
         ) : (
           products.map((product: any) => (
@@ -149,13 +151,13 @@ export default function AdminProducts() {
                   {product.name}
                 </Text>
                 <Text className="text-secondary text-xs mb-1" numberOfLines={1}>
-                  Category : {product.category || "Others"}
+                  {t("category")} : {product.category || t("others")}
                 </Text>
                 <Text className="text-secondary text-xs mb-1" numberOfLines={1}>
-                  Stock : {product.stock}
+                  {t("stock")} : {product.stock}
                 </Text>
                 <Text className="text-secondary text-xs mb-1" numberOfLines={1}>
-                  Sizes : {product.sizes.join(", ")}
+                  {t("sizes")} : {product.sizes.join(", ")}
                 </Text>
                 <Text className="text-primary font-bold">
                   ${product.price.toFixed(2)}

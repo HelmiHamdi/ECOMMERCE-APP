@@ -6,7 +6,7 @@ import { useCart } from "@/context/CartContext";
 import { View } from "react-native";
 
 export default function TabLayout() {
-  const {cartItems} = useCart()
+  const { cartItems } = useCart();
   return (
     <Tabs
       screenOptions={{
@@ -39,19 +39,21 @@ export default function TabLayout() {
         name="cart"
         options={{
           tabBarIcon: ({ color, focused }) => (
-          <View className="relative">
+            <View className="relative">
               <Feather
-              name={focused ? "shopping-cart" : "shopping-cart"}
-              size={26}
-              color={color}
-            />
-            {cartItems?.length > 0 && 
-            <View className="absolute -top-1 -right-2 bg-accent
-            size-3 rounded-full items-center justify-center">
-              <Ionicons name="ellipse" size={6} color="white"/>
+                name={focused ? "shopping-cart" : "shopping-cart"}
+                size={26}
+                color={color}
+              />
+              {cartItems?.length > 0 && (
+                <View
+                  className="absolute -top-1 -right-2 bg-accent
+            size-3 rounded-full items-center justify-center"
+                >
+                  <Ionicons name="ellipse" size={6} color="white" />
+                </View>
+              )}
             </View>
-            }
-          </View>
           ),
         }}
       />
@@ -79,6 +81,14 @@ export default function TabLayout() {
           ),
         }}
       />
+      {/* 👇 Cache "settings" de la tab bar */}
+      <Tabs.Screen
+        name="settings"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen name="change-password" options={{ href: null }} />
     </Tabs>
   );
 }

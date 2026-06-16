@@ -2,11 +2,17 @@ import { Request, Response } from "express";
 import Product from "../models/Products.js";
 import cloudinary from "../config/cloudinary.js";
 import { UploadStream } from "cloudinary";
+import { sendNewProductNotification } from "../utils/sendNotification.js";
 
 export const getProducts = async (req: Request, res: Response) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, category } = req.query;
     const query: any = { isActive: true };
+
+    // ← AJOUT : filtre par catégorie
+    if (category && category !== "") {
+      query.category = { $regex: new RegExp(`^${category}$`, "i") };
+    }
 
     const total = await Product.countDocuments(query);
     const products = await Product.find(query)
@@ -26,6 +32,7 @@ export const getProducts = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 export const getProduct = async (req: Request, res: Response) => {
   try {
@@ -47,13 +54,15 @@ export const getProduct = async (req: Request, res: Response) => {
 
 export const createProduct = async (req: Request, res: Response) => {
   try {
+     console.log("BODY:", req.body);
+    console.log("FILES:", req.files);
     let images: string[] = [];
     if (req.files && (req.files as any).length > 0) {
       const uploadPromises = (req.files as any).map((file: any) => {
         return new Promise((resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
             {
-              floder: "shop-mobile/products",
+              folder: "shop-mobile/products",
             },
             (error, result) => {
               if (error) reject(error);
@@ -91,8 +100,10 @@ export const createProduct = async (req: Request, res: Response) => {
         .json({ success: false, message: "Please upload at least one image" });
     }
     const product = await Product.create(productData);
+    await sendNewProductNotification(product.name, product._id.toString());
     res.status(201).json({ success: true, data: product });
   } catch (error: any) {
+     console.error("CREATE PRODUCT ERROR:", error); 
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -112,7 +123,7 @@ export const updateProduct = async (req: Request, res: Response) => {
         return new Promise((resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
             {
-              floder: "shop-mobile/products",
+              folder: "shop-mobile/products",
             },
             (error, result) => {
               if (error) reject(error);
@@ -127,7 +138,7 @@ export const updateProduct = async (req: Request, res: Response) => {
       images = [...images, ...newImages];
     }
     const updates = { ...req.body };
-    if (req.body.size) {
+    if (req.body.sizes) {
       let sizes = req.body.sizes;
       if (typeof sizes === "string") {
         try {

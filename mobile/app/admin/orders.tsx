@@ -15,9 +15,11 @@ import { COLORS, getStatusColor } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function AdminOrders() {
   const { getToken } = useAuth();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [orders, setOrders] = useState([]);
@@ -35,6 +37,23 @@ export default function AdminOrders() {
     "cancelled",
   ];
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "placed":
+        return t("statusPlaced");
+      case "processing":
+        return t("statusProcessing");
+      case "shipped":
+        return t("statusShipped");
+      case "delivered":
+        return t("statusDelivered");
+      case "cancelled":
+        return t("statusCancelled");
+      default:
+        return status;
+    }
+  };
+
   const fetchOrders = async () => {
     try {
       const token = await getToken();
@@ -48,7 +67,7 @@ export default function AdminOrders() {
       }
     } catch (error) {
       console.error("Failed to fetch orders : ", error);
-      Alert.alert("Error", "Failed to load orders");
+      Alert.alert(t("error"), t("failedToLoadOrders"));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -85,13 +104,13 @@ export default function AdminOrders() {
         },
       );
       if (data.success) {
-        Alert.alert("Success", "Order status updated");
+        Alert.alert(t("success"), t("orderStatusUpdated"));
         setStatusModalVisible(false);
         fetchOrders();
       }
     } catch (error: any) {
       console.error("Failed to update status: ", error);
-      Alert.alert("Error", "Failed to update status");
+      Alert.alert(t("error"), t("failedToUpdateStatus"));
     } finally {
       setUpdating(false);
     }
@@ -115,7 +134,7 @@ export default function AdminOrders() {
       >
         {orders.length === 0 ? (
           <View className="flex-1 justify-center items-center mt-20">
-            <Text className="text-secondary">No orders found</Text>
+            <Text className="text-secondary">{t("noOrdersFound")}</Text>
           </View>
         ) : (
           orders.map((order: any) => (
@@ -125,7 +144,7 @@ export default function AdminOrders() {
             >
               <View className="flex-row justify-between mb-2">
                 <Text className="font-medium text-sm text-gray-400 ">
-                  Order ID : #{order._id}
+                  {t("orderId")} : #{order._id}
                 </Text>
                 <Text className="text-secondary text-xs">
                   {new Date(order.createdAt).toLocaleDateString()}
@@ -134,24 +153,24 @@ export default function AdminOrders() {
 
               <View className="mb-3 bg-gray-50 p-3 rounded-lg">
                 <Text className="text-xs text-secondary font-bold mb-1">
-                  CUSTOMER
+                  {t("customer")}
                 </Text>
                 <Text className="text-primary font-medium">
-                  {order.user?.name || "Unknown User"}
+                  {order.user?.name || t("unknownUser")}
                 </Text>
                 <Text className="text-secondary text-xs">
-                  {order.user?.email || "No email"}
+                  {order.user?.email || t("noEmail")}
                 </Text>
                 {!order.user && (
                   <Text className="text-xs text-gray-400 mt-1">
-                    ID: {order.user?._id || "N/A"}
+                    {t("id")}: {order.user?._id || t("na")}
                   </Text>
                 )}
               </View>
 
               <View className="mb-3 bg-gray-50 p-3 rounded-lg">
                 <Text className="text-xs text-secondary font-bold mb-1">
-                  SHIPPING ADDRESS
+                  {t("shippingAddress")}
                 </Text>
                 <Text className="text-primary text-xs">
                   {order.shippingAddress?.street}, {order.shippingAddress?.city}
@@ -165,7 +184,7 @@ export default function AdminOrders() {
 
               <View className="mb-3">
                 <Text className="text-xs text-secondary font-bold mb-2">
-                  ITEMS
+                  {t("items")}
                 </Text>
                 {order.items.map((item: any) => (
                   <View
@@ -198,7 +217,7 @@ export default function AdminOrders() {
                   className={`flex-row items-center px-4 py-2 rounded-full ${getStatusColor(order.orderStatus)}`}
                 >
                   <Text className="text-xs font-bold mr-2 uppercase tracking-wide">
-                    {order.orderStatus}
+                    {getStatusLabel(order.orderStatus)}
                   </Text>
                   <Ionicons
                     name="pencil"
@@ -220,7 +239,7 @@ export default function AdminOrders() {
             <View className="bg-white rounded-t-2xl p-4 max-h-[60%]">
               <View className="flex-row justify-between items-center mb-4 pb-4 border-b border-gray-100">
                 <Text className="text-lg font-bold text-primary">
-                  Update Order Status
+                  {t("updateOrderStatus")}
                 </Text>
                 <TouchableOpacity onPress={() => setStatusModalVisible(false)}>
                   <Ionicons name="close" size={24} color={COLORS.secondary} />
@@ -231,7 +250,7 @@ export default function AdminOrders() {
                 <View className="py-8">
                   <ActivityIndicator size="large" color={COLORS.primary} />
                   <Text className="text-center text-secondary mt-2">
-                    Updating status...
+                    {t("updatingStatus")}
                   </Text>
                 </View>
               ) : (
@@ -248,13 +267,13 @@ export default function AdminOrders() {
                       onPress={() => updateStatus(item)}
                     >
                       <Text
-                        className={`font-medium capitalize ${
+                        className={`font-medium ${
                           selectedOrder?.orderStatus === item
                             ? "text-primary font-bold"
                             : "text-secondary"
                         }`}
                       >
-                        {item}
+                        {getStatusLabel(item)}
                       </Text>
                       {selectedOrder?.orderStatus === item && (
                         <Ionicons

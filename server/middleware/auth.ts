@@ -22,6 +22,19 @@ try {
 }
 }
 
+export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { userId } = await req.auth();
+    if (userId) {
+      const user = await User.findOne({ clerkId: userId });
+      req.user = user;
+    }
+    next();
+  } catch (error) {
+   
+    next();
+  }
+};
 export const authorize = (...roles: string[])=>{
     return (req: Request, res:Response, next: NextFunction)=>{
         if (!roles.includes(req.user.role)) {

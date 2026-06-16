@@ -15,8 +15,10 @@ import { COLORS } from "@/constants";
 import { TextInput } from "react-native-gesture-handler";
 import ProductCard from "@/components/ProductCard";
 import api from "@/constants/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Shop() {
+  const { t } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -58,7 +60,7 @@ export default function Shop() {
   }, []);
   return (
     <SafeAreaView className="flex-1 bg-surface" edges={["top"]}>
-      <Header title="Shop" showBack showCart />
+      <Header title={t("shop")} showBack showCart />
       {/* search bar */}
       <View className="flex-row gap-2 mb-3 mx-4 my-2">
         <View className="flex-1 flex-row items-center bg-white rounded-xl border border-gray-100">
@@ -70,7 +72,7 @@ export default function Shop() {
           />
           <TextInput
             className="flex-1 ml-2 text-primary px-4 py-3"
-            placeholder="Search products..."
+            placeholder={t("searchProductsPlaceholder")}
             returnKeyType="search"
             placeholderTextColor={COLORS.secondary}
           />
@@ -108,7 +110,7 @@ export default function Shop() {
           ListEmptyComponent={
             !loading && (
                 <View className="flex-1 items-center justify-center py-20" >
-                    <Text className="text-secondary">No products found</Text>
+                    <Text className="text-secondary">{t("noProductsFound")}</Text>
                 </View>
             )
           } />
