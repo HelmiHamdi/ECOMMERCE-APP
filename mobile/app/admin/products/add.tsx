@@ -71,7 +71,7 @@ export default function AddProduct() {
         description,
         price,
         stock: stock || "0",
-        category,
+        category: category.toLowerCase(), // ✅ FIX
         isFeatured: String(isFeatured),
         sizes,
       };
@@ -89,7 +89,6 @@ export default function AddProduct() {
         } as any);
       }
 
-      // ✅ No Content-Type header — let Axios set it with the correct boundary
       const { data } = await api.post("/products", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -151,6 +150,7 @@ export default function AddProduct() {
             onPress={() => setModalVisible(true)}
             className="bg-surface p-3 rounded-lg mb-4 flex-row justify-between items-center"
           >
+            {/* ✅ FIX: afficher la traduction mais stocker la clé */}
             <Text className="text-primary">{t(category)}</Text>
             <Ionicons name="chevron-down" size={20} color={COLORS.secondary} />
           </TouchableOpacity>
@@ -169,7 +169,7 @@ export default function AddProduct() {
                       <TouchableOpacity
                         className={`p-4 border-b ${category === item.nameKey ? "bg-primary/5" : ""}`}
                         onPress={() => {
-                          setCategory(item.nameKey);
+                          setCategory(item.nameKey); // ✅ stocke "men", "women"...
                           setModalVisible(false);
                         }}
                       >
@@ -177,7 +177,7 @@ export default function AddProduct() {
                           <Text
                             className={`${category === item.nameKey ? "font-bold text-primary" : ""}`}
                           >
-                            {t(item.nameKey)}
+                            {t(item.nameKey)} {/* ✅ affiche traduit */}
                           </Text>
                           {category === item.nameKey && (
                             <Ionicons

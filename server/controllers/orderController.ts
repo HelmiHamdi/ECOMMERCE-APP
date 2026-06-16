@@ -64,6 +64,7 @@ export const createOrder = async (req: Request, res: Response) => {
         quantity: item.quantity,
         price: item.price,
         size: item.size,
+        image: (item.product as any).images?.[0] ?? null,
       });
       product.stock -= item.quantity;
       await product.save();

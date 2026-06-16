@@ -55,11 +55,15 @@ export default function EditProduct() {
           setDescription(product.description || "");
           setPrice(product.price.toString());
           setStock(product.stock.toString());
+
+          // ✅ FIX: normaliser en minuscules
           setCategory(
-            typeof product.category === "object"
+            (typeof product.category === "object"
               ? product.category.name
-              : product.category,
+              : product.category
+            ).toLowerCase()
           );
+
           setIsFeatured(product.isFeatured);
           if (product.sizes)
             setSizes(
@@ -130,7 +134,7 @@ export default function EditProduct() {
       formData.append("description", description);
       formData.append("price", price);
       formData.append("stock", stock);
-      formData.append("category", category);
+      formData.append("category", category.toLowerCase()); // ✅ FIX
       formData.append("isFeatured", String(isFeatured));
       formData.append("sizes", sizes);
       existingImages.forEach((img) => formData.append("existingImages", img));
@@ -161,7 +165,7 @@ export default function EditProduct() {
           text1: t("success"),
           text2: t("productUpdatedSuccess"),
         });
-        router.replace('/admin/products');
+        router.replace("/admin/products");
       }
     } catch (error: any) {
       console.error("Failed to update product:", error);
@@ -236,8 +240,9 @@ export default function EditProduct() {
             onPress={() => setModalVisible(true)}
             className="bg-surface p-3 rounded-lg mb-4 flex-row justify-between items-center"
           >
+            {/* ✅ FIX: afficher la traduction mais stocker la clé */}
             <Text className="text-primary">
-              {category || t("selectCategory")}
+              {category ? t(category) : t("selectCategory")}
             </Text>
             <Ionicons name="chevron-down" size={20} color={COLORS.secondary} />
           </TouchableOpacity>
@@ -256,7 +261,7 @@ export default function EditProduct() {
                       <TouchableOpacity
                         className={`p-4 border-b ${category === item.nameKey ? "bg-primary/5" : ""}`}
                         onPress={() => {
-                          setCategory(item.nameKey);
+                          setCategory(item.nameKey); // ✅ stocke "men", "women"...
                           setModalVisible(false);
                         }}
                       >
@@ -264,7 +269,7 @@ export default function EditProduct() {
                           <Text
                             className={`${category === item.nameKey ? "font-bold text-primary" : ""}`}
                           >
-                            {t(item.nameKey)}
+                            {t(item.nameKey)} {/* ✅ affiche traduit */}
                           </Text>
                           {category === item.nameKey && (
                             <Ionicons
