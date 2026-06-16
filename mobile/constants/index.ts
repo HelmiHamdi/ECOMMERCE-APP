@@ -7,7 +7,7 @@ export const COLORS = {
   border: "#EEEEEE",
   error: "#FF4444",
 };
-
+/* categories */
 export const CATEGORIES = [
   { id: 1, nameKey: "men", icon: "man-outline" },
   { id: 2, nameKey: "women", icon: "woman-outline" },
