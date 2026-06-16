@@ -3,12 +3,14 @@ import React from "react";
 import { CartItemProps } from "@/constants/types";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function CartItem({
   item,
   onRemove,
   onUpdateQuantity,
 }: CartItemProps) {
+  const { t } = useLanguage();
   const imageUrl = item.product.images[0];
   return (
     <View className="flex-row mb-4 bg-white p-3 rounded-xl overflow-hidden mr-3">
@@ -26,7 +28,7 @@ export default function CartItem({
             <Text className="text-primary font-medium text-sm mb-1 ">
               {item.product.name}
             </Text>
-            <Text className="text-secondary text-xs">Size: {item.size}</Text>
+            <Text className="text-secondary text-xs">{t("sizeLabel")}: {item.size}</Text>
           </View>
           <TouchableOpacity onPress={onRemove}>
             <Ionicons name="close-circle-outline" size={20} color="#FF4C3B" />

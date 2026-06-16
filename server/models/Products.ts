@@ -1,23 +1,27 @@
-import mongoose ,{Schema} from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import { IProduct } from "../types/index.js";
 
-
 const productSchema = new Schema<IProduct>(
-    {
-        name:{type: String, required: true, trim: true},
-        description: {type: String, required: true},
-        price: {type: Number, required: true, min: 0},
-        images: [{type: String}],
-        sizes: [{type: String}],
-        category: {type: String, required: true, enum :["Men", "Women","Kids","Shoes","Bags","Other"], defult: "Other"},
-        stock: {type: Number, required: true, default: 0 , min : 0},
-        isFeatured:{type: Boolean, defult: true},
-        isActive : {type : Boolean , default : true}
-    },{timestamps: true}
-)
+  {
+    name: { type: String, required: true, trim: true },
+    description: { type: String, required: true },
+    price: { type: Number, required: true, min: 0 },
+    images: [{ type: String }],
+    sizes: [{ type: String }],
+    category: {
+      type: String,
+      enum: ["men", "women", "kids", "shoes", "bag", "other"], // ← minuscules
+      required: true,
+    },
+    stock: { type: Number, required: true, default: 0, min: 0 },
+    isFeatured: { type: Boolean, defult: true },
+    isActive: { type: Boolean, default: true },
+  },
+  { timestamps: true },
+);
 
-productSchema.index({name: "text", description:"text"})
+productSchema.index({ name: "text", description: "text" });
 
-const Product = mongoose.model<IProduct>("Product", productSchema)
+const Product = mongoose.model<IProduct>("Product", productSchema);
 
-export default Product
+export default Product;

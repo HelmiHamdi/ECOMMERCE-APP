@@ -6,16 +6,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/Header";
 import { COLORS } from "@/constants";
 import type { Order, Product } from "@/constants/types";
-import { dummyOrders } from "@/assets/assets";
+
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function OrderDetails() {
     const { id } = useLocalSearchParams();
     const [order, setOrder] = useState<Order | null>(null);
     const [loading, setLoading] = useState(true);
- const {getToken} = useAuth()
-   const fetchOrderDetails = async () => {
+    const {getToken} = useAuth()
+    const { t } = useLanguage();
+
+    const fetchOrderDetails = async () => {
     console.log("📦 ID reçu via params:", id);
     try {
       const token = await getToken();
@@ -35,6 +38,26 @@ export default function OrderDetails() {
         fetchOrderDetails();
     }, [id]);
 
+    const getPaymentStatusLabel = (status: string) => {
+        switch (status) {
+            case "paid": return t("paymentStatusPaid");
+            case "pending": return t("paymentStatusPending");
+            case "failed": return t("paymentStatusFailed");
+            case "refunded": return t("paymentStatusRefunded");
+            default: return status;
+        }
+    };
+
+    const getPaymentMethodLabel = (method: string) => {
+        switch (method) {
+            case "cod": return t("paymentMethodCod");
+            case "card": return t("paymentMethodCard");
+            case "stripe": return t("paymentMethodCard");
+            case "paypal": return t("paymentMethodPaypal");
+            default: return method;
+        }
+    };
+
     if (loading) {
         return (
             <SafeAreaView className="flex-1 bg-surface justify-center items-center">
@@ -46,7 +69,7 @@ export default function OrderDetails() {
     if (!order) {
         return (
             <SafeAreaView className="flex-1 bg-surface justify-center items-center">
-                <Text>Order not found</Text>
+                <Text>{t("orderNotFound")}</Text>
             </SafeAreaView>
         );
     }
@@ -57,20 +80,20 @@ export default function OrderDetails() {
     };
 
     const ORDER_STEPS = [
-        { title: "Order Placed", date: formatDate(order.createdAt), completed: true },
-        { title: "Processing", date: "", completed: ['processing', 'shipped', 'delivered'].includes(order.orderStatus) },
-        { title: "Shipped", date: "", completed: ['shipped', 'delivered'].includes(order.orderStatus) },
-        { title: "Delivered", date: "", completed: order.orderStatus === 'delivered' },
+        { title: t("orderPlacedStep"), date: formatDate(order.createdAt), completed: true },
+        { title: t("statusProcessing"), date: "", completed: ['processing', 'shipped', 'delivered'].includes(order.orderStatus) },
+        { title: t("statusShipped"), date: "", completed: ['shipped', 'delivered'].includes(order.orderStatus) },
+        { title: t("statusDelivered"), date: "", completed: order.orderStatus === 'delivered' },
     ];
 
     return (
         <SafeAreaView className="flex-1 bg-surface" edges={['top']}>
-            <Header title={`Order #${order.orderNumber}`} showBack />
+            <Header title={`${t("order")} #${order.orderNumber}`} showBack />
 
             <ScrollView className="flex-1 px-4 pt-4">
                 {/* Order Status */}
                 <View className="bg-white p-4 rounded-xl mb-4 border border-gray-100">
-                    <Text className="text-lg font-bold text-primary mb-4">Order Status</Text>
+                    <Text className="text-lg font-bold text-primary mb-4">{t("orderStatus")}</Text>
 
                     {ORDER_STEPS.map((step, index) => (
                         <View key={index} className="flex-row mb-4 last:mb-0">
@@ -90,7 +113,7 @@ export default function OrderDetails() {
 
                 {/* Items */}
                 <View className="bg-white p-4 rounded-xl mb-4 border border-gray-100">
-                    <Text className="text-lg font-bold text-primary mb-4">Products</Text>
+                    <Text className="text-lg font-bold text-primary mb-4">{t("products")}</Text>
                     {order.items.map((item: any, index: number) => {
 
                         const productData = item.product as Product;
@@ -101,10 +124,10 @@ export default function OrderDetails() {
                                 {image && <Image source={{ uri: image }} className="w-16 h-16 rounded-lg bg-gray-100" resizeMode="contain" />}
                                 <View className="flex-1 ml-3 justify-center">
                                     <Text className="text-primary font-medium" numberOfLines={1}>{item.name}</Text>
-                                    <Text className="text-secondary text-xs">Size: {item.size}</Text>
+                                    <Text className="text-secondary text-xs">{t("sizeLabel")}: {item.size}</Text>
                                     <View className="flex-row justify-between items-center mt-2">
                                         <Text className="text-primary font-bold">${item.price}</Text>
-                                        <Text className="text-secondary text-xs">Qty: {item.quantity}</Text>
+                                        <Text className="text-secondary text-xs">{t("qtyLabel")}: {item.quantity}</Text>
                                     </View>
                                 </View>
                             </View>
@@ -114,7 +137,7 @@ export default function OrderDetails() {
 
                 {/* Shipping Details */}
                 <View className="bg-white p-4 rounded-xl mb-4 border border-gray-100">
-                    <Text className="text-lg font-bold text-primary mb-2">Shipping Details</Text>
+                    <Text className="text-lg font-bold text-primary mb-2">{t("shippingDetails")}</Text>
                     <View className="flex-row items-center mb-2">
                         <Ionicons name="location-outline" size={20} color={COLORS.secondary} />
                         <Text className="text-secondary ml-2 flex-1">
@@ -125,33 +148,33 @@ export default function OrderDetails() {
 
                 {/* Payment Summary */}
                 <View className="bg-white p-4 rounded-xl mb-8 border border-gray-100">
-                    <Text className="text-lg font-bold text-primary mb-4">Payment Summary</Text>
+                    <Text className="text-lg font-bold text-primary mb-4">{t("paymentSummary")}</Text>
                     <View className="flex-row justify-between mb-2">
-                        <Text className="text-secondary">Payment Method</Text>
-                        <Text className="text-primary font-medium capitalize">{order.paymentMethod}</Text>
+                        <Text className="text-secondary">{t("paymentMethod")}</Text>
+                        <Text className="text-primary font-medium">{getPaymentMethodLabel(order.paymentMethod)}</Text>
                     </View>
                     <View className="flex-row justify-between mb-2">
-                        <Text className="text-secondary">Payment Status</Text>
-                        <Text className={`font-medium capitalize ${order.paymentStatus === 'paid' ? 'text-green-600' : order.paymentStatus === 'failed' ? 'text-red-600' : 'text-orange-500'}`}>
-                            {order.paymentStatus}
+                        <Text className="text-secondary">{t("paymentStatus")}</Text>
+                        <Text className={`font-medium ${order.paymentStatus === 'paid' ? 'text-green-600' : order.paymentStatus === 'failed' ? 'text-red-600' : 'text-orange-500'}`}>
+                            {getPaymentStatusLabel(order.paymentStatus)}
                         </Text>
                     </View>
                     <View className="h-px bg-gray-100 my-2" />
                     <View className="flex-row justify-between mb-2">
-                        <Text className="text-secondary">Subtotal</Text>
+                        <Text className="text-secondary">{t("subtotal")}</Text>
                         <Text className="text-primary font-medium">${order.subtotal.toFixed(2)}</Text>
                     </View>
                     <View className="flex-row justify-between mb-2">
-                        <Text className="text-secondary">Shipping</Text>
+                        <Text className="text-secondary">{t("shippingLabel")}</Text>
                         <Text className="text-primary font-medium">${order.shippingCost.toFixed(2)}</Text>
                     </View>
                     <View className="flex-row justify-between mb-2">
-                        <Text className="text-secondary">Tax</Text>
+                        <Text className="text-secondary">{t("tax")}</Text>
                         <Text className="text-primary font-medium">${order.tax.toFixed(2)}</Text>
                     </View>
                     <View className="h-px bg-gray-100 my-2" />
                     <View className="flex-row justify-between">
-                        <Text className="text-primary font-bold text-lg">Total</Text>
+                        <Text className="text-primary font-bold text-lg">{t("total")}</Text>
                         <Text className="text-primary font-bold text-lg">${order.totalAmount.toFixed(2)}</Text>
                     </View>
                 </View>

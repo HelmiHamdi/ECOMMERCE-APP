@@ -5,6 +5,7 @@ import Ionicons from "@expo/vector-icons/build/Ionicons";
 import { COLORS } from "@/constants";
 import { useRouter } from "expo-router";
 import { useCart } from "@/context/CartContext";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Header({
   title,
@@ -16,6 +17,8 @@ export default function Header({
 }: HeaderProps) {
   const router = useRouter();
   const { itemCount } = useCart();
+  const { t } = useLanguage();
+
   return (
     <View className="flex-row items-center justify-between px-4 py-3 bg-white">
       {/* Gauche */}
@@ -50,17 +53,21 @@ export default function Header({
       {/* Droite */}
       <View className="flex-row items-center gap-4">
         {showSearch && (
-          <TouchableOpacity>
+          <TouchableOpacity accessibilityLabel={t("search")}>
             <Ionicons name="search-outline" size={24} color={COLORS.primary} />
           </TouchableOpacity>
         )}
         {showCart && (
-          <TouchableOpacity onPress={() => router.push("/(tabs)/cart")}>
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/cart")}
+            accessibilityLabel={t("cart")}
+          >
             <View className="relative">
               <Ionicons name="bag-outline" size={24} color={COLORS.primary} />
-              <View 
-               style={{ width: 16, height: 16, borderRadius: 8 }}
-              className="absolute -top-1 -right-1 bg-accent  rounded-full items-center justify-center ">
+              <View
+                style={{ width: 16, height: 16, borderRadius: 8 }}
+                className="absolute -top-1 -right-1 bg-accent rounded-full items-center justify-center"
+              >
                 <Text className="text-white text-[10px] font-bold">
                   {itemCount}
                 </Text>

@@ -22,11 +22,13 @@ import * as ImagePicker from "expo-image-picker";
 import Header from "@/components/Header";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function EditProduct() {
   const { getToken } = useAuth();
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { t } = useLanguage();
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -75,8 +77,8 @@ export default function EditProduct() {
         console.error("Failed to fetch product:", error);
         Toast.show({
           type: "error",
-          text1: "Failed to Fetch Product",
-          text2: error.response?.data?.message || "Something went wrong",
+          text1: t("failedToFetchProduct"),
+          text2: error.response?.data?.message || t("somethingWentWrong"),
         });
         router.back();
       } finally {
@@ -115,8 +117,8 @@ export default function EditProduct() {
     if (!name || !price || sizes.length < 1) {
       Toast.show({
         type: "error",
-        text1: "Missing Fields",
-        text2: "Please fill in all required fields",
+        text1: t("missingFields"),
+        text2: t("fillRequiredFields"),
       });
       return;
     }
@@ -151,14 +153,13 @@ export default function EditProduct() {
       const { data } = await api.put(`/products/${id}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
         },
       });
       if (data.success) {
         Toast.show({
           type: "success",
-          text1: "success",
-          text2: "Product updated successfully",
+          text1: t("success"),
+          text2: t("productUpdatedSuccess"),
         });
         router.replace('/admin/products');
       }
@@ -166,8 +167,8 @@ export default function EditProduct() {
       console.error("Failed to update product:", error);
       Toast.show({
         type: "error",
-        text1: "Failed to Update Product",
-        text2: error.response?.data?.message || "Something went wrong",
+        text1: t("failedToUpdateProduct"),
+        text2: error.response?.data?.message || t("somethingWentWrong"),
       });
     } finally {
       setSubmitting(false);
@@ -185,12 +186,12 @@ export default function EditProduct() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <Header title="Edit Product" showBack />
+      <Header title={t("editProduct")} showBack />
 
       <ScrollView className="flex-1 bg-surface p-4">
         <View className="bg-white p-4 rounded-xl border border-gray-100 mb-20">
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            Product Name *
+            {t("productName")} *
           </Text>
           <TextInput
             className="bg-surface p-3 rounded-lg mb-4 text-primary"
@@ -199,7 +200,7 @@ export default function EditProduct() {
           />
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            Price ($) *
+            {t("price")} ($) *
           </Text>
           <TextInput
             className="bg-surface p-3 rounded-lg mb-4 text-primary"
@@ -209,7 +210,7 @@ export default function EditProduct() {
           />
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            Stock Level
+            {t("stockLevel")}
           </Text>
           <TextInput
             className="bg-surface p-3 rounded-lg mb-4 text-primary"
@@ -219,24 +220,24 @@ export default function EditProduct() {
           />
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            Sizes (comma separated)
+            {t("sizesCommaSeparated")}
           </Text>
           <TextInput
             className="bg-surface p-3 rounded-lg mb-4 text-primary"
-            placeholder="e.g. S, M, L"
+            placeholder={t("sizesPlaceholder")}
             value={sizes}
             onChangeText={setSizes}
           />
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            Category
+            {t("category")}
           </Text>
           <TouchableOpacity
             onPress={() => setModalVisible(true)}
             className="bg-surface p-3 rounded-lg mb-4 flex-row justify-between items-center"
           >
             <Text className="text-primary">
-              {category || "Select Category"}
+              {category || t("selectCategory")}
             </Text>
             <Ionicons name="chevron-down" size={20} color={COLORS.secondary} />
           </TouchableOpacity>
@@ -246,26 +247,26 @@ export default function EditProduct() {
               <View className="flex-1 justify-end bg-black/50">
                 <View className="bg-white rounded-t-2xl p-4 max-h-[50%]">
                   <Text className="text-lg font-bold text-center mb-4">
-                    Select Category
+                    {t("selectCategory")}
                   </Text>
                   <FlatList
                     data={CATEGORIES}
                     keyExtractor={(item) => String(item.id)}
                     renderItem={({ item }) => (
                       <TouchableOpacity
-                        className={`p-4 border-b ${category === item.name ? "bg-primary/5" : ""}`}
+                        className={`p-4 border-b ${category === item.nameKey ? "bg-primary/5" : ""}`}
                         onPress={() => {
-                          setCategory(item.name);
+                          setCategory(item.nameKey);
                           setModalVisible(false);
                         }}
                       >
                         <View className="flex-row justify-between">
                           <Text
-                            className={`${category === item.name ? "font-bold text-primary" : ""}`}
+                            className={`${category === item.nameKey ? "font-bold text-primary" : ""}`}
                           >
-                            {item.name}
+                            {t(item.nameKey)}
                           </Text>
-                          {category === item.name && (
+                          {category === item.nameKey && (
                             <Ionicons
                               name="checkmark"
                               size={20}
@@ -282,7 +283,7 @@ export default function EditProduct() {
           </Modal>
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            Images
+            {t("images")}
           </Text>
           <View className="mb-4">
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -317,14 +318,14 @@ export default function EditProduct() {
                   className="w-24 h-24 rounded-lg bg-gray-100 justify-center items-center border border-dashed border-gray-300"
                 >
                   <Ionicons name="add" size={24} color={COLORS.secondary} />
-                  <Text className="text-xs text-secondary mt-1">Add</Text>
+                  <Text className="text-xs text-secondary mt-1">{t("add")}</Text>
                 </TouchableOpacity>
               )}
             </ScrollView>
           </View>
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            Description
+            {t("description")}
           </Text>
           <TextInput
             className="bg-surface p-3 rounded-lg mb-6 text-primary h-24"
@@ -335,7 +336,7 @@ export default function EditProduct() {
           />
 
           <View className="flex-row justify-between items-center mb-6">
-            <Text className="text-primary font-bold">Featured Product</Text>
+            <Text className="text-primary font-bold">{t("featuredProduct")}</Text>
             <Switch
               value={isFeatured}
               onValueChange={setIsFeatured}
@@ -352,7 +353,7 @@ export default function EditProduct() {
               <ActivityIndicator color="white" />
             ) : (
               <Text className="text-white font-medium text-lg">
-                Update Product
+                {t("updateProduct")}
               </Text>
             )}
           </TouchableOpacity>

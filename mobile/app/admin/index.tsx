@@ -5,10 +5,12 @@ import { COLORS, getStatusColor } from "@/constants";
 
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function AdminDashboard() {
     const {getToken} = useAuth();
     const router = useRouter();
+    const { t } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [stats, setStats] = useState({
@@ -60,27 +62,27 @@ export default function AdminDashboard() {
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
             <View className="mb-8">
-                <Text className="text-primary font-bold text-2xl mb-4 tracking-tight">Overview</Text>
+                <Text className="text-primary font-bold text-2xl mb-4 tracking-tight">{t("overview")}</Text>
                 <View className="flex-row flex-wrap justify-between">
-                    <StatCard label="Total Revenue" value={`$${stats.totalRevenue.toFixed(2)}`} />
-                    <StatCard label="Total Orders" value={stats.totalOrders.toString()} />
-                    <StatCard label="Products" value={stats.totalProducts.toString()} />
-                    <StatCard label="Users" value={stats.totalUsers.toString()} />
+                    <StatCard label={t("totalRevenue")} value={`$${stats.totalRevenue.toFixed(2)}`} />
+                    <StatCard label={t("totalOrders")} value={stats.totalOrders.toString()} />
+                    <StatCard label={t("products")} value={stats.totalProducts.toString()} />
+                    <StatCard label={t("users")} value={stats.totalUsers.toString()} />
                 </View>
             </View>
 
             <View className="mb-6">
-                <Text className="text-primary font-bold text-2xl mb-4 tracking-tight">Recent Orders</Text>
+                <Text className="text-primary font-bold text-2xl mb-4 tracking-tight">{t("recentOrders")}</Text>
                 {stats.recentOrders.length === 0 ? (
                     <View className="bg-white p-6 rounded-2xl border border-gray-100 items-center">
-                        <Text className="text-secondary">No recent orders</Text>
+                        <Text className="text-secondary">{t("noRecentOrders")}</Text>
                     </View>
                 ) : (
                     stats.recentOrders.map((order: any) => (
                         <View key={order._id} className="bg-white p-5 rounded-2xl border border-gray-100 mb-3">
                             <View className="flex-row justify-between items-center mb-3">
                                 <View>
-                                    <Text className="font-bold text-primary text-base">Total Products : {order.items.reduce((acc: number, item: any) => acc + item.quantity, 0)}</Text>
+                                    <Text className="font-bold text-primary text-base">{t("totalProducts")} : {order.items.reduce((acc: number, item: any) => acc + item.quantity, 0)}</Text>
                                     <Text className="text-secondary text-xs mt-1">{new Date(order.createdAt).toLocaleDateString()}</Text>
                                 </View>
                                 <View className={`px-3 py-1.5 rounded-full ${getStatusColor(order.orderStatus)}`}>
@@ -102,7 +104,7 @@ export default function AdminDashboard() {
                                             {(order.user?.name || '?').charAt(0).toUpperCase()}
                                         </Text>
                                     </View>
-                                    <Text className="text-secondary text-sm">{order.user?.name || 'Unknown User'}</Text>
+                                    <Text className="text-secondary text-sm">{order.user?.name || t("unknownUser")}</Text>
                                 </View>
                                 <Text className="text-primary font-bold text-lg">${order.totalAmount.toFixed(2)}</Text>
                             </View>

@@ -18,11 +18,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import api from "@/constants/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 const { width } = Dimensions.get("window");
 export default function ProductDetail() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { t } = useLanguage();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const { addToCart, cartItems,itemCount } = useCart();
@@ -38,8 +40,8 @@ export default function ProductDetail() {
    } catch (error: any) {
       Toast.show({
           type: 'error',
-          text1: 'Failed to Fetch Product',
-          text2: error.response?.data?.message ||'Product created'
+          text1: t("failedToFetchProduct"),
+          text2: error.response?.data?.message || t("productCreated")
       })
    }finally{
     setLoading(false)
@@ -60,7 +62,7 @@ export default function ProductDetail() {
   if (!product) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center">
-        <Text className="text-primary text-lg">Product not found</Text>
+        <Text className="text-primary text-lg">{t("productNotFound")}</Text>
       </SafeAreaView>
     );
   }
@@ -70,8 +72,8 @@ export default function ProductDetail() {
     if(!selectedSize){
       Toast.show({
         type: 'info',
-        text1: 'No Size Selected',
-        text2: 'Please select a size'
+        text1: t("noSizeSelected"),
+        text2: t("pleaseSelectSize")
       })
       return;
     }
@@ -154,7 +156,7 @@ export default function ProductDetail() {
           {product.sizes && product.sizes.length > 0 && (
             <>
               <Text className="text-base font-bold text-primary mb-3 mt-4">
-                Size
+                {t("sizeLabel")}
               </Text>
               <View className="flex-row gap-3 mb-6 flex-wrap">
                 {product.sizes.map((size) => (
@@ -176,7 +178,7 @@ export default function ProductDetail() {
               </View>
             </>
           )}
-          <Text className="text-base font-bold text-primary mb-2">Description</Text>
+          <Text className="text-base font-bold text-primary mb-2">{t("description")}</Text>
           <Text className="text-secondary leading-6 mb-6"> {product.description}</Text>
         </View>
       </ScrollView>
@@ -185,7 +187,7 @@ export default function ProductDetail() {
         <TouchableOpacity onPress={handleAddToCart} className="w-4/5 bg-primary py-4 rounded-full items-center shadow-lg flex-row
         justify-center">
           <Ionicons name="bag-outline" size={20} color="white"/>
-          <Text className="text-white font-bold text-base ml-2">Add to Cart</Text>
+          <Text className="text-white font-bold text-base ml-2">{t("addToCart")}</Text>
         </TouchableOpacity>
          <TouchableOpacity onPress={()=> router.push("/(tabs)/cart")} className="w-1/5 py-3 flex-row relative justify-center">
           <Ionicons name="cart-outline" size={24} />

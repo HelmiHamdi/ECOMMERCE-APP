@@ -11,7 +11,10 @@ import OrderRouter from "./routers/orderRoute.js";
 import AddressRouter from "./routers/addressRoute.js";
 import AdminRouter from "./routers/adminRoute.js";
 import { seedProducts } from "./scripts/seedProducts.js";
-
+import UserRouter from "./routers/userRoute.js";
+import WishlistRouter from "./routers/wishlistRoute.js";
+import RatingRouter from "./routers/ratingRoute.js";
+import ChatRouter from "./routers/chatRoute.js";
 
 const app = express();
 
@@ -36,7 +39,10 @@ app.use("/api/cart",CartRouter)
 app.use("/api/orders",OrderRouter)
 app.use("/api/addresses",AddressRouter)
 app.use("/api/admin",AdminRouter)
-
+app.use("/api/users",UserRouter)
+app.use("/api/wishlist", WishlistRouter);
+app.use("/api/chat", ChatRouter);
+app.use("/api/ratings", RatingRouter);
 await makeAdmin();
  //Seed dummy products if no products are present
 

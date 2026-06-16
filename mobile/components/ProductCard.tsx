@@ -5,9 +5,11 @@ import { ProductCardProps } from "@/constants/types";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants";
 import { useWishlist } from "@/context/WishlistContext";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function ProductCard({ product }: ProductCardProps) {
   const {toggleWishlist,isInWishlist} = useWishlist();
+  const { t } = useLanguage();
   const isLiked = isInWishlist(product._id); // This should come from your state or props
 
   return (
@@ -36,7 +38,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.isFeatured && (
             <View className="absolute top-2 left-2 px-2 py-1 bg-black rounded">
               <Text className="text-white text-xs font-bold uppercase">
-                Featured
+                {t("featured")}
               </Text>
             </View>
           )}

@@ -12,11 +12,13 @@ import { ScrollView } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Checkout() {
   const {getToken} = useAuth();
   const { cartTotal , clearCart } = useCart();
   const router = useRouter();
+  const { t } = useLanguage();
 
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
@@ -27,6 +29,15 @@ export default function Checkout() {
   const shipping = 2.0;
   const tax = 0;
   const total = cartTotal + shipping + tax;
+
+  const getAddressTypeLabel = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case "home": return t("addressTypeHome");
+      case "work": return t("addressTypeWork");
+      case "other": return t("addressTypeOther");
+      default: return type;
+    }
+  };
 
   const fetchAddress = async () => {
        try {
@@ -43,8 +54,8 @@ export default function Checkout() {
       console.error("Error fetching checkout data: ",error)
       Toast.show({
         type: "error",
-        text1: "Error",
-        text2:  "Failed to load chackout information",
+        text1: t("error"),
+        text2: t("failedToLoadCheckoutInfo"),
       });
     } finally {
       setPageLoading(false);
@@ -55,16 +66,16 @@ export default function Checkout() {
     if (!selectedAddress) {
       Toast.show({
         type: "error",
-        text1: "Error",
-        text2: "Please add a shipping address",
+        text1: t("error"),
+        text2: t("pleaseAddShippingAddress"),
       });
       return;
     }
     if (paymentMethod === "stripe")
       return Toast.show({
         type: "error",
-        text1: "Info",
-        text2: "Stripe not implemented yet",
+        text1: t("info"),
+        text2: t("stripeNotImplemented"),
       });
    setLoading(true);
    try {
@@ -83,8 +94,8 @@ export default function Checkout() {
        await clearCart()
        Toast.show({
         type: "success",
-        text1: "Order Placed",
-        text2: "Your order has been placed successfully!",
+        text1: t("orderPlaced"),
+        text2: t("orderPlacedSuccess"),
       });
       router.replace("/orders")
      }
@@ -92,8 +103,8 @@ export default function Checkout() {
     console.log(error);
     Toast.show({
         type: "error",
-        text1: "Failed to place order",
-        text2: error.response?.data?.message || "Something went wrong",
+        text1: t("failedToPlaceOrder"),
+        text2: error.response?.data?.message || t("somethingWentWrong"),
       });
    }finally{
     setLoading(false)
@@ -112,19 +123,19 @@ export default function Checkout() {
   }
   return (
     <SafeAreaView className="flex-1 bg-surface" edges={["top"]}>
-      <Header title="Checkout" showBack />
+      <Header title={t("checkout")} showBack />
       <ScrollView className="flex-1 px-4 mt-4">
         <Text className="text-lg font-bold text-primary mb-4">
-          Shipping Address
+          {t("shippingAddressTitle")}
         </Text>
         {selectedAddress ? (
           <View className="bg-white p-4 rounded-xl mb-6 shadow-sm">
             <View className="flex-row items-center justify-between mb-2">
               <Text className="text-base font-bold">
-                {selectedAddress.type}
+                {getAddressTypeLabel(selectedAddress.type)}
               </Text>
               <TouchableOpacity onPress={() => router.push("/addresses")}>
-                <Text className="text-accent text-sm">Change</Text>
+                <Text className="text-accent text-sm">{t("change")}</Text>
               </TouchableOpacity>
             </View>
             <Text className="text-secondary leading-5">
@@ -141,12 +152,12 @@ export default function Checkout() {
             className="bg-white p-6 rounded-xl mb-6 items-center
          justify-center border-dashed border-2 border-gray-100"
           >
-            <Text className="text-primary font-bold">Add Address</Text>
+            <Text className="text-primary font-bold">{t("addAddress")}</Text>
           </TouchableOpacity>
         )}
         {/* Payment section */}
         <Text className="text-lg font-bold text-primary mb-4">
-          Payment Method
+          {t("paymentMethod")}
         </Text>
         {/* Cash on Delivery Option */}
         <TouchableOpacity
@@ -162,10 +173,10 @@ export default function Checkout() {
           />
           <View className="ml-3 flex-1">
             <Text className="text-base font-bold text-primary">
-              Cash on Delivery
+              {t("paymentMethodCod")}
             </Text>
             <Text className="text-secondary text-xs mt-1">
-              Pay when you receive the order
+              {t("payWhenReceive")}
             </Text>
           </View>
           {paymentMethod === "cash" && (
@@ -190,10 +201,10 @@ export default function Checkout() {
           />
           <View className="ml-3 flex-1">
             <Text className="text-base font-bold text-primary">
-              Pay with Card
+              {t("payWithCard")}
             </Text>
             <Text className="text-secondary text-xs mt-1">
-              Credit or Debit Card
+              {t("creditOrDebitCard")}
             </Text>
           </View>
           {paymentMethod === "stripe" && (
@@ -207,27 +218,27 @@ export default function Checkout() {
       </ScrollView>
 {/* Order summary */}
 <View className="p-4 pb-14 bg-white shadow-lg border-t border-gray-100">
- <Text className="text-lg font-bold text-primary mb-4">Order Summary</Text>
+ <Text className="text-lg font-bold text-primary mb-4">{t("orderSummary")}</Text>
  {/* Subtotal */}
  <View className="flex-row justify-between mb-2">
-    <Text className="text-secondary">Subtotal</Text>
+    <Text className="text-secondary">{t("subtotal")}</Text>
     <Text className="font-bold">${cartTotal.toFixed(2)}</Text>
  </View>
  {/* Shipping */}
  <View className="flex-row justify-between mb-2">
-    <Text className="text-secondary">Shipping</Text>
+    <Text className="text-secondary">{t("shippingLabel")}</Text>
     <Text className="font-bold">${shipping.toFixed(2)}</Text>
 
  </View>
   {/* Tax */}
  <View className="flex-row justify-between mb-4">
-    <Text className="text-secondary">Tax</Text>
+    <Text className="text-secondary">{t("tax")}</Text>
     <Text className="font-bold">${tax.toFixed(2)}</Text>
 
  </View>
   {/* Total */}
  <View className="flex-row justify-between mb-6">
-    <Text className="text-primary text-xl font-bold">Total</Text>
+    <Text className="text-primary text-xl font-bold">{t("total")}</Text>
     <Text className="text-primary text-xl font-bold">${total.toFixed(2)}</Text>
 
  </View>
@@ -235,7 +246,7 @@ export default function Checkout() {
  <TouchableOpacity className={`p-4 rounded-xl items-center ${loading ? 'bg-gray-400' : 'bg-primary'}`}
  onPress={handlePlaceOrder} disabled={loading}>
     {loading ? <ActivityIndicator color="white"/> :
-    <Text className="text-white font-bold text-lg">Place Order</Text>}
+    <Text className="text-white font-bold text-lg">{t("placeOrder")}</Text>}
  </TouchableOpacity>
 </View>
 

@@ -10,6 +10,7 @@ import {
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import Toast from "react-native-toast-message";
+import { useLanguage } from "@/context/LanguageContext";
 
 export type CartItem = {
   id: string;
@@ -34,12 +35,16 @@ type CartContextType = {
   itemCount: number;
   isloading: boolean;
 };
+
 const CartContext = createContext<CartContextType | undefined>(undefined);
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const { getToken, isSignedIn } = useAuth();
+  const { t } = useLanguage();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isloading, setIsLoading] = useState(false);
   const [cartTotal, setCartTotal] = useState(0);
+
   const fetchCart = async () => {
     try {
       setIsLoading(true);
@@ -68,10 +73,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     }
   };
+
   const addToCart = async (product: Product, size: string) => {
     if (!isSignedIn) {
       return Toast.show({
-        text1: "Please login to add to cart",
+        text1: t("loginToAddToCart"),
         type: "error",
       });
     }
@@ -97,16 +103,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Failed to add to cart:", error);
       Toast.show({
-        text1: "Failed to add to cart",
+        text1: t("failedToAddToCart"),
         type: "error",
       });
     } finally {
       setIsLoading(false);
     }
   };
+
   const removeFromCart = async (productId: string, size: string) => {
     if (!isSignedIn) return;
-
     try {
       setIsLoading(true);
       const token = await getToken();
@@ -179,6 +185,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+
   useEffect(() => {
     if (isSignedIn) {
       fetchCart();
