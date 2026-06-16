@@ -12,6 +12,7 @@ const productSchema = new Schema<IProduct>(
       type: String,
       enum: ["men", "women", "kids", "shoes", "bag", "other"], // ← minuscules
       required: true,
+      set: (v: string) => v?.toLowerCase(),
     },
     stock: { type: Number, required: true, default: 0, min: 0 },
     isFeatured: { type: Boolean, defult: true },
