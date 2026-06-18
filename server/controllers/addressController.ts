@@ -40,10 +40,10 @@ export const updateAddresses = async (req: Request, res: Response) => {
   try {
     const { type, street, city, state, zipCode, country, isDefault } = req.body;
 
-    // Vérifie ownership directement dans la query MongoDB
+    
     const existing = await Address.findOne({
       _id: req.params.id,
-      user: req.user._id, // ← ownership vérifié en DB, pas en JS
+      user: req.user._id, 
     });
 
     if (!existing) {

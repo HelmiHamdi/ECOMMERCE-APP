@@ -108,7 +108,7 @@ export const createOrder = async (req: Request, res: Response) => {
         items: orderItems,
         shippingAddress,
         paymentMethod: paymentMethod || "cash",
-        // ✅ Si Stripe et paiement confirmé → "paid" directement
+      
         paymentStatus: paymentMethod === "stripe" ? "paid" : "pending",
         orderStatus: paymentMethod === "stripe" ? "processing" : "placed",
         subtotal,
