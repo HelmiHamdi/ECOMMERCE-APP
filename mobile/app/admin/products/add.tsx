@@ -43,12 +43,12 @@ export default function AddProduct() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"] as any,
       allowsMultipleSelection: true,
-      selectionLimit: 5,
+      selectionLimit: 10,
       quality: 0.8,
     });
     if (!result.canceled) {
       const uris = result.assets.map((asset) => asset.uri);
-      setImages(uris.slice(0, 5));
+      setImages(uris.slice(0, 10));
     }
   };
 
@@ -217,7 +217,7 @@ export default function AddProduct() {
           />
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            {t("productImagesMax5")}
+            {t("productImagesMax10")}
           </Text>
           <TouchableOpacity onPress={pickImages} className="mb-4">
             {images.length > 0 ? (

@@ -3,7 +3,6 @@ import Product from "../models/Products.js";
 import Order from "../models/Order.js";
 import { OPENROUTER_API_KEY, OPENROUTER_URL, CHAT_MODEL } from "../config/openrouter.js";
 
-// ⚠️ À ADAPTER selon les vraies politiques de la boutique
 const SHIPPING_COST = "2 TND";
 const SHIPPING_DELAY = "2 à 5 jours ouvrables";
 const SHIPPING_ZONES = "Toute la Tunisie";
@@ -20,7 +19,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   other: "Autres",
 };
 
-// Cache simple en mémoire (rafraîchi toutes les 10 min)
 let shopContextCache: { data: string; expiresAt: number } | null = null;
 
 const buildShopContext = async (): Promise<string> => {
@@ -28,42 +26,47 @@ const buildShopContext = async (): Promise<string> => {
     return shopContextCache.data;
   }
 
-  const totalProducts = await Product.countDocuments({ isActive: true });
-
-  // Stats par catégorie : nombre de produits, prix min/max, tailles dispo
-  const categoryStats = await Product.aggregate([
-    { $match: { isActive: true } },
-    {
-      $group: {
-        _id: "$category",
-        count: { $sum: 1 },
-        minPrice: { $min: "$price" },
-        maxPrice: { $max: "$price" },
-        sizes: { $addToSet: "$sizes" },
-        inStock: { $sum: { $cond: [{ $gt: ["$stock", 0] }, 1, 0] } },
+  // 6 requêtes en parallèle au lieu de séquentielles
+  const [
+    totalProducts,
+    categoryStats,
+    priceStats,
+    allSizes,
+    outOfStockCount,
+    featuredProducts,
+  ] = await Promise.all([
+    Product.countDocuments({ isActive: true }),
+    Product.aggregate([
+      { $match: { isActive: true } },
+      {
+        $group: {
+          _id: "$category",
+          count: { $sum: 1 },
+          minPrice: { $min: "$price" },
+          maxPrice: { $max: "$price" },
+          sizes: { $addToSet: "$sizes" },
+          inStock: { $sum: { $cond: [{ $gt: ["$stock", 0] }, 1, 0] } },
+        },
       },
-    },
-  ]);
-
-  const priceStats = await Product.aggregate([
-    { $match: { isActive: true } },
-    {
-      $group: {
-        _id: null,
-        minPrice: { $min: "$price" },
-        maxPrice: { $max: "$price" },
-        avgPrice: { $avg: "$price" },
+    ]),
+    Product.aggregate([
+      { $match: { isActive: true } },
+      {
+        $group: {
+          _id: null,
+          minPrice: { $min: "$price" },
+          maxPrice: { $max: "$price" },
+          avgPrice: { $avg: "$price" },
+        },
       },
-    },
+    ]),
+    Product.distinct("sizes", { isActive: true }),
+    Product.countDocuments({ isActive: true, stock: 0 }),
+    Product.find({ isActive: true, isFeatured: true })
+      .limit(6)
+      .select("name price category sizes stock")
+      .lean(),
   ]);
-
-  const allSizes = await Product.distinct("sizes", { isActive: true });
-
-  const outOfStockCount = await Product.countDocuments({ isActive: true, stock: 0 });
-
-  const featuredProducts = await Product.find({ isActive: true, isFeatured: true })
-    .limit(6)
-    .select("name price category sizes stock");
 
   const stats = priceStats[0] || { minPrice: 0, maxPrice: 0, avgPrice: 0 };
 
@@ -79,7 +82,7 @@ const buildShopContext = async (): Promise<string> => {
 
   const featuredLines = featuredProducts
     .map(
-      (p) =>
+      (p: any) =>
         `  - ${p.name} (${CATEGORY_LABELS[p.category] || p.category}) - ${p.price} TND - tailles: ${
           (p.sizes || []).join(", ") || "N/A"
         } - ${p.stock > 0 ? `${p.stock} en stock` : "rupture de stock"}`
@@ -155,7 +158,8 @@ const searchProducts = async (query: string) => {
     ],
   })
     .limit(8)
-    .select("name price category sizes stock description");
+    .select("name price category sizes stock description")
+    .lean();
 
   if (products.length === 0) {
     return "Aucun produit trouvé pour cette recherche.";
@@ -163,12 +167,31 @@ const searchProducts = async (query: string) => {
 
   return products
     .map(
-      (p) =>
+      (p: any) =>
         `- ${p.name} | Catégorie: ${CATEGORY_LABELS[p.category] || p.category} | Prix: ${p.price} TND | Tailles: ${
           (p.sizes || []).join(", ") || "N/A"
         } | Stock: ${p.stock > 0 ? `${p.stock} disponible(s)` : "Rupture de stock"}`
     )
     .join("\n");
+};
+
+const fetchOpenRouter = async (body: object): Promise<any> => {
+  const response = await fetch(OPENROUTER_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error("OpenRouter error:", errText);
+    throw new Error("Chat service unavailable");
+  }
+
+  return response.json();
 };
 
 export const sendChatMessage = async (req: Request, res: Response) => {
@@ -179,23 +202,26 @@ export const sendChatMessage = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: "Message is required" });
     }
 
-    const shopContext = await buildShopContext();
+    // shopContext + recentOrders en parallèle
+    const [shopContext, recentOrders] = await Promise.all([
+      buildShopContext(),
+      req.user
+        ? Order.find({ user: req.user._id })
+            .sort("-createdAt")
+            .limit(3)
+            .select("orderNumber orderStatus totalAmount createdAt")
+            .lean()
+        : Promise.resolve([]),
+    ]);
 
     let userContext = "";
-    if (req.user) {
-      const recentOrders = await Order.find({ user: req.user._id })
-        .sort("-createdAt")
-        .limit(3)
-        .select("orderNumber orderStatus totalAmount createdAt");
-
-      if (recentOrders.length > 0) {
-        userContext = `\n\n=== COMMANDES RÉCENTES DU CLIENT ===\n${recentOrders
-          .map(
-            (o) =>
-              `- ${o.orderNumber}: statut "${o.orderStatus}", total ${o.totalAmount} TND`
-          )
-          .join("\n")}`;
-      }
+    if (recentOrders.length > 0) {
+      userContext = `\n\n=== COMMANDES RÉCENTES DU CLIENT ===\n${(recentOrders as any[])
+        .map(
+          (o) =>
+            `- ${o.orderNumber}: statut "${o.orderStatus}", total ${o.totalAmount} TND`
+        )
+        .join("\n")}`;
     }
 
     const systemContent = `${SHOP_SYSTEM_PROMPT_BASE}\n\n${shopContext}${userContext}`;
@@ -206,29 +232,16 @@ export const sendChatMessage = async (req: Request, res: Response) => {
       { role: "user", content: message },
     ];
 
-    let response = await fetch(OPENROUTER_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: CHAT_MODEL,
-        messages,
-        tools: [PRODUCT_SEARCH_TOOL],
-        max_tokens: 600,
-      }),
+    let data = await fetchOpenRouter({
+      model: CHAT_MODEL,
+      messages,
+      tools: [PRODUCT_SEARCH_TOOL],
+      max_tokens: 600,
     });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("OpenRouter error:", errText);
-      return res.status(502).json({ success: false, message: "Chat service unavailable" });
-    }
-
-    let data: any = await response.json();
     let choice = data?.choices?.[0];
 
+    // Tool call : recherche produit demandée par le modèle
     if (choice?.message?.tool_calls?.length > 0) {
       const toolCall = choice.message.tool_calls[0];
       const args = JSON.parse(toolCall.function.arguments || "{}");
@@ -241,35 +254,23 @@ export const sendChatMessage = async (req: Request, res: Response) => {
         content: searchResult,
       });
 
-      response = await fetch(OPENROUTER_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: CHAT_MODEL,
-          messages,
-          max_tokens: 600,
-        }),
+      data = await fetchOpenRouter({
+        model: CHAT_MODEL,
+        messages,
+        max_tokens: 600,
       });
 
-      if (!response.ok) {
-        const errText = await response.text();
-        console.error("OpenRouter error (2nd call):", errText);
-        return res.status(502).json({ success: false, message: "Chat service unavailable" });
-      }
-
-      data = await response.json();
       choice = data?.choices?.[0];
     }
 
     const reply = choice?.message?.content ?? "";
-
     res.json({ success: true, reply });
   } catch (error: any) {
     console.error("CHAT ERROR:", error);
-    res.status(500).json({ success: false, message: error.message });
+    const isServiceError = error.message === "Chat service unavailable";
+    res
+      .status(isServiceError ? 502 : 500)
+      .json({ success: false, message: error.message });
   }
 };
 
@@ -281,7 +282,8 @@ export const searchProductsForChat = async (req: Request, res: Response) => {
       name: { $regex: query as string, $options: "i" },
     })
       .limit(5)
-      .select("name price images sizes stock");
+      .select("name price images sizes stock")
+      .lean();
 
     res.json({ success: true, data: products });
   } catch (error: any) {

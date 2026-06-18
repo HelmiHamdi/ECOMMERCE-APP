@@ -1,11 +1,13 @@
 import { Request, Response } from "express";
-import User from "../models/User.js";
 import Product from "../models/Products.js";
+import User from "../models/User.js";
+import { invalidateCache } from "../middleware/cache.js";
 
-// GET /api/wishlist — récupérer la wishlist de l'utilisateur connecté
 export const getWishlist = async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.user._id).populate("wishlist");
+    const user = await User.findById(req.user._id)
+      .populate("wishlist")
+      .lean();
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
@@ -15,63 +17,56 @@ export const getWishlist = async (req: Request, res: Response) => {
   }
 };
 
-// POST /api/wishlist/:productId — ajouter ou retirer (toggle)
 export const toggleWishlist = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
 
-    const product = await Product.findById(productId);
+    // Vérifie produit + user en parallèle
+    const [product, user] = await Promise.all([
+      Product.exists({ _id: productId }), // exists() plus léger que findById
+      User.findById(req.user._id).select("wishlist"),
+    ]);
+
     if (!product) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
-
-    const user = await User.findById(req.user._id);
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-   const index = user.wishlist.findIndex(
-  (id) => id.toString() === productId
-);
-    let added: boolean;
+    const isInWishlist = user.wishlist.some((id) => id.toString() === productId);
 
-    if (index === -1) {
-      // Pas encore dans la wishlist → on ajoute
-      user.wishlist.push(productId as any);
-      added = true;
-    } else {
-      // Déjà présent → on retire
-      user.wishlist.splice(index, 1);
-      added = false;
-    }
+    // $pull ou $addToSet directement en DB, pas de find + save
+    await User.findByIdAndUpdate(
+      req.user._id,
+      isInWishlist
+        ? { $pull: { wishlist: productId } }
+        : { $addToSet: { wishlist: productId } }
+    );
 
-    await user.save();
-
+    invalidateCache("wishlist");
     res.json({
       success: true,
-      added,
-      message: added ? "Added to wishlist" : "Removed from wishlist",
+      added: !isInWishlist,
+      message: !isInWishlist ? "Added to wishlist" : "Removed from wishlist",
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// DELETE /api/wishlist/:productId — retirer explicitement
 export const removeFromWishlist = async (req: Request, res: Response) => {
   try {
-    const { productId } = req.params;
-
     const user = await User.findByIdAndUpdate(
       req.user._id,
-      { $pull: { wishlist: productId } },
+      { $pull: { wishlist: req.params.productId } },
       { new: true }
-    ).populate("wishlist");
+    ).populate("wishlist").lean();
 
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
-
+    invalidateCache("wishlist");
     res.json({ success: true, data: user.wishlist });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });

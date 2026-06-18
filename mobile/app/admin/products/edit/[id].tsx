@@ -96,7 +96,7 @@ export default function EditProduct() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
-      selectionLimit: 5 - (existingImages.length + newImages.length),
+      selectionLimit: 10 - (existingImages.length + newImages.length),
       quality: 0.8,
     });
     if (!result.canceled) {
@@ -317,7 +317,7 @@ export default function EditProduct() {
                   </TouchableOpacity>
                 </View>
               ))}
-              {existingImages.length + newImages.length < 5 && (
+              {existingImages.length + newImages.length < 10 && (
                 <TouchableOpacity
                   onPress={pickImages}
                   className="w-24 h-24 rounded-lg bg-gray-100 justify-center items-center border border-dashed border-gray-300"

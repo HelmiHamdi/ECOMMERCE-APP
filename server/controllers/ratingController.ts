@@ -66,17 +66,21 @@ export const deleteMyRating = async (req: Request, res: Response) => {
 // GET /api/ratings — admin: voir tous les ratings
 export const getAllRatings = async (req: Request, res: Response) => {
   try {
-    const ratings = await Rating.find().sort({ createdAt: -1 });
-    const avg =
-      ratings.length > 0
-        ? ratings.reduce((sum, r) => sum + r.stars, 0) / ratings.length
-        : 0;
+    // aggregate plus efficace que find + reduce JS
+    const [ratings, statsResult] = await Promise.all([
+      Rating.find().sort({ createdAt: -1 }).lean(),
+      Rating.aggregate([
+        { $group: { _id: null, avg: { $avg: "$stars" }, total: { $sum: 1 } } },
+      ]),
+    ]);
+
+    const stats = statsResult[0] || { avg: 0, total: 0 };
 
     res.json({
       success: true,
       data: ratings,
-      average: parseFloat(avg.toFixed(2)),
-      total: ratings.length,
+      average: parseFloat(stats.avg.toFixed(2)),
+      total: stats.total,
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });

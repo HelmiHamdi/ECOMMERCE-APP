@@ -45,6 +45,13 @@
           }
         }
       ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.helmihamdi.mobile",
+          "enableGooglePay": false
+        }
+      ],
       "@clerk/expo",
       "expo-secure-store",
       "expo-localization"
