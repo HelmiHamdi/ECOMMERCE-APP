@@ -16,6 +16,9 @@ import WishlistRouter from "./routers/wishlistRoute.js";
 import RatingRouter from "./routers/ratingRoute.js";
 import ChatRouter from "./routers/chatRoute.js";
 
+import { cacheMiddleware } from "./middleware/cache.js";
+import compression from "compression";
+import PaymentRouter from "./routers/paymentRoute.js";
 const app = express();
 
 await connectDB();
@@ -23,9 +26,10 @@ await connectDB();
 app.post('/api/clerk', express.raw({type: "application/json"}), clerkWebhook)
 // Middleware
 app.use(cors())
+app.use(compression());
 app.use(express.json());
 app.use(clerkMiddleware());
-
+app.use(cacheMiddleware); 
 
 
 const port = process.env.PORT || 3000;
@@ -43,6 +47,7 @@ app.use("/api/users",UserRouter)
 app.use("/api/wishlist", WishlistRouter);
 app.use("/api/chat", ChatRouter);
 app.use("/api/ratings", RatingRouter);
+app.use("/api/payments", PaymentRouter);
 await makeAdmin();
  //Seed dummy products if no products are present
 

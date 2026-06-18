@@ -27,7 +27,7 @@
 
   "changePasswordSubtitle": "Your new password must be at least 8 characters long.",
   "currentPassword": "Current Password",
-  
+
   "rateTitle": "Enjoying the app?",
   "rateSubtitle": "Your feedback helps us improve. Let us know what you think!",
   "rateTapToRate": "Tap to rate",
@@ -331,7 +331,7 @@
   "termsSection4Body": "You agree not to misuse the application, attempt unauthorized access to other accounts, upload harmful content, or use the service for any illegal or fraudulent purpose.",
   "termsSection5Title": "5. Changes to These Terms",
   "termsSection5Body": "We may update these Terms of Service from time to time. Continued use of the application after changes are made constitutes your acceptance of the revised terms.",
-   "chatBotName": "Ines Shop Assistant",
+  "chatBotName": "Ines Shop Assistant",
   "chatBotOnline": "Online",
   "chatWelcome": "Hi! I'm the Ines Shop assistant. How can I help you today?",
   "chatPlaceholder": "Type your message...",
@@ -341,14 +341,18 @@
   "rateUsSubtitle": "Your feedback helps us improve. Share your experience with Ines Shop.",
   "yourRating": "Your Rating",
   "yourComment": "Your Comment",
+  "failedToLoadCheckoutInfo": "Failed to load checkout information",
+  "payNow": "Pay Now",
+  "paymentStatusPaid": "Paid",
+  "paymentMethodCard": "Bank Card",
   "reviewPlaceholder": "Tell us what you think...",
   "selectRating": "Please select a star rating",
   "reviewSubmitted": "Thank you for your feedback!",
   "submitReview": "Submit Review",
   "updateReview": "Update Review",
-    "deleteReview": "Delete Review",
+  "deleteReview": "Delete Review",
+  "productImagesMax10": "Product Images (max 10)",
   "deleteReviewTitle": "Delete Review",
   "deleteReviewConfirm": "Are you sure you want to delete your review? This action cannot be undone.",
   "reviewDeleted": "Your review has been deleted"
- 
 }

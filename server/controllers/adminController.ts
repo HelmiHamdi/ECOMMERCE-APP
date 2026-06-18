@@ -2,25 +2,38 @@ import { Request, Response } from "express";
 import User from "../models/User.js";
 import Product from "../models/Products.js";
 import Order from "../models/Order.js";
-
-
+import { invalidateCache } from "../middleware/cache.js";
 
 export const getDashboardStats = async (req: Request, res: Response) => {
   try {
-     const totalUsers = await User.countDocuments()
-     const totalProducts = await Product.countDocuments()
-     const totalOrders = await Order.countDocuments()
+    // Une seule requête MongoDB au lieu de 4
+    const [totalUsers, totalProducts, totalOrders, revenueResult, recentOrders] = 
+      await Promise.all([
+        User.countDocuments(),
+        Product.countDocuments(),
+        Order.countDocuments(),
+        // Calcul du revenu DANS MongoDB, pas en JS
+        Order.aggregate([
+          { $match: { orderStatus: { $ne: "cancelled" } } },
+          { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+        ]),
+        Order.find()
+          .sort("-createdAt")
+          .limit(5)
+          .populate("user", "name email")
+          .lean(),
+      ]);
 
-     const validOrders = await Order.find({orderStatus: {$ne: 'cancelled'}});
-     const totalRevenue = validOrders.reduce((sum, order)=> sum + order.totalAmount,0)
-
-     const recentOrders = await Order.find().sort("-createdAt").limit(5).populate("user","name email");
-     res.json({
-        success: true,
-        data:{
-            totalUsers, totalProducts,totalOrders,totalRevenue,recentOrders
-        }
-     })
+    res.json({
+      success: true,
+      data: {
+        totalUsers,
+        totalProducts,
+        totalOrders,
+        totalRevenue: revenueResult[0]?.total || 0,
+        recentOrders,
+      },
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

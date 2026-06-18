@@ -348,6 +348,9 @@
   "updateReview": "Modifier l'avis",
     "deleteReview": "Supprimer l'avis",
   "deleteReviewTitle": "Supprimer l'avis",
+    "failedToLoadCheckoutInfo": "Failed to load checkout information",
+     "payNow": "Pay Now",
   "deleteReviewConfirm": "Êtes-vous sûr de vouloir supprimer votre avis ? Cette action est irréversible.",
-  "reviewDeleted": "Votre avis a été supprimé"
+  "reviewDeleted": "Votre avis a été supprimé",
+  "productImagesMax10": "Product Images (max 10)"
 }

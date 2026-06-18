@@ -37,7 +37,7 @@ export default function ChatBot() {
   const listRef = useRef<FlatList>(null);
 
   // Animation values
-  const slideAnim = useRef(new Animated.Value(0)).current; // 0 = caché, 1 = visible
+  const slideAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   // Pulse continu sur la bulle flottante
@@ -141,7 +141,7 @@ export default function ChatBot() {
       <Animated.View
         style={{
           position: "absolute",
-          bottom: 90,
+          bottom: 200,
           right: 20,
           transform: [{ scale: pulseAnim }],
           zIndex: 50,
@@ -180,10 +180,11 @@ export default function ChatBot() {
             transform: [{ translateY }],
           }}
         >
+          {/* ✅ FIX 1: behavior="height" على Android + style={{ flex: 1 }} بدل className flex-1 */}
           <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-            className="bg-white rounded-t-3xl flex-1"
-            style={{ elevation: 10 }}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            className="bg-white rounded-t-3xl"
+            style={{ flex: 1, elevation: 10 }}
           >
             {/* Drag handle */}
             <View className="items-center pt-3 pb-1">
@@ -240,8 +241,11 @@ export default function ChatBot() {
               </View>
             )}
 
-            {/* Input */}
-            <View className="flex-row items-center px-4 py-3 border-t border-gray-100">
+            {/* ✅ FIX 2: paddingBottom على Android لضمان ما يتخبّاش الـ input */}
+            <View
+              className="flex-row items-center px-4 py-3 border-t border-gray-100"
+              style={{ paddingBottom: Platform.OS === "android" ? 12 : 0 }}
+            >
               <TextInput
                 className="flex-1 bg-surface rounded-full px-4 py-3 text-primary mr-2"
                 placeholder={t("chatPlaceholder")}

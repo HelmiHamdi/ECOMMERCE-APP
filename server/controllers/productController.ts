@@ -3,6 +3,7 @@ import Product from "../models/Products.js";
 import cloudinary from "../config/cloudinary.js";
 import { UploadStream } from "cloudinary";
 import { sendNewProductNotification } from "../utils/sendNotification.js";
+import { invalidateCache } from "../middleware/cache.js";
 
 export const getProducts = async (req: Request, res: Response) => {
   try {
@@ -100,6 +101,7 @@ export const createProduct = async (req: Request, res: Response) => {
         .json({ success: false, message: "Please upload at least one image" });
     }
     const product = await Product.create(productData);
+    invalidateCache("products");
     await sendNewProductNotification(product.name, product._id.toString());
     res.status(201).json({ success: true, data: product });
   } catch (error: any) {
@@ -171,6 +173,7 @@ export const updateProduct = async (req: Request, res: Response) => {
         .status(404)
         .json({ success: false, message: "Product not found" });
     }
+    invalidateCache("products");
     res.json({ success: true, data: product });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
@@ -195,6 +198,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
        await Promise.all(deletePromises)
     }
     await Product.findByIdAndDelete(req.params.id)
+    invalidateCache("products");
     res.json({success: true, message: "Product deleted"})
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
