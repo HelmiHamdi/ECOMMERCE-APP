@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Image, ScrollView, Text, View, ActivityIndicator } from "react-native";
+import { Image, ScrollView, Text, View, ActivityIndicator, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/Header";
 import { COLORS } from "@/constants";
@@ -10,11 +10,14 @@ import type { Order, Product } from "@/constants/types";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
+import { downloadInvoice } from "../utils/downloadInvoice";
+
 
 export default function OrderDetails() {
     const { id } = useLocalSearchParams();
     const [order, setOrder] = useState<Order | null>(null);
     const [loading, setLoading] = useState(true);
+    const [downloadingInvoice, setDownloadingInvoice] = useState(false);
     const {getToken} = useAuth()
     const { t } = useLanguage();
 
@@ -33,6 +36,16 @@ export default function OrderDetails() {
       setLoading(false);
     }
 };
+
+    const handleDownloadInvoice = async () => {
+        if (!order) return;
+        setDownloadingInvoice(true);
+        try {
+            await downloadInvoice(order._id, order.orderNumber, getToken);
+        } finally {
+            setDownloadingInvoice(false);
+        }
+    };
 
     useEffect(() => {
         fetchOrderDetails();
@@ -178,6 +191,24 @@ export default function OrderDetails() {
                         <Text className="text-primary font-bold text-lg">${order.totalAmount.toFixed(2)}</Text>
                     </View>
                 </View>
+
+                {/* Download Invoice Button */}
+                <TouchableOpacity
+                    onPress={handleDownloadInvoice}
+                    disabled={downloadingInvoice}
+                    className="flex-row items-center justify-center bg-primary py-3 rounded-xl mb-8"
+                >
+                    {downloadingInvoice ? (
+                        <ActivityIndicator size="small" color="white" />
+                    ) : (
+                        <>
+                            <Ionicons name="download-outline" size={18} color="white" />
+                            <Text className="text-white font-bold ml-2">
+                                {t("downloadInvoice") ?? "Télécharger la facture"}
+                            </Text>
+                        </>
+                    )}
+                </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>
     );

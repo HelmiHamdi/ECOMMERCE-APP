@@ -54,19 +54,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (data.success && data.data) {
-        const serverCart = data.data;
-        const mappedItems: CartItem[] = serverCart.items.map((item: any) => ({
-          id: item._id,
-          productId: item.product._id,
-          product: item.product,
-          quantity: item.quantity,
-          size: item?.size || "M",
-          price: item.price,
-        }));
-        setCartItems(mappedItems);
-        setCartTotal(serverCart.totalAmount);
-      }
+     if (data.success && data.data) {
+  const serverCart = data.data;
+  const mappedItems: CartItem[] = serverCart.items
+    .filter((item: any) => item.product != null) // ← ignore les produits supprimés
+    .map((item: any) => ({
+      id: item._id,
+      productId: item.product._id,
+      product: item.product,
+      quantity: item.quantity,
+      size: item?.size || "M",
+      price: item.price,
+    }));
+  setCartItems(mappedItems);
+  setCartTotal(serverCart.totalAmount);
+}
     } catch (error) {
       console.error("Failed to fetch cart:", error);
     } finally {

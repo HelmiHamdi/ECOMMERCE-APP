@@ -96,6 +96,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         projectId ? { projectId } : undefined
       );
       const expoPushToken = tokenData.data;
+      console.log("🔔 MON PUSH TOKEN:", expoPushToken); 
 
       const authToken = await getToken();
       await api.post(

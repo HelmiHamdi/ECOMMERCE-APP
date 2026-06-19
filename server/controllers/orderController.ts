@@ -4,7 +4,32 @@ import Cart from "../models/Cart.js";
 import Product from "../models/Products.js";
 import { invalidateCache } from "../middleware/cache.js";
 import stripe from "../config/stripe.js";
+import { generateInvoicePDF } from "../utils/generateInvoicePDF.js";
 
+
+export const getOrderInvoice = async (req: Request, res: Response) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate("items.product", "name")
+      .populate("user", "name email")
+      .lean();
+ 
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+ 
+    const isOwner = (order.user as any)?._id?.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === "admin";
+ 
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ success: false, message: "Not authorized" });
+    }
+ 
+    generateInvoicePDF(order as any, res);
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 export const getOrders = async (req: Request, res: Response) => {
   try {
     const orders = await Order.find({ user: req.user._id })

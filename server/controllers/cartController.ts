@@ -7,18 +7,47 @@ export const getCart = async (req: Request, res: Response) => {
   try {
     let cart = await Cart.findOne({ user: req.user._id })
       .populate("items.product", "name images price stock")
-      .lean(); // ← ajout
+      .lean();
 
     if (!cart) {
       const newCart = await Cart.create({ user: req.user._id, items: [] });
       return res.json({ success: true, data: newCart });
     }
+
+    // Filtre les items dont le produit a été supprimé (référence cassée)
+    const validItems = cart.items.filter((item: any) => item.product != null);
+
+    if (validItems.length !== cart.items.length) {
+      // Des produits orphelins détectés → on nettoie le panier en base
+      const orphanProductIds = cart.items
+        .filter((item: any) => item.product == null)
+        .map((item: any) => item.product); // sera déjà null, donc on doit comparer autrement
+
+      // On recharge le doc (non-lean) pour pouvoir le sauvegarder proprement
+      const cartDoc = await Cart.findOne({ user: req.user._id });
+      if (cartDoc) {
+        const validProductIdsSet = new Set(
+          validItems.map((item: any) => item.product._id.toString())
+        );
+        cartDoc.items = cartDoc.items.filter((item) =>
+          validProductIdsSet.has(item.product.toString())
+        );
+        cartDoc.calculateTotal();
+        await cartDoc.save();
+      }
+
+      cart.items = validItems;
+      cart.totalAmount = validItems.reduce(
+        (sum: number, item: any) => sum + item.price * item.quantity,
+        0
+      );
+    }
+
     res.json({ success: true, data: cart });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 export const addToCart = async (req: Request, res: Response) => {
   try {
     const { productId, quantity = 1, size } = req.body;
