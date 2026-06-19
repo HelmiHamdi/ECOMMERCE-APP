@@ -1,4 +1,11 @@
-import React, { createContext, useEffect, useRef } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import Constants from "expo-constants";
@@ -17,7 +24,18 @@ Notifications.setNotificationHandler({
   }),
 });
 
-const NotificationContext = createContext<{}>({});
+interface NotificationContextValue {
+  unreadCount: number;
+  refreshUnreadCount: () => Promise<void>;
+}
+
+const NotificationContext = createContext<NotificationContextValue>({
+  unreadCount: 0,
+  refreshUnreadCount: async () => {},
+});
+
+// Hook pratique pour consommer le compteur ailleurs (ex: badge dans Settings)
+export const useNotifications = () => useContext(NotificationContext);
 
 const isExpoGo = Constants.appOwnership === "expo";
 
@@ -27,6 +45,23 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const { getToken } = useAuth();
   const notificationListener = useRef<any>(null);
   const responseListener = useRef<any>(null);
+
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Récupère le compteur non-lu depuis le serveur (source de vérité = DB)
+  const refreshUnreadCount = useCallback(async () => {
+    if (!isSignedIn) return;
+    try {
+      const authToken = await getToken();
+      const res = await api.get("/notifications", {
+        params: { page: 1, limit: 1 }, // on a juste besoin du champ unreadCount
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      setUnreadCount(res.data.unreadCount ?? 0);
+    } catch (error) {
+      console.error("Erreur récupération compteur notifications:", error);
+    }
+  }, [isSignedIn, getToken]);
 
   const registerForPushNotifications = async () => {
     // Push notifications désactivées dans Expo Go (SDK 53+) — nécessite un dev build
@@ -76,10 +111,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (!isSignedIn) return;
     registerForPushNotifications();
+    refreshUnreadCount();
 
     notificationListener.current = Notifications.addNotificationReceivedListener(
       (notification) => {
         console.log("Notification reçue:", notification.request.content.title);
+        // Une notif arrive pendant que l'app est ouverte → on rafraîchit le badge
+        refreshUnreadCount();
       }
     );
 
@@ -92,6 +130,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             params: { id: String(productId) },
           });
         }
+        // L'utilisateur a tapé la notif → elle sera bientôt marquée lue, on resync
+        refreshUnreadCount();
       }
     );
 
@@ -101,5 +141,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     };
   }, [isSignedIn]);
 
-  return <NotificationContext.Provider value={{}}>{children}</NotificationContext.Provider>;
+  return (
+    <NotificationContext.Provider value={{ unreadCount, refreshUnreadCount }}>
+      {children}
+    </NotificationContext.Provider>
+  );
 }

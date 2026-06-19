@@ -98,3 +98,14 @@ export interface IWishlist extends Document {
   products: Types.ObjectId[];
   createdAt: Date;
 }
+
+export interface INotification extends Document {
+  user: Types.ObjectId;
+  title: string;
+  body: string;
+  type: "new_product" | "daily_reminder" | "order" | "general";
+  data?: Record<string, any>;
+  isRead: boolean;
+  createdAt?: Date;
+}
+ 

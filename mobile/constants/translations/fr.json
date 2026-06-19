@@ -352,5 +352,12 @@
      "payNow": "Pay Now",
   "deleteReviewConfirm": "Êtes-vous sûr de vouloir supprimer votre avis ? Cette action est irréversible.",
   "reviewDeleted": "Votre avis a été supprimé",
-  "productImagesMax10": "Product Images (max 10)"
+  "productImagesMax10": "Product Images (max 10)",
+    "unread": "non lue(s)",
+  "markAllRead": "Tout marquer comme lu",
+  "noNotifications": "Aucune notification pour le moment",
+  "notificationsPermissionDenied": "Permission refusée",
+  "notificationsPermissionDeniedHint": "Active les notifications dans les réglages du téléphone",
+  "notificationsEnabled": "Notifications activées",
+  "notificationsDisabled": "Notifications désactivées"
 }

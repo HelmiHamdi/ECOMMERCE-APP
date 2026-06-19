@@ -13,11 +13,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from "expo-notifications"; // ← AJOUT
 import Header from "@/components/Header";
 import { COLORS } from "@/constants";
 import { useLanguage, Language } from "@/context/LanguageContext";
 import Toast from "react-native-toast-message";
 import { useRouter } from "expo-router";
+import { useNotifications } from "@/context/NotificationContext";
+
 const LANGUAGES: { code: Language; nameKey: string; flag: string }[] = [
   { code: "en", nameKey: "english", flag: "🇬🇧" },
   { code: "fr", nameKey: "french", flag: "🇫🇷" },
@@ -27,8 +30,9 @@ const LANGUAGES: { code: Language; nameKey: string; flag: string }[] = [
 const CURRENCIES = ["USD", "EUR", "TND"];
 
 export default function Settings() {
-   const router = useRouter();
+  const router = useRouter();
   const { language, setLanguage, t, isRTL } = useLanguage();
+  const { unreadCount } = useNotifications();
 
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
@@ -50,8 +54,37 @@ export default function Settings() {
   }, []);
 
   const toggleNotifications = async (value: boolean) => {
+    if (value) {
+      // L'utilisateur active : on demande/vérifie la permission système
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      if (finalStatus !== "granted") {
+        // Permission refusée par le système : on ne peut pas l'activer réellement
+        Toast.show({
+          type: "error",
+          text1: t("notificationsPermissionDenied") ?? "Permission refusée",
+          text2:
+            t("notificationsPermissionDeniedHint") ??
+            "Active les notifications dans les réglages du téléphone",
+        });
+        return;
+      }
+    }
+
     setNotificationsEnabled(value);
     await AsyncStorage.setItem("notificationsEnabled", String(value));
+    Toast.show({
+      type: "success",
+      text1: value
+        ? t("notificationsEnabled") ?? "Notifications activées"
+        : t("notificationsDisabled") ?? "Notifications désactivées",
+    });
   };
 
   const toggleDarkMode = async (value: boolean) => {
@@ -139,12 +172,33 @@ export default function Settings() {
             <Ionicons name="chevron-forward" size={20} color={COLORS.secondary} />
           </TouchableOpacity>
 
-          {/* Notifications */}
+          {/* Notifications — icône cliquable vers l'historique + switch pour activer/désactiver */}
           <View className="flex-row items-center p-4 border-b border-gray-100">
-            <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
-              <Ionicons name="notifications-outline" size={20} color={COLORS.primary} />
-            </View>
-            <Text className="flex-1 text-primary font-medium">{t("notifications")}</Text>
+            <TouchableOpacity
+              className="flex-row items-center flex-1"
+              onPress={() => router.push("/notifications")}
+            >
+              <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
+                <Ionicons name="notifications-outline" size={20} color={COLORS.primary} />
+                {unreadCount > 0 && (
+                  <View
+                    className="absolute -top-1 -right-1 bg-red-500 rounded-full items-center justify-center"
+                    style={{ minWidth: 18, height: 18, paddingHorizontal: 4 }}
+                  >
+                    <Text className="text-white text-[10px] font-bold">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              <Text className="flex-1 text-primary font-medium">{t("notifications")}</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={COLORS.secondary}
+                style={{ marginRight: 8 }}
+              />
+            </TouchableOpacity>
             <Switch
               value={notificationsEnabled}
               onValueChange={toggleNotifications}

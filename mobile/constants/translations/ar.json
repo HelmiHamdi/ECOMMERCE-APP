@@ -353,5 +353,12 @@
   "failedToLoadCheckoutInfo": "فشل في تحميل معلومات الدفع",
 
   "paymentStatusPaid": "تم الدفع",
-  "paymentMethodCard": "بطاقة ائتمان أو خصم"
+  "paymentMethodCard": "بطاقة ائتمان أو خصم",
+  "unread": "غير مقروءة",
+  "markAllRead": "تحديد الكل كمقروء",
+  "noNotifications": "لا توجد إشعارات بعد",
+  "notificationsPermissionDenied": "تم رفض الإذن",
+  "notificationsPermissionDeniedHint": "فعّل الإشعارات من إعدادات هاتفك",
+  "notificationsEnabled": "تم تفعيل الإشعارات",
+  "notificationsDisabled": "تم إيقاف الإشعارات"
 }

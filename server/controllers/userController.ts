@@ -81,32 +81,35 @@ export const updateMyProfile = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 
-export const savePushToken = async (
-  expoPushToken: string,
-  title: string,
-  body: string,
-  data?: Record<string, any>
-) => {
-  if (!expoPushToken) return;
-
+// POST /api/users/push-token → enregistre/replace le token Expo de l'utilisateur connecté
+export const registerPushToken = async (req: Request, res: Response) => {
   try {
-    await fetch(EXPO_PUSH_URL, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        to: expoPushToken,
-        sound: "default",
-        title,
-        body,
-        data: data || {},
-      }),
-    });
-  } catch (error) {
-    console.error("Push notification error:", error);
+    const { userId } = await req.auth();
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Not authorized" });
+    }
+
+    const { expoPushToken } = req.body;
+    if (!expoPushToken) {
+      return res
+        .status(400)
+        .json({ success: false, message: "expoPushToken is required" });
+    }
+
+    const user = await User.findOneAndUpdate(
+      { clerkId: userId },
+      { expoPushToken },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.json({ success: true, message: "Push token saved" });
+  } catch (error: any) {
+    console.error("REGISTER PUSH TOKEN ERROR:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };

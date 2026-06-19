@@ -354,5 +354,12 @@
   "productImagesMax10": "Product Images (max 10)",
   "deleteReviewTitle": "Delete Review",
   "deleteReviewConfirm": "Are you sure you want to delete your review? This action cannot be undone.",
-  "reviewDeleted": "Your review has been deleted"
+  "reviewDeleted": "Your review has been deleted",
+  "unread": "unread",
+  "markAllRead": "Mark all as read",
+  "noNotifications": "No notifications yet",
+  "notificationsPermissionDenied": "Permission denied",
+  "notificationsPermissionDeniedHint": "Enable notifications in your phone settings",
+  "notificationsEnabled": "Notifications enabled",
+  "notificationsDisabled": "Notifications disabled"
 }

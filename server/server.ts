@@ -15,10 +15,13 @@ import UserRouter from "./routers/userRoute.js";
 import WishlistRouter from "./routers/wishlistRoute.js";
 import RatingRouter from "./routers/ratingRoute.js";
 import ChatRouter from "./routers/chatRoute.js";
+import NotificationRouter from "./routers/notificationRoute.js"; // ← AJOUT
 
 import { cacheMiddleware } from "./middleware/cache.js";
 import compression from "compression";
 import PaymentRouter from "./routers/paymentRoute.js";
+import { scheduleDailyReminder } from "./scripts/dailyReminder.js"; // ← AJOUT
+
 const app = express();
 
 await connectDB();
@@ -48,10 +51,14 @@ app.use("/api/wishlist", WishlistRouter);
 app.use("/api/chat", ChatRouter);
 app.use("/api/ratings", RatingRouter);
 app.use("/api/payments", PaymentRouter);
+app.use("/api/notifications", NotificationRouter); // ← AJOUT
 await makeAdmin();
  //Seed dummy products if no products are present
 
  //await seedProducts()
+
+scheduleDailyReminder(); // ← AJOUT : démarre le cron du rappel quotidien
+
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 });
