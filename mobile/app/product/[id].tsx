@@ -21,6 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
 
 const { width, height } = Dimensions.get("window");
 
@@ -28,6 +29,7 @@ export default function ProductDetail() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { t } = useLanguage();
+  const { formatPrice } = useCurrency(); // ← AJOUT
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const { addToCart, cartItems, itemCount } = useCart();
@@ -312,8 +314,9 @@ export default function ProductDetail() {
             </View>
           </View>
 
+          {/* ✅ FIX : prix formaté selon la devise active */}
           <Text className="text-2xl font-bold ml-1">
-            ${product.price.toFixed(2)}
+            {formatPrice(product.price)}
           </Text>
 
           {product.sizes && product.sizes.length > 0 && (

@@ -18,17 +18,18 @@ import Toast from "react-native-toast-message";
 import { COLORS, CATEGORIES } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-
 import Header from "@/components/Header";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
 
 export default function EditProduct() {
   const { getToken } = useAuth();
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { t } = useLanguage();
+  const { formatPrice } = useCurrency(); // ← AJOUT
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -55,21 +56,18 @@ export default function EditProduct() {
           setDescription(product.description || "");
           setPrice(product.price.toString());
           setStock(product.stock.toString());
-
-          // ✅ FIX: normaliser en minuscules
           setCategory(
             (typeof product.category === "object"
               ? product.category.name
               : product.category
             ).toLowerCase()
           );
-
           setIsFeatured(product.isFeatured);
           if (product.sizes)
             setSizes(
               Array.isArray(product.sizes)
                 ? product.sizes.join(", ")
-                : product.sizes,
+                : product.sizes
             );
           if (product.images && Array.isArray(product.images)) {
             setExistingImages(product.images);
@@ -134,7 +132,7 @@ export default function EditProduct() {
       formData.append("description", description);
       formData.append("price", price);
       formData.append("stock", stock);
-      formData.append("category", category.toLowerCase()); // ✅ FIX
+      formData.append("category", category.toLowerCase());
       formData.append("isFeatured", String(isFeatured));
       formData.append("sizes", sizes);
       existingImages.forEach((img) => formData.append("existingImages", img));
@@ -144,7 +142,7 @@ export default function EditProduct() {
           const blob = await (await fetch(uri)).blob();
           formData.append(
             "images",
-            new File([blob], filename, { type: "image/jpeg" }),
+            new File([blob], filename, { type: "image/jpeg" })
           );
         } else {
           formData.append("images", {
@@ -155,9 +153,7 @@ export default function EditProduct() {
         }
       }
       const { data } = await api.put(`/products/${id}`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (data.success) {
         Toast.show({
@@ -203,14 +199,17 @@ export default function EditProduct() {
             onChangeText={setName}
           />
 
+          {/* Label du prix affiché en devise courante ← MODIFIÉ */}
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            {t("price")} ($) *
+            {t("price")} ({formatPrice(0).replace(/[\d.,]/g, "").trim()}) *
           </Text>
           <TextInput
             className="bg-surface p-3 rounded-lg mb-4 text-primary"
             keyboardType="decimal-pad"
             value={price}
             onChangeText={setPrice}
+            placeholder={price ? formatPrice(parseFloat(price) || 0) : "0.00"}
+            placeholderTextColor={COLORS.secondary}
           />
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
@@ -240,7 +239,6 @@ export default function EditProduct() {
             onPress={() => setModalVisible(true)}
             className="bg-surface p-3 rounded-lg mb-4 flex-row justify-between items-center"
           >
-            {/* ✅ FIX: afficher la traduction mais stocker la clé */}
             <Text className="text-primary">
               {category ? t(category) : t("selectCategory")}
             </Text>
@@ -261,7 +259,7 @@ export default function EditProduct() {
                       <TouchableOpacity
                         className={`p-4 border-b ${category === item.nameKey ? "bg-primary/5" : ""}`}
                         onPress={() => {
-                          setCategory(item.nameKey); // ✅ stocke "men", "women"...
+                          setCategory(item.nameKey);
                           setModalVisible(false);
                         }}
                       >
@@ -269,14 +267,10 @@ export default function EditProduct() {
                           <Text
                             className={`${category === item.nameKey ? "font-bold text-primary" : ""}`}
                           >
-                            {t(item.nameKey)} {/* ✅ affiche traduit */}
+                            {t(item.nameKey)}
                           </Text>
                           {category === item.nameKey && (
-                            <Ionicons
-                              name="checkmark"
-                              size={20}
-                              color={COLORS.primary}
-                            />
+                            <Ionicons name="checkmark" size={20} color={COLORS.primary} />
                           )}
                         </View>
                       </TouchableOpacity>

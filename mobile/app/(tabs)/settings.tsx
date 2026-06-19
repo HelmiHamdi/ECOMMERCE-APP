@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -13,10 +13,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Notifications from "expo-notifications"; // ← AJOUT
+import * as Notifications from "expo-notifications";
 import Header from "@/components/Header";
 import { COLORS } from "@/constants";
 import { useLanguage, Language } from "@/context/LanguageContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import Toast from "react-native-toast-message";
 import { useRouter } from "expo-router";
 import { useNotifications } from "@/context/NotificationContext";
@@ -33,39 +34,31 @@ export default function Settings() {
   const router = useRouter();
   const { language, setLanguage, t, isRTL } = useLanguage();
   const { unreadCount } = useNotifications();
+  const { currency, setCurrency } = useCurrency();
 
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
-
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
-  const [currency, setCurrency] = useState("USD");
 
-  // Load saved preferences
-  useEffect(() => {
+  React.useEffect(() => {
     (async () => {
       const notif = await AsyncStorage.getItem("notificationsEnabled");
       const dark = await AsyncStorage.getItem("darkModeEnabled");
-      const curr = await AsyncStorage.getItem("currency");
       if (notif !== null) setNotificationsEnabled(notif === "true");
       if (dark !== null) setDarkModeEnabled(dark === "true");
-      if (curr !== null) setCurrency(curr);
     })();
   }, []);
 
   const toggleNotifications = async (value: boolean) => {
     if (value) {
-      // L'utilisateur active : on demande/vérifie la permission système
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
-
       if (existingStatus !== "granted") {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
-
       if (finalStatus !== "granted") {
-        // Permission refusée par le système : on ne peut pas l'activer réellement
         Toast.show({
           type: "error",
           text1: t("notificationsPermissionDenied") ?? "Permission refusée",
@@ -76,7 +69,6 @@ export default function Settings() {
         return;
       }
     }
-
     setNotificationsEnabled(value);
     await AsyncStorage.setItem("notificationsEnabled", String(value));
     Toast.show({
@@ -90,17 +82,14 @@ export default function Settings() {
   const toggleDarkMode = async (value: boolean) => {
     setDarkModeEnabled(value);
     await AsyncStorage.setItem("darkModeEnabled", String(value));
-    // TODO: brancher sur ton ThemeContext si tu en as un
   };
 
   const handleSelectLanguage = async (lang: Language) => {
     const wasRTL = isRTL;
     await setLanguage(lang);
     setLanguageModalVisible(false);
-
     const willBeRTL = lang === "ar";
     if (wasRTL !== willBeRTL) {
-      // Changer la direction RTL nécessite un redémarrage de l'app
       I18nManager.forceRTL(willBeRTL);
       Alert.alert(t("restartRequired"), t("restartMessage"), [
         { text: t("ok") },
@@ -111,9 +100,9 @@ export default function Settings() {
   };
 
   const handleSelectCurrency = async (curr: string) => {
-    setCurrency(curr);
-    await AsyncStorage.setItem("currency", curr);
+    await setCurrency(curr as any);
     setCurrencyModalVisible(false);
+    Toast.show({ type: "success", text1: t("currency") + " ✅" });
   };
 
   const handleClearCache = async () => {
@@ -122,7 +111,6 @@ export default function Settings() {
       {
         text: t("ok"),
         onPress: async () => {
-          // Garde les préférences importantes (langue, devise, etc.)
           const keysToKeep = ["appLanguage", "currency", "notificationsEnabled", "darkModeEnabled"];
           const allKeys = await AsyncStorage.getAllKeys();
           const keysToRemove = allKeys.filter((k) => !keysToKeep.includes(k));
@@ -172,7 +160,7 @@ export default function Settings() {
             <Ionicons name="chevron-forward" size={20} color={COLORS.secondary} />
           </TouchableOpacity>
 
-          {/* Notifications — icône cliquable vers l'historique + switch pour activer/désactiver */}
+          {/* Notifications */}
           <View className="flex-row items-center p-4 border-b border-gray-100">
             <TouchableOpacity
               className="flex-row items-center flex-1"
@@ -225,7 +213,10 @@ export default function Settings() {
           {t("account")}
         </Text>
         <View className="bg-white rounded-xl border border-gray-100 mb-6">
-          <TouchableOpacity className="flex-row items-center p-4 border-b border-gray-100" onPress={() => router.push("/edit-profile")}>
+          <TouchableOpacity
+            className="flex-row items-center p-4 border-b border-gray-100"
+            onPress={() => router.push("/edit-profile")}
+          >
             <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
               <Ionicons name="person-outline" size={20} color={COLORS.primary} />
             </View>
@@ -233,7 +224,10 @@ export default function Settings() {
             <Ionicons name="chevron-forward" size={20} color={COLORS.secondary} />
           </TouchableOpacity>
 
-          <TouchableOpacity className="flex-row items-center p-4" onPress={()=>router.push("/change-password")}>
+          <TouchableOpacity
+            className="flex-row items-center p-4"
+            onPress={() => router.push("/change-password")}
+          >
             <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
               <Ionicons name="lock-closed-outline" size={20} color={COLORS.primary} />
             </View>
@@ -269,7 +263,10 @@ export default function Settings() {
             <Ionicons name="chevron-forward" size={20} color={COLORS.secondary} />
           </TouchableOpacity>
 
-          <TouchableOpacity className="flex-row items-center p-4" onPress={() => router.push("/rate-app")}   >
+          <TouchableOpacity
+            className="flex-row items-center p-4"
+            onPress={() => router.push("/rate-app")}
+          >
             <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
               <Ionicons name="star-outline" size={20} color={COLORS.primary} />
             </View>
@@ -283,7 +280,10 @@ export default function Settings() {
           {t("about")}
         </Text>
         <View className="bg-white rounded-xl border border-gray-100 mb-6">
-          <TouchableOpacity className="flex-row items-center p-4 border-b border-gray-100" onPress={() => router.push("/privacy-policy")}>
+          <TouchableOpacity
+            className="flex-row items-center p-4 border-b border-gray-100"
+            onPress={() => router.push("/privacy-policy")}
+          >
             <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
               <Ionicons name="document-text-outline" size={20} color={COLORS.primary} />
             </View>
@@ -291,7 +291,10 @@ export default function Settings() {
             <Ionicons name="chevron-forward" size={20} color={COLORS.secondary} />
           </TouchableOpacity>
 
-          <TouchableOpacity className="flex-row items-center p-4 border-b border-gray-100" onPress={() => router.push("/terms-of-service")}>
+          <TouchableOpacity
+            className="flex-row items-center p-4 border-b border-gray-100"
+            onPress={() => router.push("/terms-of-service")}
+          >
             <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
               <Ionicons name="reader-outline" size={20} color={COLORS.primary} />
             </View>
@@ -334,7 +337,6 @@ export default function Settings() {
                 <Ionicons name="close" size={24} color={COLORS.secondary} />
               </TouchableOpacity>
             </View>
-
             {LANGUAGES.map((lang) => (
               <TouchableOpacity
                 key={lang.code}
@@ -365,7 +367,7 @@ export default function Settings() {
       {/* CURRENCY MODAL */}
       <Modal visible={currencyModalVisible} animationType="slide" transparent>
         <TouchableOpacity
-          className="flex-1 bg-black/50 justify-end"
+          className="flex-1 bg-black/50 justify-end mb-10"
           activeOpacity={1}
           onPress={() => setCurrencyModalVisible(false)}
         >
@@ -376,7 +378,6 @@ export default function Settings() {
                 <Ionicons name="close" size={24} color={COLORS.secondary} />
               </TouchableOpacity>
             </View>
-
             {CURRENCIES.map((curr) => (
               <TouchableOpacity
                 key={curr}

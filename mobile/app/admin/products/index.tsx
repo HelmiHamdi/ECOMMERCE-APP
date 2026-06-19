@@ -16,11 +16,13 @@ import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import Toast from "react-native-toast-message";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
 
 export default function AdminProducts() {
   const { getToken } = useAuth();
   const router = useRouter();
   const { t } = useLanguage();
+  const { formatPrice } = useCurrency(); // ← AJOUT
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [products, setProducts] = useState([]);
@@ -159,8 +161,9 @@ export default function AdminProducts() {
                 <Text className="text-secondary text-xs mb-1" numberOfLines={1}>
                   {t("sizes")} : {product.sizes.join(", ")}
                 </Text>
+                {/* ✅ FIX : prix formaté selon la devise active au lieu d'un "$" en dur */}
                 <Text className="text-primary font-bold">
-                  ${product.price.toFixed(2)}
+                  {formatPrice(product.price)}
                 </Text>
               </View>
 

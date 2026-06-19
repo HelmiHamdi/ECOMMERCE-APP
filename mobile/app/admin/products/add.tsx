@@ -22,11 +22,13 @@ import Header from "@/components/Header";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
 
 export default function AddProduct() {
   const router = useRouter();
   const { getToken } = useAuth();
   const { t } = useLanguage();
+  const { currency, formatPrice } = useCurrency(); // ← AJOUT
   const [submitting, setSubmitting] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -69,7 +71,7 @@ export default function AddProduct() {
       const fields = {
         name,
         description,
-        price,
+        price, // ✅ toujours envoyé en USD (devise de référence côté backend)
         stock: stock || "0",
         category: category.toLowerCase(), // ✅ FIX
         isFeatured: String(isFeatured),
@@ -136,12 +138,21 @@ export default function AddProduct() {
             {t("price")} ($) *
           </Text>
           <TextInput
-            className="bg-surface p-3 rounded-lg mb-4 text-primary"
+            className="bg-surface p-3 rounded-lg text-primary"
             placeholder={t("pricePlaceholder")}
             keyboardType="decimal-pad"
             value={price}
             onChangeText={setPrice}
           />
+          {/* ✅ AJOUT : aperçu du prix converti dans la devise active, si différente de USD */}
+          {price.length > 0 && !isNaN(parseFloat(price)) && currency !== "USD" && (
+            <Text className="text-secondary text-xs mb-4 mt-1">
+              ≈ {formatPrice(parseFloat(price))} ({currency})
+            </Text>
+          )}
+          {(price.length === 0 || isNaN(parseFloat(price)) || currency === "USD") && (
+            <View className="mb-4" />
+          )}
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
             {t("category")}

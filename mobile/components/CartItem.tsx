@@ -4,6 +4,7 @@ import { CartItemProps } from "@/constants/types";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
 
 export default function CartItem({
   item,
@@ -11,6 +12,7 @@ export default function CartItem({
   onUpdateQuantity,
 }: CartItemProps) {
   const { t } = useLanguage();
+  const { formatPrice } = useCurrency(); // ← AJOUT
   const imageUrl = item.product.images[0];
   return (
     <View className="flex-row mb-4 bg-white p-3 rounded-xl overflow-hidden mr-3">
@@ -37,8 +39,7 @@ export default function CartItem({
         {/* price and quantity */}
         <View className="flex-row justify-between items-center mt-2">
           <Text className="text-primary font-bold text-base">
-            {" "}
-            ${item.product.price.toFixed(2)}
+            {formatPrice(item.product.price)}
           </Text>
           <View className="flex-row items-center bg-surface rounded-full px-2 py-1">
             <TouchableOpacity

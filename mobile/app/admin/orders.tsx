@@ -16,10 +16,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
 
 export default function AdminOrders() {
   const { getToken } = useAuth();
   const { t } = useLanguage();
+  const { formatPrice } = useCurrency(); // ← AJOUT
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [orders, setOrders] = useState([]);
@@ -200,16 +202,18 @@ export default function AdminOrders() {
                         </Text>
                       )}
                     </Text>
+                    {/* ✅ FIX : prix unitaire formaté selon la devise active */}
                     <Text className="text-secondary text-xs font-bold">
-                      ${item.price.toFixed(2)}
+                      {formatPrice(item.price)}
                     </Text>
                   </View>
                 ))}
               </View>
 
               <View className="flex-row justify-between items-center mt-2 pt-3 border-t border-gray-100">
+                {/* ✅ FIX : total formaté selon la devise active */}
                 <Text className="text-primary font-bold text-lg">
-                  ${order.totalAmount.toFixed(2)}
+                  {formatPrice(order.totalAmount)}
                 </Text>
 
                 <TouchableOpacity

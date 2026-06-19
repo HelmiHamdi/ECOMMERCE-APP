@@ -1,4 +1,4 @@
-// app/checkout.tsx — version complète avec Stripe
+// app/checkout.tsx — version complète avec Stripe + Currency
 import { View, Text, ActivityIndicator, TouchableOpacity } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
@@ -14,6 +14,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
 import { useStripePayment } from "./hooks/useStripePayment";
+import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
 
 
 export default function Checkout() {
@@ -22,6 +23,7 @@ export default function Checkout() {
   const router = useRouter();
   const { t } = useLanguage();
   const { initializePayment, presentPayment } = useStripePayment();
+  const { formatPrice } = useCurrency(); // ← AJOUT
 
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
@@ -203,19 +205,19 @@ export default function Checkout() {
         <Text className="text-lg font-bold text-primary mb-4">{t("orderSummary")}</Text>
         <View className="flex-row justify-between mb-2">
           <Text className="text-secondary">{t("subtotal")}</Text>
-          <Text className="font-bold">${cartTotal.toFixed(2)}</Text>
+          <Text className="font-bold">{formatPrice(cartTotal)}</Text>
         </View>
         <View className="flex-row justify-between mb-2">
           <Text className="text-secondary">{t("shippingLabel")}</Text>
-          <Text className="font-bold">${shipping.toFixed(2)}</Text>
+          <Text className="font-bold">{formatPrice(shipping)}</Text>
         </View>
         <View className="flex-row justify-between mb-4">
           <Text className="text-secondary">{t("tax")}</Text>
-          <Text className="font-bold">${tax.toFixed(2)}</Text>
+          <Text className="font-bold">{formatPrice(tax)}</Text>
         </View>
         <View className="flex-row justify-between mb-6">
           <Text className="text-primary text-xl font-bold">{t("total")}</Text>
-          <Text className="text-primary text-xl font-bold">${total.toFixed(2)}</Text>
+          <Text className="text-primary text-xl font-bold">{formatPrice(total)}</Text>
         </View>
         <TouchableOpacity
           className={`p-4 rounded-xl items-center ${loading ? "bg-gray-400" : "bg-primary"}`}
@@ -226,7 +228,7 @@ export default function Checkout() {
             <ActivityIndicator color="white" />
           ) : (
             <Text className="text-white font-bold text-lg">
-              {paymentMethod === "stripe" ? `💳 ${t("payNow")} $${total.toFixed(2)}` : t("placeOrder")}
+              {paymentMethod === "stripe" ? `💳 ${t("payNow")} ${formatPrice(total)}` : t("placeOrder")}
             </Text>
           )}
         </TouchableOpacity>

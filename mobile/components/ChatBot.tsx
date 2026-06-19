@@ -141,7 +141,7 @@ export default function ChatBot() {
       <Animated.View
         style={{
           position: "absolute",
-          bottom: 200,
+          bottom: 90,
           right: 20,
           transform: [{ scale: pulseAnim }],
           zIndex: 50,
@@ -243,11 +243,11 @@ export default function ChatBot() {
 
             {/* ✅ FIX 2: paddingBottom على Android لضمان ما يتخبّاش الـ input */}
             <View
-              className="flex-row items-center px-4 py-3 border-t border-gray-100"
+              className="flex-row items-center px-4 py-3 border-t border-gray-100 mb-14"
               style={{ paddingBottom: Platform.OS === "android" ? 12 : 0 }}
             >
               <TextInput
-                className="flex-1 bg-surface rounded-full px-4 py-3 text-primary mr-2"
+                className="flex-1 bg-surface rounded-full px-4 py-3 text-primary mr-2 "
                 placeholder={t("chatPlaceholder")}
                 placeholderTextColor="#999"
                 value={input}

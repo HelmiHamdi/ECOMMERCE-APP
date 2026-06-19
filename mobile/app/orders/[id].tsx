@@ -10,6 +10,7 @@ import type { Order, Product } from "@/constants/types";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
 import { downloadInvoice } from "../utils/downloadInvoice";
 
 
@@ -20,6 +21,7 @@ export default function OrderDetails() {
     const [downloadingInvoice, setDownloadingInvoice] = useState(false);
     const {getToken} = useAuth()
     const { t } = useLanguage();
+    const { formatPrice } = useCurrency(); // ← AJOUT
 
     const fetchOrderDetails = async () => {
     console.log("📦 ID reçu via params:", id);
@@ -100,10 +102,13 @@ export default function OrderDetails() {
     ];
 
     return (
-        <SafeAreaView className="flex-1 bg-surface" edges={['top']}>
+        <SafeAreaView className="flex-1 bg-surface" edges={['top', 'bottom']}>
             <Header title={`${t("order")} #${order.orderNumber}`} showBack />
 
-            <ScrollView className="flex-1 px-4 pt-4">
+            <ScrollView
+                className="flex-1 px-4 pt-4"
+                contentContainerStyle={{ paddingBottom: 100 }}
+            >
                 {/* Order Status */}
                 <View className="bg-white p-4 rounded-xl mb-4 border border-gray-100">
                     <Text className="text-lg font-bold text-primary mb-4">{t("orderStatus")}</Text>
@@ -139,7 +144,8 @@ export default function OrderDetails() {
                                     <Text className="text-primary font-medium" numberOfLines={1}>{item.name}</Text>
                                     <Text className="text-secondary text-xs">{t("sizeLabel")}: {item.size}</Text>
                                     <View className="flex-row justify-between items-center mt-2">
-                                        <Text className="text-primary font-bold">${item.price}</Text>
+                                        {/* ✅ FIX : prix formaté selon la devise active */}
+                                        <Text className="text-primary font-bold">{formatPrice(item.price)}</Text>
                                         <Text className="text-secondary text-xs">{t("qtyLabel")}: {item.quantity}</Text>
                                     </View>
                                 </View>
@@ -175,20 +181,21 @@ export default function OrderDetails() {
                     <View className="h-px bg-gray-100 my-2" />
                     <View className="flex-row justify-between mb-2">
                         <Text className="text-secondary">{t("subtotal")}</Text>
-                        <Text className="text-primary font-medium">${order.subtotal.toFixed(2)}</Text>
+                        {/* ✅ FIX : montants formatés selon la devise active */}
+                        <Text className="text-primary font-medium">{formatPrice(order.subtotal)}</Text>
                     </View>
                     <View className="flex-row justify-between mb-2">
                         <Text className="text-secondary">{t("shippingLabel")}</Text>
-                        <Text className="text-primary font-medium">${order.shippingCost.toFixed(2)}</Text>
+                        <Text className="text-primary font-medium">{formatPrice(order.shippingCost)}</Text>
                     </View>
                     <View className="flex-row justify-between mb-2">
                         <Text className="text-secondary">{t("tax")}</Text>
-                        <Text className="text-primary font-medium">${order.tax.toFixed(2)}</Text>
+                        <Text className="text-primary font-medium">{formatPrice(order.tax)}</Text>
                     </View>
                     <View className="h-px bg-gray-100 my-2" />
                     <View className="flex-row justify-between">
                         <Text className="text-primary font-bold text-lg">{t("total")}</Text>
-                        <Text className="text-primary font-bold text-lg">${order.totalAmount.toFixed(2)}</Text>
+                        <Text className="text-primary font-bold text-lg">{formatPrice(order.totalAmount)}</Text>
                     </View>
                 </View>
 

@@ -10,6 +10,7 @@ import { formatDate } from "@/assets/assets";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
 
 export default function Orders() {
     const router = useRouter();
@@ -17,6 +18,7 @@ export default function Orders() {
     const [loading, setLoading] = useState(true);
     const {getToken} = useAuth()
     const { t } = useLanguage();
+    const { formatPrice } = useCurrency(); // ← AJOUT
 
     const fetchOrders = async () => {
         try {
@@ -139,7 +141,8 @@ export default function Orders() {
 
                             <View className="flex-row justify-between items-center mt-2 pt-3 border-t border-gray-100">
                                 <Text className="text-secondary">{t("itemsLabel")}: {item.items.length}</Text>
-                                <Text className="text-primary font-bold text-lg">${item.totalAmount.toFixed(2)}</Text>
+                                {/* ✅ FIX : montant formaté selon la devise active */}
+                                <Text className="text-primary font-bold text-lg">{formatPrice(item.totalAmount)}</Text>
                             </View>
                         </TouchableOpacity>
                     )}

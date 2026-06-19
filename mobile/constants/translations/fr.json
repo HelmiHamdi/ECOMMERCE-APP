@@ -359,5 +359,7 @@
   "notificationsPermissionDenied": "Permission refusée",
   "notificationsPermissionDeniedHint": "Active les notifications dans les réglages du téléphone",
   "notificationsEnabled": "Notifications activées",
-  "notificationsDisabled": "Notifications désactivées"
+  "notificationsDisabled": "Notifications désactivées",
+ 
+  "downloadInvoice": "Télécharger la facture"
 }

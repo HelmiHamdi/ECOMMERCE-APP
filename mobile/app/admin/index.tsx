@@ -6,11 +6,13 @@ import { COLORS, getStatusColor } from "@/constants";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
 
 export default function AdminDashboard() {
     const {getToken} = useAuth();
     const router = useRouter();
     const { t } = useLanguage();
+    const { formatPrice } = useCurrency(); // ← AJOUT
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [stats, setStats] = useState({
@@ -64,7 +66,8 @@ export default function AdminDashboard() {
             <View className="mb-8">
                 <Text className="text-primary font-bold text-2xl mb-4 tracking-tight">{t("overview")}</Text>
                 <View className="flex-row flex-wrap justify-between">
-                    <StatCard label={t("totalRevenue")} value={`$${stats.totalRevenue.toFixed(2)}`} />
+                    {/* ✅ FIX : montant formaté selon la devise active au lieu d'un "$" en dur */}
+                    <StatCard label={t("totalRevenue")} value={formatPrice(stats.totalRevenue)} />
                     <StatCard label={t("totalOrders")} value={stats.totalOrders.toString()} />
                     <StatCard label={t("products")} value={stats.totalProducts.toString()} />
                     <StatCard label={t("users")} value={stats.totalUsers.toString()} />
@@ -106,7 +109,8 @@ export default function AdminDashboard() {
                                     </View>
                                     <Text className="text-secondary text-sm">{order.user?.name || t("unknownUser")}</Text>
                                 </View>
-                                <Text className="text-primary font-bold text-lg">${order.totalAmount.toFixed(2)}</Text>
+                                {/* ✅ FIX : montant formaté selon la devise active */}
+                                <Text className="text-primary font-bold text-lg">{formatPrice(order.totalAmount)}</Text>
                             </View>
                         </View>
                     ))

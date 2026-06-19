@@ -6,10 +6,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants";
 import { useWishlist } from "@/context/WishlistContext";
 import { useLanguage } from "@/context/LanguageContext";
+import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
 
 export default function ProductCard({ product }: ProductCardProps) {
   const {toggleWishlist,isInWishlist} = useWishlist();
   const { t } = useLanguage();
+  const { formatPrice } = useCurrency(); // ← AJOUT
   const isLiked = isInWishlist(product._id); // This should come from your state or props
 
   return (
@@ -56,7 +58,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           </Text>
           <View className="flex-row items-center">
             <Text className="text-primary text-base font-bold">
-              ${product.price.toFixed(2)}
+              {formatPrice(product.price)}
             </Text>
           </View>
         </View>

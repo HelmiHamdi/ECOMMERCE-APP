@@ -10,7 +10,8 @@ import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import { LanguageProvider } from "@/context/LanguageContext";
 import ChatBot from "@/components/ChatBot";
 import { NotificationProvider } from "@/context/NotificationContext";
-import { StripeProvider } from "@stripe/stripe-react-native"; // ← AJOUT
+import { StripeProvider } from "@stripe/stripe-react-native";
+import { CurrencyProvider } from "@/context/CurrencyContext"; // ← AJOUT
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 const stripePublishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!;
@@ -19,24 +20,26 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <LanguageProvider>
-        <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-          <ClerkLoaded>
-            <StripeProvider
-              publishableKey={stripePublishableKey}
-              merchantIdentifier="merchant.com.helmihamdi.mobile" // ← bdel b identifier mte3ek l Apple Pay
-            >
-              <NotificationProvider>
-                <CartProvider>
-                  <WishlistProvider>
-                    <Stack screenOptions={{ headerShown: false }} />
-                    <Toast />
-                    <ChatBot />
-                  </WishlistProvider>
-                </CartProvider>
-              </NotificationProvider>
-            </StripeProvider>
-          </ClerkLoaded>
-        </ClerkProvider>
+        <CurrencyProvider> {/* ← AJOUT */}
+          <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+            <ClerkLoaded>
+              <StripeProvider
+                publishableKey={stripePublishableKey}
+                merchantIdentifier="merchant.com.helmihamdi.mobile"
+              >
+                <NotificationProvider>
+                  <CartProvider>
+                    <WishlistProvider>
+                      <Stack screenOptions={{ headerShown: false }} />
+                      <Toast />
+                      <ChatBot />
+                    </WishlistProvider>
+                  </CartProvider>
+                </NotificationProvider>
+              </StripeProvider>
+            </ClerkLoaded>
+          </ClerkProvider>
+        </CurrencyProvider> {/* ← AJOUT */}
       </LanguageProvider>
     </GestureHandlerRootView>
   );
