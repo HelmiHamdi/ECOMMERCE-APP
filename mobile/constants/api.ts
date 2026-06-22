@@ -5,13 +5,13 @@ const api = axios.create({baseURL: "https://shop-mobile-server.vercel.app/api"})
 export default api;*/
 /* changed */
 import axios from "axios"
-/*import { Platform } from "react-native"
+import { Platform } from "react-native"
 
 const LOCAL_API_URL = Platform.select({
-    android: "http://192.168.188.136:3000/api",
-    ios: "http://192.168.188.136:3000/api",
+    android: "http://192.168.20.136:3000/api",
+    ios: "http://192.168.20.136:3000/api",
     default:"http://localhost:3000/api"
-})*/
+})
 
 // Ressources qui ne doivent JAMAIS passer par le cache client,
 // même en GET — typiquement les données de session utilisateur
@@ -23,7 +23,7 @@ const cache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 const api = axios.create({
-  baseURL:"https://shop-mobile-server.vercel.app/api",
+  baseURL:LOCAL_API_URL,
   timeout: 10000,
 });
 
