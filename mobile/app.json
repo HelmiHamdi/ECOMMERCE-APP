@@ -16,7 +16,6 @@
       }
     },
     "android": {
-      
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -56,7 +55,9 @@
       ],
       "@clerk/expo",
       "expo-secure-store",
-      "expo-localization"
+      "expo-localization",
+      "expo-sharing",
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true,
