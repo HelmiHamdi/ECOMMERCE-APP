@@ -56,7 +56,6 @@
       "@clerk/expo",
       "expo-secure-store",
       "expo-localization",
-      "expo-sharing",
       "expo-notifications"
     ],
     "experiments": {

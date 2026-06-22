@@ -1,38 +1,39 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-type Currency = "USD" | "EUR" | "TND";
+export type Currency = "USD" | "EUR" | "TND";
 
-const RATES: Record<Currency, number> = {
-  USD: 1,
-  EUR: 0.92,
-  TND: 3.1,
+// ✅ Exporté pour être utilisé dans downloadInvoice
+export const RATES_FROM_TND: Record<Currency, number> = {
+  TND: 1,
+  USD: 0.32,  // 1 TND ≈ 0.32 USD
+  EUR: 0.30,  // 1 TND ≈ 0.30 EUR
 };
 
-const SYMBOLS: Record<Currency, string> = {
+export const SYMBOLS: Record<Currency, string> = {
+  TND: "DT",
   USD: "$",
   EUR: "€",
-  TND: "DT",
 };
 
 type CurrencyContextType = {
   currency: Currency;
   setCurrency: (c: Currency) => Promise<void>;
-  formatPrice: (priceInUSD: number) => string;
+  formatPrice: (priceInTND: number) => string;
 };
 
 const CurrencyContext = createContext<CurrencyContextType>({
-  currency: "USD",
+  currency: "TND",
   setCurrency: async () => {},
-  formatPrice: (p) => `${p.toFixed(2)} $`,
+  formatPrice: (p) => `${p.toFixed(2)} DT`,
 });
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
-  const [currency, setCurrencyState] = useState<Currency>("USD");
+  const [currency, setCurrencyState] = useState<Currency>("TND");
 
   useEffect(() => {
     AsyncStorage.getItem("currency").then((saved) => {
-      if (saved && saved in RATES) setCurrencyState(saved as Currency);
+      if (saved && saved in RATES_FROM_TND) setCurrencyState(saved as Currency);
     });
   }, []);
 
@@ -41,8 +42,9 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.setItem("currency", c);
   };
 
-  const formatPrice = (priceInUSD: number) => {
-    const converted = priceInUSD * RATES[currency];
+  // ✅ Convertit TND → devise active et formate avec le bon symbole
+  const formatPrice = (priceInTND: number): string => {
+    const converted = priceInTND * RATES_FROM_TND[currency];
     return `${converted.toFixed(2)} ${SYMBOLS[currency]}`;
   };
 

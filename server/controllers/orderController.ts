@@ -6,36 +6,44 @@ import { invalidateCache } from "../middleware/cache.js";
 import stripe from "../config/stripe.js";
 import { generateInvoicePDF } from "../utils/generateInvoicePDF.js";
 
+const VALID_CURRENCIES = ["USD", "EUR", "TND"] as const;
+//type SupportedCurrency = (typeof VALID_CURRENCIES)[number];
 
 export const getOrderInvoice = async (req: Request, res: Response) => {
   try {
     const order = await Order.findById(req.params.id)
-      .populate("items.product", "name")
-      .populate("user", "name email")
+      .populate("items.product", "name images")
+      .populate("user", "name email phone")
       .lean();
  
-    if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
-    }
+    if (!order) return res.status(404).json({ success: false, message: "Order not found" });
  
     const isOwner = (order.user as any)?._id?.toString() === req.user._id.toString();
     const isAdmin = req.user.role === "admin";
- 
-    if (!isOwner && !isAdmin) {
+    if (!isOwner && !isAdmin)
       return res.status(403).json({ success: false, message: "Not authorized" });
-    }
  
-    generateInvoicePDF(order as any, res);
+    // ✅ Lire currency ET rate depuis le frontend
+    const validCurrencies = ["USD", "EUR", "TND"];
+    const currency = validCurrencies.includes(req.query.currency as string)
+      ? (req.query.currency as "USD" | "EUR" | "TND")
+      : "TND";
+ 
+    // rate envoyé par le frontend (ex: 0.32 pour USD, 0.30 pour EUR, 1 pour TND)
+    const rate = req.query.rate ? parseFloat(req.query.rate as string) : undefined;
+ 
+    await generateInvoicePDF({ ...order, currency, rate } as any, res);
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 export const getOrders = async (req: Request, res: Response) => {
   try {
     const orders = await Order.find({ user: req.user._id })
       .populate("items.product", "name images")
       .sort("-createdAt")
-      .lean(); // ← ajout
+      .lean();
     res.json({ success: true, data: orders });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
@@ -46,7 +54,7 @@ export const getOrder = async (req: Request, res: Response) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate("items.product", "name images")
-      .lean(); // ← ajout
+      .lean();
 
     if (!order) {
       return res.status(404).json({ success: false, message: "Order not found" });
@@ -63,12 +71,10 @@ export const getOrder = async (req: Request, res: Response) => {
   }
 };
 
-// Dans orderController.ts — modifier createOrder pour Stripe
 export const createOrder = async (req: Request, res: Response) => {
   try {
     const { shippingAddress, notes, paymentMethod, paymentIntentId } = req.body;
 
-    // ── Vérifier le PaymentIntent si paiement par carte ──
     if (paymentMethod === "stripe") {
       if (!paymentIntentId) {
         return res.status(400).json({
@@ -111,10 +117,10 @@ export const createOrder = async (req: Request, res: Response) => {
       orderItems.push({
         product: item.product._id,
         name: item.product.name,
+        image: item.product.images?.[0] ?? null,
         quantity: item.quantity,
         price: item.price,
         size: item.size,
-        image: item.product.images?.[0] ?? null,
       });
       stockUpdates.push(
         Product.findByIdAndUpdate(item.product._id, {
@@ -133,7 +139,6 @@ export const createOrder = async (req: Request, res: Response) => {
         items: orderItems,
         shippingAddress,
         paymentMethod: paymentMethod || "cash",
-      
         paymentStatus: paymentMethod === "stripe" ? "paid" : "pending",
         orderStatus: paymentMethod === "stripe" ? "processing" : "placed",
         subtotal,
@@ -159,6 +164,7 @@ export const createOrder = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 export const updateOrderStatus = async (req: Request, res: Response) => {
   try {
     const { orderStatus, paymentStatus } = req.body;
@@ -168,7 +174,6 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     if (paymentStatus) updates.paymentStatus = paymentStatus;
     if (orderStatus === "delivered") updates.deliveredAt = new Date();
 
-    // findByIdAndUpdate au lieu de find + save (1 requête au lieu de 2)
     const order = await Order.findByIdAndUpdate(req.params.id, updates, { new: true });
 
     if (!order) {
@@ -187,7 +192,6 @@ export const getAllOrders = async (req: Request, res: Response) => {
     const query: any = {};
     if (status) query.orderStatus = status;
 
-    // Promise.all comme dans adminController
     const [total, orders] = await Promise.all([
       Order.countDocuments(query),
       Order.find(query)
@@ -202,7 +206,11 @@ export const getAllOrders = async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: orders,
-      pagination: { total, page: Number(page), pages: Math.ceil(total / Number(limit)) },
+      pagination: {
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / Number(limit)),
+      },
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });

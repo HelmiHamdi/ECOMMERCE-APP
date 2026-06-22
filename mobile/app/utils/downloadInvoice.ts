@@ -1,15 +1,21 @@
 import Toast from "react-native-toast-message";
 import api from "@/constants/api";
+import { RATES_FROM_TND } from "@/context/CurrencyContext";
 
+export type SupportedCurrency = "USD" | "EUR" | "TND";
+
+/**
+ * Télécharge la facture PDF avec les montants convertis dans la devise active.
+ */
 export async function downloadInvoice(
   orderId: string,
   orderNumber: string,
-  getToken: () => Promise<string | null>
+  getToken: () => Promise<string | null>,
+  currency: SupportedCurrency = "TND"
 ) {
   try {
-    // Import dynamique pour éviter le crash natif si le module n'est pas dans le build
     const FileSystem = await import("expo-file-system/legacy").catch(() => null);
-    const Sharing = await import("expo-sharing").catch(() => null);
+    const Sharing    = await import("expo-sharing").catch(() => null);
 
     if (!FileSystem || !Sharing) {
       Toast.show({
@@ -20,13 +26,16 @@ export async function downloadInvoice(
       return;
     }
 
-    const token = await getToken();
+    const token   = await getToken();
     const baseURL = api.defaults.baseURL;
-
     const fileUri = `${FileSystem.documentDirectory}facture-${orderNumber}.pdf`;
 
+    // ✅ On passe currency ET le taux de conversion au backend
+    const rate = RATES_FROM_TND[currency];
+    const url  = `${baseURL}/orders/${orderId}/invoice?currency=${currency}&rate=${rate}`;
+
     const downloadResumable = FileSystem.createDownloadResumable(
-      `${baseURL}/orders/${orderId}/invoice`,
+      url,
       fileUri,
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -44,7 +53,7 @@ export async function downloadInvoice(
       Toast.show({
         type: "info",
         text1: "Fichier téléchargé",
-        text2: `Disponible dans les fichiers de l'app.`,
+        text2: "Disponible dans les fichiers de l'app.",
       });
     }
   } catch (error) {
