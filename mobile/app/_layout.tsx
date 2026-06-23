@@ -20,7 +20,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <LanguageProvider>
-        <CurrencyProvider> {/* ← AJOUT */}
+        <CurrencyProvider>
           <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
             <ClerkLoaded>
               <StripeProvider
@@ -39,7 +39,7 @@ export default function RootLayout() {
               </StripeProvider>
             </ClerkLoaded>
           </ClerkProvider>
-        </CurrencyProvider> {/* ← AJOUT */}
+        </CurrencyProvider> 
       </LanguageProvider>
     </GestureHandlerRootView>
   );

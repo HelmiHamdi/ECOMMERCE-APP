@@ -1,0 +1,39 @@
+workflows:
+  android-dev-build:
+    name: Android Development Build
+    max_build_duration: 60
+    environment:
+      groups:
+        - expo_credentials   # à créer dans Codemagic UI (voir instructions)
+      node: 20.11.1
+      java: 17
+      vars:
+        EXPO_NO_GIT_STATUS: "1"
+
+    scripts:
+      - name: Install npm dependencies
+        script: |
+          cd mobile
+          npm install
+
+      - name: Generate native Android project (expo prebuild)
+        script: |
+          cd mobile
+          npx expo prebuild --platform android --no-install
+
+      - name: Build Android Debug APK
+        script: |
+          cd mobile/android
+          chmod +x ./gradlew
+          ./gradlew app:assembleDebug -x lint -x test
+
+    artifacts:
+      - mobile/android/app/build/outputs/**/*.apk
+
+    publishing:
+      email:
+        recipients:
+          - helmihamdi977@gmail.com
+        notify:
+          success: true
+          failure: true
