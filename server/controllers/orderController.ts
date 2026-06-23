@@ -7,7 +7,7 @@ import stripe from "../config/stripe.js";
 import { generateInvoicePDF } from "../utils/generateInvoicePDF.js";
 
 const VALID_CURRENCIES = ["USD", "EUR", "TND"] as const;
-//type SupportedCurrency = (typeof VALID_CURRENCIES)[number];
+type SupportedCurrency = (typeof VALID_CURRENCIES)[number];
 
 export const getOrderInvoice = async (req: Request, res: Response) => {
   try {
