@@ -56,7 +56,8 @@
       "@clerk/expo",
       "expo-secure-store",
       "expo-localization",
-      "expo-notifications"
+      "expo-notifications",
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,

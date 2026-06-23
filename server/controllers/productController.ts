@@ -204,3 +204,75 @@ export const deleteProduct = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Upload vidéo (séparé)
+export const uploadProductVideo = async (req: Request, res: Response) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No video file provided" });
+    }
+
+    // Supprimer l'ancienne vidéo Cloudinary si elle existe
+    if (product.video) {
+      const publicIdMatch = product.video.match(/\/v\d+\/(.+)\.[a-z0-9]+$/);
+      const publicId = publicIdMatch ? publicIdMatch[1] : null;
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId, { resource_type: "video" });
+      }
+    }
+
+    // Upload nouvelle vidéo
+    const videoUrl: string = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: "shop-mobile/products/videos", resource_type: "video" },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result!.secure_url);
+        }
+      );
+      uploadStream.end(req.file!.buffer);
+    });
+
+    product.video = videoUrl;
+    await product.save();
+
+    invalidateCache("products");
+    res.json({ success: true, data: product });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Supprimer vidéo uniquement (séparé)
+export const deleteProductVideo = async (req: Request, res: Response) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    if (!product.video) {
+      return res.status(404).json({ success: false, message: "No video to delete" });
+    }
+
+    // Supprimer sur Cloudinary
+    const publicIdMatch = product.video.match(/\/v\d+\/(.+)\.[a-z0-9]+$/);
+    const publicId = publicIdMatch ? publicIdMatch[1] : null;
+    if (publicId) {
+      await cloudinary.uploader.destroy(publicId, { resource_type: "video" });
+    }
+
+    product.video = undefined;
+    await product.save();
+
+    invalidateCache("products");
+    res.json({ success: true, message: "Video deleted successfully" });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

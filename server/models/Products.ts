@@ -8,6 +8,7 @@ const productSchema = new Schema<IProduct>(
     price: { type: Number, required: true, min: 0 },
     images: [{ type: String }],
     sizes: [{ type: String }],
+    video: { type: String },  
     category: {
       type: String,
       enum: ["men", "women", "kids", "shoes", "bag", "other"], // ← minuscules
