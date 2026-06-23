@@ -14,20 +14,22 @@ workflows:
     scripts:
       - name: Install npm dependencies
         script: |
+          cd mobile
           npm install
 
       - name: Generate native Android project (expo prebuild)
         script: |
+          cd mobile
           npx expo prebuild --platform android --no-install
 
       - name: Build Android Debug APK
         script: |
-          cd android
+          cd mobile/android
           chmod +x ./gradlew
           ./gradlew app:assembleDebug -x lint -x test
 
     artifacts:
-      - android/app/build/outputs/**/*.apk
+      - mobile/android/app/build/outputs/**/*.apk
 
     publishing:
       email:
