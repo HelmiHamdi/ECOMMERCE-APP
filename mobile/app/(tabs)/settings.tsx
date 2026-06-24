@@ -52,7 +52,8 @@ export default function Settings() {
 
   const toggleNotifications = async (value: boolean) => {
     if (value) {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
       if (existingStatus !== "granted") {
         const { status } = await Notifications.requestPermissionsAsync();
@@ -74,8 +75,8 @@ export default function Settings() {
     Toast.show({
       type: "success",
       text1: value
-        ? t("notificationsEnabled") ?? "Notifications activées"
-        : t("notificationsDisabled") ?? "Notifications désactivées",
+        ? (t("notificationsEnabled") ?? "Notifications activées")
+        : (t("notificationsDisabled") ?? "Notifications désactivées"),
     });
   };
 
@@ -111,7 +112,12 @@ export default function Settings() {
       {
         text: t("ok"),
         onPress: async () => {
-          const keysToKeep = ["appLanguage", "currency", "notificationsEnabled", "darkModeEnabled"];
+          const keysToKeep = [
+            "appLanguage",
+            "currency",
+            "notificationsEnabled",
+            "darkModeEnabled",
+          ];
           const allKeys = await AsyncStorage.getAllKeys();
           const keysToRemove = allKeys.filter((k) => !keysToKeep.includes(k));
           await AsyncStorage.multiRemove(keysToRemove);
@@ -128,7 +134,10 @@ export default function Settings() {
     <SafeAreaView className="flex-1 bg-surface" edges={["top"]}>
       <Header title={t("settings")} showBack />
 
-      <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1 px-4 pt-4"
+        showsVerticalScrollIndicator={false}
+      >
         {/* GENERAL */}
         <Text className="text-secondary text-xs font-bold uppercase mb-2 ml-1">
           {t("general")}
@@ -142,9 +151,17 @@ export default function Settings() {
             <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
               <Ionicons name="globe-outline" size={20} color={COLORS.primary} />
             </View>
-            <Text className="flex-1 text-primary font-medium">{t("language")}</Text>
-            <Text className="text-secondary mr-2">{t(currentLanguageLabel)}</Text>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.secondary} />
+            <Text className="flex-1 text-primary font-medium">
+              {t("language")}
+            </Text>
+            <Text className="text-secondary mr-2">
+              {t(currentLanguageLabel)}
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={COLORS.secondary}
+            />
           </TouchableOpacity>
 
           {/* Currency */}
@@ -155,9 +172,15 @@ export default function Settings() {
             <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
               <Ionicons name="cash-outline" size={20} color={COLORS.primary} />
             </View>
-            <Text className="flex-1 text-primary font-medium">{t("currency")}</Text>
+            <Text className="flex-1 text-primary font-medium">
+              {t("currency")}
+            </Text>
             <Text className="text-secondary mr-2">{currency}</Text>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.secondary} />
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={COLORS.secondary}
+            />
           </TouchableOpacity>
 
           {/* Notifications */}
@@ -167,7 +190,11 @@ export default function Settings() {
               onPress={() => router.push("/notifications")}
             >
               <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
-                <Ionicons name="notifications-outline" size={20} color={COLORS.primary} />
+                <Ionicons
+                  name="notifications-outline"
+                  size={20}
+                  color={COLORS.primary}
+                />
                 {unreadCount > 0 && (
                   <View
                     className="absolute -top-1 -right-1 bg-red-500 rounded-full items-center justify-center"
@@ -179,7 +206,9 @@ export default function Settings() {
                   </View>
                 )}
               </View>
-              <Text className="flex-1 text-primary font-medium">{t("notifications")}</Text>
+              <Text className="flex-1 text-primary font-medium">
+                {t("notifications")}
+              </Text>
               <Ionicons
                 name="chevron-forward"
                 size={18}
@@ -190,19 +219,6 @@ export default function Settings() {
             <Switch
               value={notificationsEnabled}
               onValueChange={toggleNotifications}
-              trackColor={{ false: "#ccc", true: COLORS.primary }}
-            />
-          </View>
-
-          {/* Dark Mode */}
-          <View className="flex-row items-center p-4">
-            <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
-              <Ionicons name="moon-outline" size={20} color={COLORS.primary} />
-            </View>
-            <Text className="flex-1 text-primary font-medium">{t("darkMode")}</Text>
-            <Switch
-              value={darkModeEnabled}
-              onValueChange={toggleDarkMode}
               trackColor={{ false: "#ccc", true: COLORS.primary }}
             />
           </View>
@@ -218,10 +234,20 @@ export default function Settings() {
             onPress={() => router.push("/edit-profile")}
           >
             <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
-              <Ionicons name="person-outline" size={20} color={COLORS.primary} />
+              <Ionicons
+                name="person-outline"
+                size={20}
+                color={COLORS.primary}
+              />
             </View>
-            <Text className="flex-1 text-primary font-medium">{t("editProfile")}</Text>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.secondary} />
+            <Text className="flex-1 text-primary font-medium">
+              {t("editProfile")}
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={COLORS.secondary}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -229,10 +255,20 @@ export default function Settings() {
             onPress={() => router.push("/change-password")}
           >
             <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
-              <Ionicons name="lock-closed-outline" size={20} color={COLORS.primary} />
+              <Ionicons
+                name="lock-closed-outline"
+                size={20}
+                color={COLORS.primary}
+              />
             </View>
-            <Text className="flex-1 text-primary font-medium">{t("changePassword")}</Text>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.secondary} />
+            <Text className="flex-1 text-primary font-medium">
+              {t("changePassword")}
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={COLORS.secondary}
+            />
           </TouchableOpacity>
         </View>
 
@@ -246,21 +282,39 @@ export default function Settings() {
             onPress={() => Linking.openURL("mailto:helmihamdi977@gmail.com")}
           >
             <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
-              <Ionicons name="help-circle-outline" size={20} color={COLORS.primary} />
+              <Ionicons
+                name="help-circle-outline"
+                size={20}
+                color={COLORS.primary}
+              />
             </View>
-            <Text className="flex-1 text-primary font-medium">{t("helpCenter")}</Text>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.secondary} />
+            <Text className="flex-1 text-primary font-medium">
+              {t("helpCenter")}
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={COLORS.secondary}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity
             className="flex-row items-center p-4 border-b border-gray-100"
-            onPress={() => Linking.openURL("mailto:helmi.hamdi@etudiant-fst.utm.tn")}
+            onPress={() =>
+              Linking.openURL("mailto:helmi.hamdi@etudiant-fst.utm.tn")
+            }
           >
             <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
               <Ionicons name="mail-outline" size={20} color={COLORS.primary} />
             </View>
-            <Text className="flex-1 text-primary font-medium">{t("contactUs")}</Text>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.secondary} />
+            <Text className="flex-1 text-primary font-medium">
+              {t("contactUs")}
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={COLORS.secondary}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -270,8 +324,14 @@ export default function Settings() {
             <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
               <Ionicons name="star-outline" size={20} color={COLORS.primary} />
             </View>
-            <Text className="flex-1 text-primary font-medium">{t("rateApp")}</Text>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.secondary} />
+            <Text className="flex-1 text-primary font-medium">
+              {t("rateApp")}
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={COLORS.secondary}
+            />
           </TouchableOpacity>
         </View>
 
@@ -285,10 +345,20 @@ export default function Settings() {
             onPress={() => router.push("/privacy-policy")}
           >
             <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
-              <Ionicons name="document-text-outline" size={20} color={COLORS.primary} />
+              <Ionicons
+                name="document-text-outline"
+                size={20}
+                color={COLORS.primary}
+              />
             </View>
-            <Text className="flex-1 text-primary font-medium">{t("privacyPolicy")}</Text>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.secondary} />
+            <Text className="flex-1 text-primary font-medium">
+              {t("privacyPolicy")}
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={COLORS.secondary}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -296,10 +366,20 @@ export default function Settings() {
             onPress={() => router.push("/terms-of-service")}
           >
             <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
-              <Ionicons name="reader-outline" size={20} color={COLORS.primary} />
+              <Ionicons
+                name="reader-outline"
+                size={20}
+                color={COLORS.primary}
+              />
             </View>
-            <Text className="flex-1 text-primary font-medium">{t("termsOfService")}</Text>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.secondary} />
+            <Text className="flex-1 text-primary font-medium">
+              {t("termsOfService")}
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={COLORS.secondary}
+            />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -309,15 +389,27 @@ export default function Settings() {
             <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
               <Ionicons name="trash-outline" size={20} color={COLORS.primary} />
             </View>
-            <Text className="flex-1 text-primary font-medium">{t("clearCache")}</Text>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.secondary} />
+            <Text className="flex-1 text-primary font-medium">
+              {t("clearCache")}
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={COLORS.secondary}
+            />
           </TouchableOpacity>
 
           <View className="flex-row items-center p-4">
             <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
-              <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
+              <Ionicons
+                name="information-circle-outline"
+                size={20}
+                color={COLORS.primary}
+              />
             </View>
-            <Text className="flex-1 text-primary font-medium">{t("version")}</Text>
+            <Text className="flex-1 text-primary font-medium">
+              {t("version")}
+            </Text>
             <Text className="text-secondary">1.0.0</Text>
           </View>
         </View>
@@ -330,9 +422,11 @@ export default function Settings() {
           activeOpacity={1}
           onPress={() => setLanguageModalVisible(false)}
         >
-          <View className="bg-white rounded-t-2xl p-4">
+          <View className="bg-white rounded-t-2xl p-4 mb-10">
             <View className="flex-row justify-between items-center mb-4 pb-4 border-b border-gray-100">
-              <Text className="text-lg font-bold text-primary">{t("selectLanguage")}</Text>
+              <Text className="text-lg font-bold text-primary">
+                {t("selectLanguage")}
+              </Text>
               <TouchableOpacity onPress={() => setLanguageModalVisible(false)}>
                 <Ionicons name="close" size={24} color={COLORS.secondary} />
               </TouchableOpacity>
@@ -349,14 +443,20 @@ export default function Settings() {
                   <Text className="text-xl mr-3">{lang.flag}</Text>
                   <Text
                     className={`font-medium ${
-                      language === lang.code ? "text-primary font-bold" : "text-secondary"
+                      language === lang.code
+                        ? "text-primary font-bold"
+                        : "text-secondary"
                     }`}
                   >
                     {t(lang.nameKey)}
                   </Text>
                 </View>
                 {language === lang.code && (
-                  <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={20}
+                    color={COLORS.primary}
+                  />
                 )}
               </TouchableOpacity>
             ))}
@@ -373,7 +473,9 @@ export default function Settings() {
         >
           <View className="bg-white rounded-t-2xl p-4">
             <View className="flex-row justify-between items-center mb-4 pb-4 border-b border-gray-100">
-              <Text className="text-lg font-bold text-primary">{t("currency")}</Text>
+              <Text className="text-lg font-bold text-primary">
+                {t("currency")}
+              </Text>
               <TouchableOpacity onPress={() => setCurrencyModalVisible(false)}>
                 <Ionicons name="close" size={24} color={COLORS.secondary} />
               </TouchableOpacity>
@@ -388,13 +490,19 @@ export default function Settings() {
               >
                 <Text
                   className={`font-medium ${
-                    currency === curr ? "text-primary font-bold" : "text-secondary"
+                    currency === curr
+                      ? "text-primary font-bold"
+                      : "text-secondary"
                   }`}
                 >
                   {curr}
                 </Text>
                 {currency === curr && (
-                  <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={20}
+                    color={COLORS.primary}
+                  />
                 )}
               </TouchableOpacity>
             ))}

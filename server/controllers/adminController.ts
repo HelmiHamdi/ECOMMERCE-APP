@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import User from "../models/User.js";
 import Product from "../models/Products.js";
 import Order from "../models/Order.js";
-import { invalidateCache } from "../middleware/cache.js";
+
 
 export const getDashboardStats = async (req: Request, res: Response) => {
   try {
