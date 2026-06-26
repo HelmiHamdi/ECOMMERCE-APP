@@ -53,7 +53,7 @@ export const getInvoiceLink = async (req: Request, res: Response) => {
     );
 
     const { currency = "TND", rate } = req.query;
-    const baseURL = process.env.BASE_URL || "http://192.168.20.136:3000";
+    const baseURL = process.env.BASE_URL || "https://shop-mobile-server.vercel.app";
 
     const link = `${baseURL}/api/orders/${req.params.id}/invoice/download?token=${tempToken}&currency=${currency}&rate=${rate}`;
 
