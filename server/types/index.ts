@@ -31,6 +31,7 @@ export interface ICart extends Document {
 export interface IOrderItem {
   product: Types.ObjectId;
   name: string;
+  image: string | null;
   quantity: number;
   price: number;
   size?: string;
@@ -110,3 +111,12 @@ export interface INotification extends Document {
   createdAt?: Date;
 }
  
+
+export interface IBanner extends Document {
+  title: string;
+  subtitle?: string;
+  image: string;
+  link?: string;   // ex: "/shop" ou une catégorie précise
+  order: number;   // pour l'ordre d'affichage dans le scroll
+  isActive: boolean;
+}

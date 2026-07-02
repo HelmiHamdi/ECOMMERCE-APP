@@ -168,7 +168,7 @@ export default function AddProduct() {
 
           <Modal visible={modalVisible} animationType="slide" transparent>
             <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
-              <View className="flex-1 justify-end bg-black/50">
+              <View className="flex-1 justify-end bg-black/50 mb-10">
                 <View className="bg-white rounded-t-2xl p-4 max-h-[50%]">
                   <Text className="text-lg font-bold text-center mb-4">
                     {t("selectCategory")}

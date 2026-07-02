@@ -14,20 +14,21 @@ import { seedProducts } from "./scripts/seedProducts.js";
 import UserRouter from "./routers/userRoute.js";
 import WishlistRouter from "./routers/wishlistRoute.js";
 import RatingRouter from "./routers/ratingRoute.js";
+import BannerRouter from "./routers/bannerRoute.js";
 import ChatRouter from "./routers/chatRoute.js";
-import NotificationRouter from "./routers/notificationRoute.js"; // ← AJOUT
-
+import NotificationRouter from "./routers/notificationRoute.js"; 
+import { backfillOrderItemNames } from "./scripts/backfillOrderItemNames.js";
 import { cacheMiddleware } from "./middleware/cache.js";
 import compression from "compression";
 import PaymentRouter from "./routers/paymentRoute.js";
-import { scheduleDailyReminder } from "./scripts/dailyReminder.js"; // ← AJOUT
+import { scheduleDailyReminder } from "./scripts/dailyReminder.js"; 
 
 const app = express();
 
 await connectDB();
 
 app.post('/api/clerk', express.raw({type: "application/json"}), clerkWebhook)
-// Middleware
+
 app.use(cors())
 app.use(compression());
 app.use(express.json());
@@ -50,14 +51,16 @@ app.use("/api/users",UserRouter)
 app.use("/api/wishlist", WishlistRouter);
 app.use("/api/chat", ChatRouter);
 app.use("/api/ratings", RatingRouter);
+app.use("/api/banners", BannerRouter);
 app.use("/api/payments", PaymentRouter);
-app.use("/api/notifications", NotificationRouter); // ← AJOUT
+app.use("/api/notifications", NotificationRouter); 
+
 await makeAdmin();
- //Seed dummy products if no products are present
+await backfillOrderItemNames();
 
  //await seedProducts()
 
-scheduleDailyReminder(); // ← AJOUT : démarre le cron du rappel quotidien
+scheduleDailyReminder(); 
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);

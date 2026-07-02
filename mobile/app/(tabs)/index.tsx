@@ -1,6 +1,6 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import React, { useEffect, useState } from "react";
-import { useRouter } from "expo-router";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import { useRouter, useFocusEffect } from "expo-router"; // ✅ AJOUT useFocusEffect
 import Header from "@/components/Header";
 import {
   ScrollView,
@@ -10,11 +10,12 @@ import {
   Text,
   TouchableOpacity,
   ActivityIndicator,
+  Animated,
 } from "react-native";
-import { BANNERS } from "@/assets/assets";
-import { CATEGORIES } from "@/constants";
+import { Ionicons } from "@expo/vector-icons";
+import { CATEGORIES, COLORS } from "@/constants";
 import CategoryItem from "@/components/CategoryItem";
-import { Product } from "@/constants/types";
+import { Product, Banner } from "@/constants/types";
 import ProductCard from "@/components/ProductCard";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
@@ -30,7 +31,14 @@ export default function Home() {
     ...CATEGORIES,
   ];
   const [products, setProducts] = useState<Product[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bannersLoading, setBannersLoading] = useState(true);
+  const [bannersError, setBannersError] = useState(false);
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
 
   const fetchProducts = async () => {
     try {
@@ -43,73 +51,172 @@ export default function Home() {
     }
   };
 
+  const fetchBanners = async () => {
+    try {
+      const { data } = await api.get("banners");
+      setBanners(data.data);
+      setBannersError(false);
+    } catch (error: any) {
+      console.error("Error fetching banners:", error);
+      setBanners([]);
+      setBannersError(true);
+    } finally {
+      setBannersLoading(false);
+    }
+  };
+
+  // ✅ REMPLACE le useEffect([]) — recharge à CHAQUE retour sur Home
+  useFocusEffect(
+    useCallback(() => {
+      fetchProducts();
+      fetchBanners();
+    }, []),
+  );
+
+  // Lance l'animation dès que le chargement des bannières est terminé et qu'il n'y en a pas
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (!bannersLoading && banners.length === 0) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 6,
+          tension: 60,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(floatAnim, {
+            toValue: -8,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(floatAnim, {
+            toValue: 0,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }
+  }, [bannersLoading, banners.length]);
+
+  const handleBannerPress = (link?: string) => {
+    router.push((link || "/shop") as any);
+  };
 
   return (
     <SafeAreaView className="flex-1" edges={["top"]}>
       <Header title="Forever" showMenu showCart showLogo />
       <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
         {/* Banners */}
-        <View className="mb-6">
-          <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            className="w-full h-48 rounded-xl"
-            scrollEventThrottle={16}
-            onScroll={(event) => {
-              const slide = Math.round(
-                event.nativeEvent.contentOffset.x /
-                  event.nativeEvent.layoutMeasurement.width,
-              );
-              if (slide !== activeBannerIndex) {
-                setActiveBannerIndex(slide);
-              }
+        {bannersLoading ? (
+          <View className="mb-6 h-48 items-center justify-center">
+            <ActivityIndicator size="large" color={COLORS.primary} />
+          </View>
+        ) : banners.length > 0 ? (
+          <View className="mb-6">
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              className="w-full h-48 rounded-xl"
+              scrollEventThrottle={16}
+              onScroll={(event) => {
+                const slide = Math.round(
+                  event.nativeEvent.contentOffset.x /
+                    event.nativeEvent.layoutMeasurement.width,
+                );
+                if (slide !== activeBannerIndex) {
+                  setActiveBannerIndex(slide);
+                }
+              }}
+            >
+              {banners.map((banner) => (
+                <View
+                  key={banner._id}
+                  className="relative w-full h-48 bg-gray-200 overflow-hidden"
+                  style={{ width: width - 32 }}
+                >
+                  <Image
+                    source={{ uri: banner.image }}
+                    className="w-full h-full"
+                    resizeMode="cover"
+                  />
+                  <View className="absolute inset-0 bg-black/40" />
+                  <View className="absolute bottom-4 left-4 z-10">
+                    <Text className="text-white text-2xl font-bold">
+                      {banner.title}
+                    </Text>
+                    {banner.subtitle ? (
+                      <Text className="text-white text-sm font-medium">
+                        {banner.subtitle}
+                      </Text>
+                    ) : null}
+                    <TouchableOpacity
+                      className="mt-2 bg-white px-4 py-2 rounded-full self-start"
+                      onPress={() => handleBannerPress(banner.link)}
+                    >
+                      <Text className="text-primary font-bold text-xs">
+                        {t("shopNow")}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+            <View className="flex-row justify-center mt-3 gap-2">
+              {banners.map((_, index) => (
+                <View
+                  key={index}
+                  className={`h-2 rounded-full ${
+                    index === activeBannerIndex
+                      ? "w-6 bg-primary"
+                      : "w-2 bg-gray-300"
+                  }`}
+                />
+              ))}
+            </View>
+          </View>
+        ) : (
+          <Animated.View
+            className="mb-6 h-48 rounded-2xl overflow-hidden items-center justify-center"
+            style={{
+              opacity: fadeAnim,
+              transform: [{ scale: scaleAnim }],
+              backgroundColor: "#F8F6F3",
+              borderWidth: 1,
+              borderColor: "#EFEAE4",
+              borderStyle: "dashed",
             }}
           >
-            {BANNERS.map((banner, index) => (
+            <Animated.View
+              style={{
+                transform: [{ translateY: floatAnim }],
+              }}
+              className="w-16 h-16 rounded-full items-center justify-center mb-3"
+            >
               <View
-                key={index}
-                className="relative w-full h-48 bg-gray-200 overflow-hidden"
-                style={{ width: width - 32 }}
+                className="w-16 h-16 rounded-full items-center justify-center"
+                style={{ backgroundColor: "#EFEAE4" }}
               >
-                <Image
-                  source={{ uri: banner.image }}
-                  className="w-full h-full"
-                  resizeMode="cover"
-                />
-                <View className="absolute inset-0 bg-black/40" />
-                <View className="absolute bottom-4 left-4 z-10">
-                  <Text className="text-white text-2xl font-bold">
-                    {banner.title}
-                  </Text>
-                  <Text className="text-white text-sm font-medium">
-                    {banner.subtitle}
-                  </Text>
-                  <TouchableOpacity className="mt-2 bg-white px-4 py-2 rounded-full self-start">
-                    <Text className="text-primary font-bold text-xs">
-                      {t("shopNow")}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                <Ionicons name="images-outline" size={30} color={COLORS.primary} />
               </View>
-            ))}
-          </ScrollView>
-          <View className="flex-row justify-center mt-3 gap-2">
-            {BANNERS.map((_, index) => (
-              <View
-                key={index}
-                className={`h-2 rounded-full ${
-                  index === activeBannerIndex
-                    ? "w-6 bg-primary"
-                    : "w-2 bg-gray-300"
-                }`}
-              />
-            ))}
-          </View>
-        </View>
+            </Animated.View>
+            <Text className="text-primary font-bold text-base">
+              {t("noBannersYet") || "Aucune bannière pour le moment"}
+            </Text>
+            <Text className="text-secondary text-xs mt-1 text-center px-8">
+              {t("noBannersSubtitle") || "Reviens bientôt pour découvrir nos offres"}
+            </Text>
+          </Animated.View>
+        )}
 
         {/* Categories */}
         <View className="mb-6">
@@ -127,7 +234,6 @@ export default function Home() {
                 item={cat}
                 isSelected={false}
                 onPress={() => {
-                  // "all" → shop normal, sinon → page catégorie dédiée
                   if (cat.id === "all") {
                     router.push("/shop");
                   } else {

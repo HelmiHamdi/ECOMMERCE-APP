@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState,  useCallback } from "react";
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   TextInput,
   ActivityIndicator,
   ScrollView,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
@@ -17,6 +16,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@clerk/clerk-expo";
 import Toast from "react-native-toast-message";
 import api from "@/constants/api";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
 export default function MyReviewScreen() {
   const { t } = useLanguage();
@@ -28,6 +28,9 @@ export default function MyReviewScreen() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [hasExisting, setHasExisting] = useState(false);
+
+  // ← état pour la popup de suppression
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const loadRating = useCallback(async () => {
     setFetching(true);
@@ -97,38 +100,36 @@ export default function MyReviewScreen() {
     }
   };
 
+  // ← ouvre juste la popup
   const onDelete = () => {
-    Alert.alert(t("deleteReviewTitle"), t("deleteReviewConfirm"), [
-      { text: t("cancel"), style: "cancel" },
-      {
-        text: t("delete"),
-        style: "destructive",
-        onPress: async () => {
-          setDeleting(true);
-          try {
-            const token = await getToken();
-            await api.delete("/ratings/me", {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            setStars(0);
-            setReview("");
-            setHasExisting(false);
-            Toast.show({
-              type: "success",
-              text1: t("reviewDeleted"),
-            });
-          } catch (err: any) {
-            Toast.show({
-              type: "error",
-              text1: t("error"),
-              text2: err?.response?.data?.message ?? t("somethingWrong"),
-            });
-          } finally {
-            setDeleting(false);
-          }
-        },
-      },
-    ]);
+    setShowDeleteModal(true);
+  };
+
+  // ← logique de suppression réelle, appelée depuis la popup
+  const performDelete = async () => {
+    setDeleting(true);
+    try {
+      const token = await getToken();
+      await api.delete("/ratings/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setStars(0);
+      setReview("");
+      setHasExisting(false);
+      Toast.show({
+        type: "success",
+        text1: t("reviewDeleted"),
+      });
+    } catch (err: any) {
+      Toast.show({
+        type: "error",
+        text1: t("error"),
+        text2: err?.response?.data?.message ?? t("somethingWrong"),
+      });
+    } finally {
+      setDeleting(false);
+      setShowDeleteModal(false);
+    }
   };
 
   if (fetching) {
@@ -226,6 +227,18 @@ export default function MyReviewScreen() {
 
         {!hasExisting && <View className="h-6" />}
       </ScrollView>
+
+      {/* ← Popup de confirmation custom */}
+      <ConfirmDeleteModal
+        visible={showDeleteModal}
+        title={t("deleteReviewTitle")}
+        message={t("deleteReviewConfirm")}
+        cancelText={t("cancel")}
+        confirmText={t("delete")}
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={performDelete}
+        loading={deleting}
+      />
     </SafeAreaView>
   );
 }

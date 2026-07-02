@@ -8,7 +8,6 @@ import {
   Modal,
   TextInput,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/Header";
@@ -18,6 +17,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import Toast from "react-native-toast-message";
 import { useLanguage } from "@/context/LanguageContext";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
 export default function Addresses() {
   const { getToken } = useAuth();
@@ -39,6 +39,13 @@ export default function Addresses() {
   // Edit state
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // ← état pour la popup de suppression
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    label: string;
+  } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchAddresses();
@@ -111,29 +118,34 @@ export default function Addresses() {
     }
   };
 
-  const handleDeleteAddress = async (id: string) => {
-    Alert.alert(t("deleteAddress"), t("deleteAddressConfirm"), [
-      { text: t("cancel"), style: "cancel" },
-      {
-        text: t("delete"),
-        style: "destructive",
-        onPress: async () => {
-          try {
-            const token = await getToken();
-            await api.delete(`/addresses/${id}`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            fetchAddresses();
-          } catch (error: any) {
-            Toast.show({
-              type: "error",
-              text1: t("failedToDeleteAddress"),
-              text2: error.response?.data?.message || t("somethingWrong"),
-            });
-          }
-        },
-      },
-    ]);
+  // ← ouvre juste la popup, avec un libellé lisible pour l'adresse concernée
+  const handleDeleteAddress = (item: Address) => {
+    setDeleteTarget({
+      id: item._id,
+      label: `${item.type} - ${item.street}`,
+    });
+  };
+
+  // ← logique de suppression réelle, appelée depuis la popup
+  const performDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const token = await getToken();
+      await api.delete(`/addresses/${deleteTarget.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchAddresses();
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: t("failedToDeleteAddress"),
+        text2: error.response?.data?.message || t("somethingWrong"),
+      });
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
   };
 
   const resetForm = () => {
@@ -204,7 +216,7 @@ export default function Addresses() {
                       />
                     </TouchableOpacity>
                     <TouchableOpacity
-                      onPress={() => handleDeleteAddress(item._id)}
+                      onPress={() => handleDeleteAddress(item)}
                     >
                       <Ionicons
                         name="trash-outline"
@@ -366,6 +378,19 @@ export default function Addresses() {
           </View>
         </View>
       </Modal>
+
+      {/* ← Popup de confirmation custom */}
+      <ConfirmDeleteModal
+        visible={!!deleteTarget}
+        title={t("deleteAddress")}
+        message={t("deleteAddressConfirm")}
+        itemName={deleteTarget?.label}
+        cancelText={t("cancel")}
+        confirmText={t("delete")}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={performDelete}
+        loading={deleting}
+      />
     </SafeAreaView>
   );
 }

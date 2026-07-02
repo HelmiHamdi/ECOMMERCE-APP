@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 export interface User {
     _id: string;
     name: string;
@@ -42,7 +44,15 @@ export interface Product {
 export type ProductCardProps = {
     product: Product;
 };
-
+export interface Banner {
+  _id: string;
+  title: string;
+  subtitle?: string;
+  image: string;
+  link?: string;
+  order: number;
+  isActive: boolean;
+}
 export interface CartItem {
     product: Product;
     quantity: number;
@@ -67,6 +77,7 @@ export type HeaderProps = {
     showCart?: boolean;
     showMenu?: boolean;
     showLogo?: boolean;
+    rightAction?: ReactNode;
 };
 
 export interface Address {

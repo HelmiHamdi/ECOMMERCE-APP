@@ -352,7 +352,7 @@
   "termsSection5Body": "قد نقوم بتحديث شروط الخدمة هذه من وقت لآخر. يُعتبر استمرارك في استخدام التطبيق بعد إجراء التعديلات موافقة منك على الشروط المعدّلة.",
 
   "failedToLoadCheckoutInfo": "فشل في تحميل معلومات الدفع",
-
+"clearCacheConfirm": "سيؤدي هذا إلى مسح البيانات المؤقتة المخزنة على هذا الجهاز. لن يتأثر حسابك ولا معلوماتك المحفوظة.",
   "paymentStatusPaid": "تم الدفع",
   "paymentMethodCard": "بطاقة ائتمان أو خصم",
   "unread": "غير مقروءة",
@@ -361,5 +361,35 @@
   "notificationsPermissionDenied": "تم رفض الإذن",
   "notificationsPermissionDeniedHint": "فعّل الإشعارات من إعدادات هاتفك",
   "notificationsEnabled": "تم تفعيل الإشعارات",
-  "notificationsDisabled": "تم إيقاف الإشعارات"
+  "notificationsDisabled": "تم إيقاف الإشعارات",
+    "noBannersYet": "لا توجد بانرات بعد",
+  "noBannersSubtitle": "عد قريبًا لاكتشاف عروضنا",
+  "banners": "البانرات",
+  "addBanner": "إضافة بانر",
+  "editBanner": "تعديل البانر",
+  "noBanners": "لا توجد بانرات حتى الآن",
+  "chooseImage": "اختر صورة",
+  "title": "العنوان",
+  "bannerTitlePlaceholder": "عنوان البانر",
+  "subtitle": "العنوان الفرعي",
+  "link": "الرابط (مثال: /shop)",
+  
+  "active": "نشط",
+  "inactive": "غير نشط",
+  "save": "حفظ",
+  
+  "titleRequired": "العنوان مطلوب",
+  "imageRequired": "يرجى اختيار صورة",
+  "saveFailed": "فشل الحفظ",
+  "loadFailed": "فشل التحميل",
+  "deleteFailed": "فشل الحذف",
+  "deleteBannerTitle": "حذف البانر",
+  "bannerCreated": "تمت إضافة البانر بنجاح",
+  "failedToCreateBanner": "فشل في إضافة البانر",
+  "somethingWentWrong": "حدث خطأ ما",
+  "failedToFetchBanner": "فشل في تحميل البانر",
+  "bannerUpdated": "تم تعديل البانر بنجاح",
+  "failedToUpdateBanner": "فشل في تعديل البانر",
+  "bannerDeleted": "تم حذف البانر بنجاح",
+  "failedToDeleteBanner": "فشل في حذف البانر"
 }

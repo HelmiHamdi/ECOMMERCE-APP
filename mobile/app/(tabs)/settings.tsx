@@ -21,6 +21,7 @@ import { useCurrency } from "@/context/CurrencyContext";
 import Toast from "react-native-toast-message";
 import { useRouter } from "expo-router";
 import { useNotifications } from "@/context/NotificationContext";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
 const LANGUAGES: { code: Language; nameKey: string; flag: string }[] = [
   { code: "en", nameKey: "english", flag: "🇬🇧" },
@@ -40,6 +41,10 @@ export default function Settings() {
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
+
+  // ← état pour la popup de confirmation "clear cache"
+  const [clearCacheModalVisible, setClearCacheModalVisible] = useState(false);
+  const [clearingCache, setClearingCache] = useState(false);
 
   React.useEffect(() => {
     (async () => {
@@ -106,25 +111,34 @@ export default function Settings() {
     Toast.show({ type: "success", text1: t("currency") + " ✅" });
   };
 
-  const handleClearCache = async () => {
-    Alert.alert(t("clearCache"), "", [
-      { text: t("cancel"), style: "cancel" },
-      {
-        text: t("ok"),
-        onPress: async () => {
-          const keysToKeep = [
-            "appLanguage",
-            "currency",
-            "notificationsEnabled",
-            "darkModeEnabled",
-          ];
-          const allKeys = await AsyncStorage.getAllKeys();
-          const keysToRemove = allKeys.filter((k) => !keysToKeep.includes(k));
-          await AsyncStorage.multiRemove(keysToRemove);
-          Toast.show({ type: "success", text1: t("cacheCleared") });
-        },
-      },
-    ]);
+  // ← ouvre juste la popup
+  const handleClearCache = () => {
+    setClearCacheModalVisible(true);
+  };
+
+  // ← logique réelle de nettoyage du cache, appelée depuis la popup
+  const performClearCache = async () => {
+    setClearingCache(true);
+    try {
+      const keysToKeep = [
+        "appLanguage",
+        "currency",
+        "notificationsEnabled",
+        "darkModeEnabled",
+      ];
+      const allKeys = await AsyncStorage.getAllKeys();
+      const keysToRemove = allKeys.filter((k) => !keysToKeep.includes(k));
+      await AsyncStorage.multiRemove(keysToRemove);
+      Toast.show({ type: "success", text1: t("cacheCleared") });
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: t("error") ?? "Erreur",
+      });
+    } finally {
+      setClearingCache(false);
+      setClearCacheModalVisible(false);
+    }
   };
 
   const currentLanguageLabel =
@@ -509,6 +523,21 @@ export default function Settings() {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* ← Popup de confirmation "clear cache" */}
+      <ConfirmDeleteModal
+        visible={clearCacheModalVisible}
+        title={t("clearCache")}
+        message={
+          t("clearCacheConfirm") ??
+          "Cette action va effacer les données temporaires stockées sur cet appareil."
+        }
+        cancelText={t("cancel")}
+        confirmText={t("ok")}
+        onCancel={() => setClearCacheModalVisible(false)}
+        onConfirm={performClearCache}
+        loading={clearingCache}
+      />
     </SafeAreaView>
   );
 }

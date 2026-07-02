@@ -14,6 +14,7 @@ export default function Header({
   showMenu,
   showLogo,
   showCart,
+  rightAction, // ← AJOUT
 }: HeaderProps) {
   const router = useRouter();
   const { itemCount } = useCart();
@@ -75,6 +76,7 @@ export default function Header({
             </View>
           </TouchableOpacity>
         )}
+        {rightAction /* ← AJOUT */}
       </View>
     </View>
   );

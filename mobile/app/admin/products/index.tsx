@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   RefreshControl,
   Image,
-  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants";
@@ -16,16 +15,24 @@ import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import Toast from "react-native-toast-message";
 import { useLanguage } from "@/context/LanguageContext";
-import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
+import { useCurrency } from "@/context/CurrencyContext";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
 export default function AdminProducts() {
   const { getToken } = useAuth();
   const router = useRouter();
   const { t } = useLanguage();
-  const { formatPrice } = useCurrency(); // ← AJOUT
+  const { formatPrice } = useCurrency();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [products, setProducts] = useState([]);
+  const [deleting, setDeleting] = useState(false);
+
+  // ← état pour la popup custom
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const fetchProducts = async () => {
     try {
@@ -42,9 +49,9 @@ export default function AdminProducts() {
         text1: t("failedToFetchProducts"),
         text2: error.response?.data?.message || t("somethingWentWrong"),
       });
-    }finally{
-        setLoading(false)
-        setRefreshing(false)
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -58,41 +65,42 @@ export default function AdminProducts() {
   };
 
   const performDelete = async (id: string) => {
+    setDeleting(true);
     try {
-        const token = await getToken();
-         const {data } = await api.delete(`/products/${id}`,{headers:{
-                Authorization: `Bearer ${token}`},})
-          if(data.success){
-                Toast.show({
-                type: 'success',
-                text1: t("success"),
-                text2: t("productDeleted")
-            })
-         fetchProducts();
-        }
+      const token = await getToken();
+      const { data } = await api.delete(`/products/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (data.success) {
+        Toast.show({
+          type: "success",
+          text1: t("success"),
+          text2: t("productDeleted"),
+        });
+        fetchProducts();
+      }
     } catch (error: any) {
-         console.error("Failed to delete product :",error)
-           Toast.show({
-                type: 'error',
-                text1: t("failedToDeleteProduct"),
-                text2: error.response?.data?.message || t("somethingWentWrong")
-            })
+      console.error("Failed to delete product :", error);
+      Toast.show({
+        type: "error",
+        text1: t("failedToDeleteProduct"),
+        text2: error.response?.data?.message || t("somethingWentWrong"),
+      });
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
     }
   };
 
-  const deleteProduct = async (id: string) => {
-    Alert.alert(
-      t("deleteProductTitle"),
-      t("deleteProductConfirm"),
-      [
-        { text: t("cancel"), style: "cancel" as const },
-        {
-          text: t("delete"),
-          style: "destructive" as const,
-          onPress: () => performDelete(id),
-        },
-      ],
-    );
+  // ← ouvre juste la popup custom
+  const deleteProduct = (id: string, name: string) => {
+    setDeleteTarget({ id, name });
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteTarget) {
+      performDelete(deleteTarget.id);
+    }
   };
 
   if (loading && !refreshing) {
@@ -161,7 +169,6 @@ export default function AdminProducts() {
                 <Text className="text-secondary text-xs mb-1" numberOfLines={1}>
                   {t("sizes")} : {product.sizes.join(", ")}
                 </Text>
-                {/* ✅ FIX : prix formaté selon la devise active au lieu d'un "$" en dur */}
                 <Text className="text-primary font-bold">
                   {formatPrice(product.price)}
                 </Text>
@@ -177,7 +184,7 @@ export default function AdminProducts() {
                   <Ionicons name="create-outline" size={18} color="#333333" />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => deleteProduct(product._id)}
+                  onPress={() => deleteProduct(product._id, product.name)}
                   className="p-2 bg-gray-50 rounded-full"
                 >
                   <Ionicons name="trash-outline" size={18} color="#333333" />
@@ -187,6 +194,19 @@ export default function AdminProducts() {
           ))
         )}
       </ScrollView>
+
+      {/* ← Popup de confirmation custom */}
+      <ConfirmDeleteModal
+        visible={!!deleteTarget}
+        title={t("deleteProductTitle")}
+        message={t("deleteProductConfirm")}
+        itemName={deleteTarget?.name}
+        cancelText={t("cancel")}
+        confirmText={t("delete")}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        loading={deleting}
+      />
     </View>
   );
 }
