@@ -26,7 +26,12 @@ import { scheduleDailyReminder } from "./scripts/dailyReminder.js";
 const app = express();
 console.time("connectDB");
 
-await connectDB();
+try {
+    await connectDB();
+} catch (err) {
+    console.error("Échec critique de connexion à la base de données:", err);
+    process.exit(1);
+}
 console.timeEnd("connectDB");
 
 app.post('/api/clerk', express.raw({type: "application/json"}), clerkWebhook)
