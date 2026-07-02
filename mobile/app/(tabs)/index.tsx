@@ -47,6 +47,7 @@ export default function Home() {
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
+      console.timeEnd("fetchProducts");
       setLoading(false);
     }
   };

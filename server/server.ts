@@ -24,8 +24,10 @@ import PaymentRouter from "./routers/paymentRoute.js";
 import { scheduleDailyReminder } from "./scripts/dailyReminder.js"; 
 
 const app = express();
+console.time("connectDB");
 
 await connectDB();
+console.timeEnd("connectDB");
 
 app.post('/api/clerk', express.raw({type: "application/json"}), clerkWebhook)
 
@@ -56,6 +58,7 @@ app.use("/api/payments", PaymentRouter);
 app.use("/api/notifications", NotificationRouter); 
 
 await makeAdmin();
+
 await backfillOrderItemNames();
 
  //await seedProducts()
