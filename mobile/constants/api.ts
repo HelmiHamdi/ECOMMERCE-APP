@@ -52,7 +52,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Intercepteur RESPONSE — met en cache les GET (sauf ressources exclues)
+
 api.interceptors.response.use((response) => {
   const resource = getResource(response.config.url || "");
   const isExcluded = NO_CACHE_RESOURCES.includes(resource);
@@ -65,13 +65,13 @@ api.interceptors.response.use((response) => {
   return response;
 });
 
-// Vider le cache après une mutation (POST/PUT/DELETE)
+
 api.interceptors.response.use((response) => {
   const method = response.config.method?.toLowerCase();
   if (method === "post" || method === "put" || method === "delete") {
-    // Vide les entrées du cache qui concernent la même ressource
+
     const url = response.config.url || "";
-    const resource = url.replace(/^\//, "").split("/")[0]; // ex: "products", "orders"
+    const resource = url.replace(/^\//, "").split("/")[0]; 
     cache.forEach((_, key) => {
       if (key.includes(resource)) cache.delete(key);
     });
