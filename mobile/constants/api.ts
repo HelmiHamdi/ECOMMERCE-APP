@@ -13,17 +13,17 @@ const LOCAL_API_URL = Platform.select({
     default:"http://localhost:3000/api"
 })
 
-// Ressources qui ne doivent JAMAIS passer par le cache client,
+
 // même en GET — typiquement les données de session utilisateur
 // qui doivent toujours refléter l'état serveur le plus récent.
 const NO_CACHE_RESOURCES = ["users"];
 
-// Cache en mémoire
+
 const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 20 * 60 * 1000; // 5 minutes
 
 const api = axios.create({
-  baseURL:LOCAL_API_URL,
+  baseURL:"https://shop-mobile-server.vercel.app/api",
   timeout: 10000,
 });
 
