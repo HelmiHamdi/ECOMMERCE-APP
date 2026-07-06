@@ -3,11 +3,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export type Currency = "USD" | "EUR" | "TND";
 
-// ✅ Exporté pour être utilisé dans downloadInvoice
+
 export const RATES_FROM_TND: Record<Currency, number> = {
   TND: 1,
-  USD: 0.32,  // 1 TND ≈ 0.32 USD
-  EUR: 0.30,  // 1 TND ≈ 0.30 EUR
+  USD: 0.32,  
+  EUR: 0.30, 
 };
 
 export const SYMBOLS: Record<Currency, string> = {
@@ -42,7 +42,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.setItem("currency", c);
   };
 
-  // ✅ Convertit TND → devise active et formate avec le bon symbole
+
   const formatPrice = (priceInTND: number): string => {
     const converted = priceInTND * RATES_FROM_TND[currency];
     return `${converted.toFixed(2)} ${SYMBOLS[currency]}`;

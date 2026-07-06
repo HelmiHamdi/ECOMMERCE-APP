@@ -391,5 +391,31 @@
   "bannerUpdated": "Bannière modifiée avec succès",
   "failedToUpdateBanner": "Échec de la modification de la bannière",
   "bannerDeleted": "Bannière supprimée avec succès",
-  "failedToDeleteBanner": "Échec de la suppression de la bannière"
+  "failedToDeleteBanner": "Échec de la suppression de la bannière",
+   "deleteNotification": "Supprimer la notification",
+  "deleteNotificationConfirm": "Cette notification sera supprimée définitivement.",
+  "clearAll": "Effacer tout",
+  "clearAllConfirm": "Toutes tes notifications seront supprimées définitivement. Cette action est irréversible.",
+  "allCaughtUp": "Tout est lu",
+    "admin": "Admin",
+  "viewUsers": "Voir les Utilisateurs",
+  "searchUsers": "Rechercher un nom, un email...",
+  "noUsersFound": "Aucun utilisateur trouvé",
+  "roleAll": "Tous",
+  "roleUsers": "Clients",
+  "roleAdmins": "Admins",
+  "wishlistItem": "article en liste de souhaits",
+  "wishlistItems": "articles en liste de souhaits",
+
+  "options": "Filtres",
+   "emailCannotBeChanged": "Votre email ne peut pas être modifié",
+  "invalidEmail": "Email invalide",
+  "invalidEmailHint": "Vérifie le format de ton adresse email",
+  "subscribed": "Inscription réussie",
+  "subscribedHint": "Merci de rejoindre notre newsletter !",
+  "alreadySubscribed": "Déjà inscrit",
+  "alreadySubscribedHint": "Cet email est déjà abonné",
+  "thankYou": "Merci !",
+  "emailPlaceholder": "ton@email.com", "seeProfile": "Voir le profil"
+
 }

@@ -18,7 +18,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const { getToken, isSignedIn } = useAuth();
 
-  // ✅ Stabiliser getToken via une ref pour éviter les re-renders
+ 
   const getTokenRef = useRef(getToken);
   useEffect(() => {
     getTokenRef.current = getToken;
@@ -43,9 +43,9 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [isSignedIn]); // ✅ getToken retiré des dépendances
+  }, [isSignedIn]); 
 
-  // ✅ Ne se déclenche que quand isSignedIn change vraiment
+
   useEffect(() => {
     fetchWishlist();
   }, [fetchWishlist]);
@@ -53,7 +53,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   const toggleWishlist = useCallback(async (product: Product) => {
     if (!isSignedIn) return;
 
-    // Optimistic update
+   
     setWishlist((prev) => {
       const exists = prev.some((item) => item._id === product._id);
       return exists
@@ -69,7 +69,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // ✅ Rollback corrigé : inverser l'état optimiste si échec
+      
       if (!data.success) {
         setWishlist((prev) => {
           const exists = prev.some((item) => item._id === product._id);
@@ -80,7 +80,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error("Failed to toggle wishlist:", error);
-      // ✅ Resync depuis le serveur en cas d'erreur réseau
+     
       await fetchWishlist();
     }
   }, [isSignedIn, fetchWishlist]);

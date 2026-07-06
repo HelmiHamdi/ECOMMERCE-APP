@@ -36,11 +36,11 @@ export default function ChatBot() {
   const [loading, setLoading] = useState(false);
   const listRef = useRef<FlatList>(null);
 
-  // Animation values
+ 
   const slideAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  // Pulse continu sur la bulle flottante
+ 
   useEffect(() => {
     const pulse = Animated.loop(
       Animated.sequence([
@@ -137,7 +137,7 @@ export default function ChatBot() {
 
   return (
     <>
-      {/* Floating Button (pulse animation) */}
+     
       <Animated.View
         style={{
           position: "absolute",
@@ -158,7 +158,7 @@ export default function ChatBot() {
         </TouchableOpacity>
       </Animated.View>
 
-      {/* Chat Modal */}
+     
       <Modal visible={visible} animationType="none" transparent onRequestClose={closeChat}>
         <Animated.View
           style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.3)", opacity: overlayOpacity }}
@@ -180,18 +180,18 @@ export default function ChatBot() {
             transform: [{ translateY }],
           }}
         >
-          {/* ✅ FIX 1: behavior="height" على Android + style={{ flex: 1 }} بدل className flex-1 */}
+         
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             className="bg-white rounded-t-3xl"
             style={{ flex: 1, elevation: 10 }}
           >
-            {/* Drag handle */}
+        
             <View className="items-center pt-3 pb-1">
               <View className="w-10 h-1.5 bg-gray-200 rounded-full" />
             </View>
 
-            {/* Header */}
+         
             <View className="flex-row items-center justify-between px-4 py-3 border-b border-gray-100">
               <View className="flex-row items-center">
                 <View className="w-9 h-9 bg-primary/10 rounded-full items-center justify-center mr-3">
@@ -209,7 +209,7 @@ export default function ChatBot() {
               </TouchableOpacity>
             </View>
 
-            {/* Messages */}
+          
             <FlatList
               ref={listRef}
               data={messages}
@@ -241,7 +241,7 @@ export default function ChatBot() {
               </View>
             )}
 
-            {/* ✅ FIX 2: paddingBottom على Android لضمان ما يتخبّاش الـ input */}
+            
             <View
               className="flex-row items-center px-4 py-3 border-t border-gray-100 mb-14"
               style={{ paddingBottom: Platform.OS === "android" ? 12 : 0 }}

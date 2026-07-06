@@ -1,4 +1,4 @@
-// app/checkout.tsx — version complète avec Stripe + Currency
+
 import { View, Text, ActivityIndicator, TouchableOpacity } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
@@ -23,7 +23,7 @@ export default function Checkout() {
   const router = useRouter();
   const { t } = useLanguage();
   const { initializePayment, presentPayment } = useStripePayment();
-  const { formatPrice } = useCurrency(); // ← AJOUT
+  const { formatPrice } = useCurrency(); 
 
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
@@ -54,7 +54,7 @@ export default function Checkout() {
 
   useEffect(() => { fetchAddress(); }, []);
 
-  // ─── Paiement Cash ────────────────────────────────────────────────────────
+
   const handleCashOrder = async () => {
     const token = await getToken();
     const { data } = await api.post(
@@ -69,16 +69,16 @@ export default function Checkout() {
     }
   };
 
-  // ─── Paiement Stripe ──────────────────────────────────────────────────────
+
   const handleStripeOrder = async () => {
-    // Étape 1 : créer le PaymentIntent
+  
     const { paymentIntentId } = await initializePayment();
 
-    // Étape 2 : ouvrir la feuille de paiement Stripe
+   
     const result = await presentPayment();
-    if (result.canceled) return; // user a annulé
+    if (result.canceled) return;
 
-    // Étape 3 : créer la commande avec paymentIntentId confirmé
+
     const token = await getToken();
     const { data } = await api.post(
       "/orders",
@@ -98,7 +98,7 @@ export default function Checkout() {
     }
   };
 
-  // ─── Handler principal ────────────────────────────────────────────────────
+ 
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
       return Toast.show({ type: "error", text1: t("error"), text2: t("pleaseAddShippingAddress") });
@@ -133,7 +133,7 @@ export default function Checkout() {
     <SafeAreaView className="flex-1 bg-surface" edges={["top"]}>
       <Header title={t("checkout")} showBack />
       <ScrollView className="flex-1 px-4 mt-4">
-        {/* Adresse */}
+       
         <Text className="text-lg font-bold text-primary mb-4">{t("shippingAddressTitle")}</Text>
         {selectedAddress ? (
           <View className="bg-white p-4 rounded-xl mb-6 shadow-sm">
@@ -158,10 +158,10 @@ export default function Checkout() {
           </TouchableOpacity>
         )}
 
-        {/* Méthode de paiement */}
+       
         <Text className="text-lg font-bold text-primary mb-4">{t("paymentMethod")}</Text>
 
-        {/* Cash */}
+       
         <TouchableOpacity
           onPress={() => setPaymentMethod("cash")}
           className={`bg-white p-4 rounded-xl mb-4 shadow-sm flex-row items-center border-2 ${paymentMethod === "cash" ? "border-primary" : "border-transparent"}`}
@@ -176,7 +176,7 @@ export default function Checkout() {
           )}
         </TouchableOpacity>
 
-        {/* Carte Stripe */}
+        
         <TouchableOpacity
           onPress={() => setPaymentMethod("stripe")}
           className={`bg-white p-4 rounded-xl mb-4 shadow-sm flex-row items-center border-2 ${paymentMethod === "stripe" ? "border-primary" : "border-transparent"}`}
@@ -185,7 +185,7 @@ export default function Checkout() {
           <View className="ml-3 flex-1">
             <Text className="text-base font-bold text-primary">{t("payWithCard")}</Text>
             <Text className="text-secondary text-xs mt-1">{t("creditOrDebitCard")}</Text>
-            {/* Badge cartes acceptées */}
+            
             <View className="flex-row mt-2 gap-1">
               {["VISA", "MC", "AMEX"].map((brand) => (
                 <View key={brand} className="bg-gray-100 px-2 py-0.5 rounded">
@@ -200,7 +200,7 @@ export default function Checkout() {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Résumé commande */}
+      
       <View className="p-4 pb-14 bg-white shadow-lg border-t border-gray-100">
         <Text className="text-lg font-bold text-primary mb-4">{t("orderSummary")}</Text>
         <View className="flex-row justify-between mb-2">

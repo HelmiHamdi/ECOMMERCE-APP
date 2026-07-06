@@ -13,12 +13,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import Toast from "react-native-toast-message"; // ✅ AJOUT
+import Toast from "react-native-toast-message"; 
 import Header from "@/components/Header";
 import api from "@/constants/api";
 import { useAuth } from "@clerk/clerk-expo";
 import { useLanguage } from "@/context/LanguageContext";
-import { COLORS } from "@/constants";
+
 
 export default function AddBanner() {
   const router = useRouter();

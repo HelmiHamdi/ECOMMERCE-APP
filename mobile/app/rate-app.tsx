@@ -41,7 +41,7 @@ export default function RateAppScreen() {
   const [loading, setLoading] = useState(false);
   const [loadingExisting, setLoadingExisting] = useState(true);
 
-  // Charger le rating existant de l'utilisateur (si déjà noté)
+ 
   useEffect(() => {
     (async () => {
       try {
@@ -54,7 +54,7 @@ export default function RateAppScreen() {
           setReview(res.data.data.review ?? "");
         }
       } catch {
-        // pas de rating existant — normal
+      
       } finally {
         setLoadingExisting(false);
       }
@@ -93,7 +93,7 @@ export default function RateAppScreen() {
 
       setSubmitted(true);
 
-      // Si 4 ou 5 étoiles → rediriger vers le store
+      
       if (selectedStars >= 4) {
         setTimeout(() => {
           const url =
@@ -151,7 +151,7 @@ export default function RateAppScreen() {
             <Ionicons name="checkmark-circle" size={56} color="#22c55e" />
           </View>
           <Text className="text-2xl font-bold text-primary mb-3 text-center">
-            {t("rateThanksTitle") ?? "Thank you! 🎉"}
+            {t("rateThanksTitle") ?? "Thank you! "}
           </Text>
           <Text className="text-secondary text-center text-sm leading-6 mb-8">
             {selectedStars >= 4
@@ -203,7 +203,7 @@ export default function RateAppScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Hero */}
+      
         <View className="items-center mb-10">
           <View
             className="w-24 h-24 rounded-3xl items-center justify-center mb-5 shadow-sm"
@@ -220,7 +220,7 @@ export default function RateAppScreen() {
           </Text>
         </View>
 
-        {/* Stars */}
+      
         <View className="items-center mb-4">
           <View className="flex-row gap-3 mb-3">
             {[1, 2, 3, 4, 5].map((star) => (
@@ -259,7 +259,7 @@ export default function RateAppScreen() {
 
         <View className="border-t border-gray-100 my-6" />
 
-        {/* Review */}
+        
         <View className="mb-6">
           <Text className="text-primary font-medium mb-2">
             {t("rateReviewLabel") ?? "Write a review (optional)"}
@@ -282,7 +282,7 @@ export default function RateAppScreen() {
           </Text>
         </View>
 
-        {/* Quick chips */}
+      
         {selectedStars > 0 && (
           <View className="mb-6">
             <Text className="text-primary font-medium mb-3">
@@ -347,7 +347,7 @@ export default function RateAppScreen() {
           </View>
         )}
 
-        {/* Submit */}
+        
         <TouchableOpacity
           className="w-full py-4 rounded-full items-center mb-10"
           style={{

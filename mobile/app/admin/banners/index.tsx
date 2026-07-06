@@ -14,13 +14,13 @@ import Header from "@/components/Header";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import api from "@/constants/api";
 import { Banner } from "@/constants/types";
-import { useAuth } from "@clerk/clerk-expo"; // ✅ AJOUT
+import { useAuth } from "@clerk/clerk-expo"; 
 import { useLanguage } from "@/context/LanguageContext";
 import { COLORS } from "@/constants";
 
 export default function AdminBannersIndex() {
   const router = useRouter();
-  const { getToken } = useAuth(); // ✅ AJOUT
+  const { getToken } = useAuth(); 
   const { t } = useLanguage();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,9 +31,9 @@ export default function AdminBannersIndex() {
   const fetchBanners = async () => {
     try {
       setLoading(true);
-      const token = await getToken(); // ✅ AJOUT
+      const token = await getToken();
       const { data } = await api.get("banners/all", {
-        headers: { Authorization: `Bearer ${token}` }, // ✅ AJOUT
+        headers: { Authorization: `Bearer ${token}` }, 
       });
       setBanners(data.data);
     } catch (error) {
@@ -43,7 +43,7 @@ export default function AdminBannersIndex() {
     }
   };
 
-  // Recharge à chaque retour sur cet écran (après add/edit)
+
   useFocusEffect(
     useCallback(() => {
       fetchBanners();
@@ -54,9 +54,9 @@ export default function AdminBannersIndex() {
     if (!deleteTarget) return;
     try {
       setDeleting(true);
-      const token = await getToken(); // ✅ AJOUT
+      const token = await getToken(); 
       await api.delete(`banners/${deleteTarget._id}`, {
-        headers: { Authorization: `Bearer ${token}` }, // ✅ AJOUT
+        headers: { Authorization: `Bearer ${token}` },
       });
       setBanners((prev) => prev.filter((b) => b._id !== deleteTarget._id));
       setDeleteTarget(null);

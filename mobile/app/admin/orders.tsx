@@ -16,17 +16,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
-import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
+import { useCurrency } from "@/context/CurrencyContext"; 
 
 export default function AdminOrders() {
   const { getToken } = useAuth();
   const { t } = useLanguage();
-  const { formatPrice } = useCurrency(); // ← AJOUT
+  const { formatPrice } = useCurrency(); 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [orders, setOrders] = useState([]);
 
-  // Status Modal State
+  
   const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [updating, setUpdating] = useState(false);
@@ -202,7 +202,7 @@ export default function AdminOrders() {
                         </Text>
                       )}
                     </Text>
-                    {/* ✅ FIX : prix unitaire formaté selon la devise active */}
+                
                     <Text className="text-secondary text-xs font-bold">
                       {formatPrice(item.price)}
                     </Text>
@@ -211,7 +211,7 @@ export default function AdminOrders() {
               </View>
 
               <View className="flex-row justify-between items-center mt-2 pt-3 border-t border-gray-100">
-                {/* ✅ FIX : total formaté selon la devise active */}
+              
                 <Text className="text-primary font-bold text-lg">
                   {formatPrice(order.totalAmount)}
                 </Text>
@@ -236,7 +236,7 @@ export default function AdminOrders() {
         )}
       </ScrollView>
 
-      {/* STATUS MODAL */}
+     
       <Modal visible={statusModalVisible} animationType="fade" transparent>
         <TouchableWithoutFeedback onPress={() => setStatusModalVisible(false)}>
           <View className="flex-1 justify-end bg-black/50">

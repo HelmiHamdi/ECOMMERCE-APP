@@ -6,13 +6,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants";
 import { useWishlist } from "@/context/WishlistContext";
 import { useLanguage } from "@/context/LanguageContext";
-import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
+import { useCurrency } from "@/context/CurrencyContext"; 
 
 export default function ProductCard({ product }: ProductCardProps) {
   const {toggleWishlist,isInWishlist} = useWishlist();
   const { t } = useLanguage();
-  const { formatPrice } = useCurrency(); // ← AJOUT
-  const isLiked = isInWishlist(product._id); // This should come from your state or props
+  const { formatPrice } = useCurrency(); 
+  const isLiked = isInWishlist(product._id); 
 
   return (
     <Link href={`/product/${product._id}`} asChild>

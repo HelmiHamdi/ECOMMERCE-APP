@@ -22,6 +22,7 @@ import { cacheMiddleware } from "./middleware/cache.js";
 import compression from "compression";
 import PaymentRouter from "./routers/paymentRoute.js";
 import { scheduleDailyReminder } from "./scripts/dailyReminder.js"; 
+import NewsletterRouter from "./routers/newsletterRoutes.js";
 
 const app = express();
 console.time("connectDB");
@@ -61,7 +62,7 @@ app.use("/api/ratings", RatingRouter);
 app.use("/api/banners", BannerRouter);
 app.use("/api/payments", PaymentRouter);
 app.use("/api/notifications", NotificationRouter); 
-
+app.use("/api/newsletter", NewsletterRouter);
 await makeAdmin();
 
 await backfillOrderItemNames();

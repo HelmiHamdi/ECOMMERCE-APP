@@ -14,7 +14,10 @@ export default function Header({
   showMenu,
   showLogo,
   showCart,
-  rightAction, // ← AJOUT
+  rightAction, 
+  
+  onMenuPress, 
+  
 }: HeaderProps) {
   const router = useRouter();
   const { itemCount } = useCart();
@@ -22,7 +25,7 @@ export default function Header({
 
   return (
     <View className="flex-row items-center justify-between px-4 py-3 bg-white">
-      {/* Gauche */}
+    
       <View className="flex-row items-center flex-1">
         {showBack && (
           <TouchableOpacity onPress={() => router.back()} className="mr-3">
@@ -31,7 +34,10 @@ export default function Header({
         )}
 
         {showMenu && (
-          <TouchableOpacity className="mr-3">
+          <TouchableOpacity  className="mr-3"
+            onPress={onMenuPress}
+            accessibilityLabel={t("menu") ?? "Menu"}
+            hitSlop={8}>
             <Ionicons name="menu-outline" size={28} color={COLORS.primary} />
           </TouchableOpacity>
         )}
@@ -51,7 +57,7 @@ export default function Header({
         ) : null}
       </View>
 
-      {/* Droite */}
+     
       <View className="flex-row items-center gap-4">
         {showSearch && (
           <TouchableOpacity accessibilityLabel={t("search")}>
@@ -76,7 +82,7 @@ export default function Header({
             </View>
           </TouchableOpacity>
         )}
-        {rightAction /* ← AJOUT */}
+        {rightAction}
       </View>
     </View>
   );

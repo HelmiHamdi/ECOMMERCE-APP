@@ -50,7 +50,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     await AsyncStorage.setItem(STORAGE_KEY, lang);
   };
 
-  // ✅ t dépend de `language` → nouvelle référence à chaque changement
+  
   const t = useCallback(
     (key: string, options?: object) => i18n.t(key, options),
     [language]

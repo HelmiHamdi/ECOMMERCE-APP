@@ -1,0 +1,27 @@
+import mongoose, { Schema } from "mongoose";
+import { INewsletter } from "../types/index.js";
+
+
+
+const newsletterSchema = new Schema<INewsletter>(
+  {
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    subscribedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    active: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  { timestamps: true }
+);
+
+export default mongoose.model<INewsletter>("Newsletter", newsletterSchema);

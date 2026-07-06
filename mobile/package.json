@@ -11,12 +11,13 @@
     "lint": "expo lint"
   },
   "optionalDependencies": {
-  "lightningcss-linux-x64-gnu": "1.x"
-},
+    "lightningcss-linux-x64-gnu": "1.x"
+  },
   "dependencies": {
     "@clerk/clerk-expo": "^2.19.31",
     "@clerk/expo": "^3.4.0",
     "@expo/vector-icons": "^15.0.3",
+    "@ptomasroos/react-native-multi-slider": "^2.2.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
@@ -26,6 +27,7 @@
     "babel-preset-expo": "~54.0.10",
     "expo": "~54.0.34",
     "expo-auth-session": "~7.0.11",
+    "expo-blur": "~15.0.8",
     "expo-constants": "~18.0.13",
     "expo-crypto": "~15.0.9",
     "expo-dev-client": "~6.0.21",
@@ -36,7 +38,6 @@
     "expo-haptics": "~15.0.8",
     "expo-image": "~3.0.11",
     "expo-image-picker": "~17.0.11",
-    "expo-linear-gradient": "~15.0.8",
     "expo-linking": "~8.0.12",
     "expo-localization": "~17.0.9",
     "expo-media-library": "~18.2.1",

@@ -97,3 +97,54 @@ export const markAllNotificationsRead = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// DELETE /api/notifications/:id  → supprimer une seule notification
+export const deleteNotification = async (req: Request, res: Response) => {
+  try {
+    const { userId } = await req.auth();
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Not authorized" });
+    }
+
+    const user = await User.findOne({ clerkId: userId });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const notification = await Notification.findOneAndDelete({
+      _id: req.params.id,
+      user: user._id,
+    });
+
+    if (!notification) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Notification not found" });
+    }
+
+    res.json({ success: true, message: "Notification deleted" });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// DELETE /api/notifications/clear-all  → supprimer toutes les notifications de l'utilisateur
+export const clearAllNotifications = async (req: Request, res: Response) => {
+  try {
+    const { userId } = await req.auth();
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Not authorized" });
+    }
+
+    const user = await User.findOne({ clerkId: userId });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    await Notification.deleteMany({ user: user._id });
+
+    res.json({ success: true, message: "All notifications cleared" });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

@@ -1,37 +1,23 @@
 import React, { useEffect, useRef } from "react";
-import {
-  Text,
-  TouchableOpacity,
-  View,
-  Modal,
-  Animated,
-  Pressable,
-} from "react-native";
+import { Text, TouchableOpacity, View, Modal, Animated, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { COLORS } from "@/constants";
 
-interface ConfirmDeleteModalProps {
+interface RestartRequiredModalProps {
   visible: boolean;
   title: string;
   message: string;
-  itemName?: string;
-  cancelText: string;
   confirmText: string;
-  onCancel: () => void;
   onConfirm: () => void;
-  loading?: boolean;
 }
 
-export default function ConfirmDeleteModal({
+export default function RestartRequiredModal({
   visible,
   title,
   message,
-  itemName,
-  cancelText,
   confirmText,
-  onCancel,
   onConfirm,
-  loading = false,
-}: ConfirmDeleteModalProps) {
+}: RestartRequiredModalProps) {
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -62,10 +48,9 @@ export default function ConfirmDeleteModal({
       transparent
       animationType="fade"
       statusBarTranslucent
-      onRequestClose={onCancel}
+      onRequestClose={onConfirm}
     >
       <Pressable
-        onPress={onCancel}
         style={{
           flex: 1,
           backgroundColor: "rgba(0,0,0,0.55)",
@@ -81,7 +66,6 @@ export default function ConfirmDeleteModal({
             width: "100%",
           }}
         >
-         
           <Pressable
             onPress={(e) => e.stopPropagation()}
             className="bg-white rounded-3xl p-6 items-center"
@@ -96,58 +80,28 @@ export default function ConfirmDeleteModal({
           
             <View
               className="w-16 h-16 rounded-full items-center justify-center mb-4"
-              style={{ backgroundColor: "#FEE2E2" }}
+              style={{ backgroundColor: `${COLORS.primary}1A` }}
             >
-              <Ionicons name="trash-outline" size={30} color="#DC2626" />
+              <Ionicons name="refresh-outline" size={30} color={COLORS.primary} />
             </View>
 
             <Text className="text-lg font-bold text-primary text-center mb-1">
               {title}
             </Text>
 
-            <Text className="text-sm text-secondary text-center mb-1">
+            <Text className="text-sm text-secondary text-center mb-5">
               {message}
             </Text>
 
-            {itemName ? (
-              <Text
-                className="text-sm font-semibold text-primary text-center mb-5"
-                numberOfLines={1}
-              >
-               &quot;{itemName}&quot;
-              </Text>
-            ) : (
-              <View className="mb-5" />
-            )}
-
-            {/* Boutons */}
-            <View className="flex-row w-full" style={{ gap: 10 }}>
-              <TouchableOpacity
-                onPress={onCancel}
-                disabled={loading}
-                className="flex-1 py-3 rounded-2xl items-center bg-gray-100"
-                activeOpacity={0.7}
-              >
-                <Text className="font-semibold text-primary">
-                  {cancelText}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={onConfirm}
-                disabled={loading}
-                className="flex-1 py-3 rounded-2xl items-center"
-                style={{
-                  backgroundColor: "#DC2626",
-                  opacity: loading ? 0.6 : 1,
-                }}
-                activeOpacity={0.85}
-              >
-                <Text className="font-semibold text-white">
-                  {loading ? "..." : confirmText}
-                </Text>
-              </TouchableOpacity>
-            </View>
+        
+            <TouchableOpacity
+              onPress={onConfirm}
+              className="w-full py-3 rounded-2xl items-center"
+              style={{ backgroundColor: COLORS.primary }}
+              activeOpacity={0.85}
+            >
+              <Text className="font-semibold text-white">{confirmText}</Text>
+            </TouchableOpacity>
           </Pressable>
         </Animated.View>
       </Pressable>

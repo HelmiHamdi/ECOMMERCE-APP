@@ -4,7 +4,8 @@ import { CartItemProps } from "@/constants/types";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants";
 import { useLanguage } from "@/context/LanguageContext";
-import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
+import { useCurrency } from "@/context/CurrencyContext"; 
+
 
 export default function CartItem({
   item,
@@ -12,7 +13,8 @@ export default function CartItem({
   onUpdateQuantity,
 }: CartItemProps) {
   const { t } = useLanguage();
-  const { formatPrice } = useCurrency(); // ← AJOUT
+  const { formatPrice } = useCurrency(); 
+  
   const imageUrl = item.product.images[0];
   return (
     <View className="flex-row mb-4 bg-white p-3 rounded-xl overflow-hidden mr-3">

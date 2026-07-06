@@ -10,7 +10,7 @@ import { formatDate } from "@/assets/assets";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
-import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
+import { useCurrency } from "@/context/CurrencyContext"; 
 
 export default function Orders() {
     const router = useRouter();
@@ -18,7 +18,7 @@ export default function Orders() {
     const [loading, setLoading] = useState(true);
     const {getToken} = useAuth()
     const { t } = useLanguage();
-    const { formatPrice } = useCurrency(); // ← AJOUT
+    const { formatPrice } = useCurrency(); 
 
     const fetchOrders = async () => {
         try {
@@ -96,7 +96,6 @@ export default function Orders() {
                                 <Text className="text-secondary text-sm">{formatDate(item.createdAt)}</Text>
                             </View>
 
-                            {/* Status Badges */}
                             <View className="flex-row gap-2 mb-3">
                                 <View className={`px-2 py-1 rounded-full ${getStatusColor(item.orderStatus)}`}>
                                     <Text className={`text-xs font-bold`}>
@@ -117,7 +116,7 @@ export default function Orders() {
                                 <Text className="text-secondary text-xs">{t("paymentMethod")}: <Text className="text-primary font-medium">{getPaymentMethodLabel(item.paymentMethod)}</Text></Text>
                             </View>
 
-                            {/* Product Images */}
+                           
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">
                                 {item.items.map((prod: any, idx) => {
                                     const image = prod.product?.images?.[0];
@@ -141,7 +140,7 @@ export default function Orders() {
 
                             <View className="flex-row justify-between items-center mt-2 pt-3 border-t border-gray-100">
                                 <Text className="text-secondary">{t("itemsLabel")}: {item.items.length}</Text>
-                                {/* ✅ FIX : montant formaté selon la devise active */}
+                              
                                 <Text className="text-primary font-bold text-lg">{formatPrice(item.totalAmount)}</Text>
                             </View>
                         </TouchableOpacity>

@@ -29,7 +29,7 @@ export default function MyReviewScreen() {
   const [deleting, setDeleting] = useState(false);
   const [hasExisting, setHasExisting] = useState(false);
 
-  // ← état pour la popup de suppression
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const loadRating = useCallback(async () => {
@@ -100,12 +100,12 @@ export default function MyReviewScreen() {
     }
   };
 
-  // ← ouvre juste la popup
+
   const onDelete = () => {
     setShowDeleteModal(true);
   };
 
-  // ← logique de suppression réelle, appelée depuis la popup
+  
   const performDelete = async () => {
     setDeleting(true);
     try {
@@ -145,7 +145,7 @@ export default function MyReviewScreen() {
       <Header title={t("myReviews")} showBack />
 
       <ScrollView className="flex-1 px-4 pt-6" showsVerticalScrollIndicator={false}>
-        {/* Hero */}
+      
         <View className="bg-primary/5 border border-primary/10 rounded-2xl p-5 mb-6 items-center">
           <View className="w-14 h-14 rounded-full bg-primary/10 items-center justify-center mb-3">
             <Ionicons name="star-outline" size={26} color={COLORS.primary} />
@@ -158,7 +158,7 @@ export default function MyReviewScreen() {
           </Text>
         </View>
 
-        {/* Stars */}
+      
         <View className="bg-white rounded-xl border border-gray-100 p-5 mb-4">
           <Text className="text-primary font-medium mb-3">{t("yourRating")}</Text>
           <View className="flex-row justify-center mb-2">
@@ -174,7 +174,7 @@ export default function MyReviewScreen() {
           </View>
         </View>
 
-        {/* Review text */}
+        
         <View className="bg-white rounded-xl border border-gray-100 p-5 mb-6">
           <Text className="text-primary font-medium mb-3">{t("yourComment")}</Text>
           <TextInput
@@ -193,7 +193,7 @@ export default function MyReviewScreen() {
           </Text>
         </View>
 
-        {/* Submit */}
+      
         <TouchableOpacity
           className={`w-full py-4 rounded-full items-center mb-4 ${
             saving || stars < 1 ? "bg-gray-300" : "bg-primary"
@@ -210,7 +210,7 @@ export default function MyReviewScreen() {
           )}
         </TouchableOpacity>
 
-        {/* Delete — visible only if a review exists */}
+      
         {hasExisting && (
           <TouchableOpacity
             className="w-full py-4 rounded-full items-center mb-10 border border-red-200"
@@ -228,7 +228,7 @@ export default function MyReviewScreen() {
         {!hasExisting && <View className="h-6" />}
       </ScrollView>
 
-      {/* ← Popup de confirmation custom */}
+      
       <ConfirmDeleteModal
         visible={showDeleteModal}
         title={t("deleteReviewTitle")}

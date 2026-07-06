@@ -4,10 +4,8 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Modal,
   Switch,
   Linking,
-  Alert,
   I18nManager,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,6 +20,9 @@ import Toast from "react-native-toast-message";
 import { useRouter } from "expo-router";
 import { useNotifications } from "@/context/NotificationContext";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
+import RestartRequiredModal from "@/components/RestartRequiredModal";
+import CurrencyModal from "@/components/CurrencyModal";
+import LanguageModal from "@/components/LanguageModal";
 
 const LANGUAGES: { code: Language; nameKey: string; flag: string }[] = [
   { code: "en", nameKey: "english", flag: "🇬🇧" },
@@ -42,9 +43,13 @@ export default function Settings() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
 
-  // ← état pour la popup de confirmation "clear cache"
+  
   const [clearCacheModalVisible, setClearCacheModalVisible] = useState(false);
   const [clearingCache, setClearingCache] = useState(false);
+
+ 
+  const [restartModalVisible, setRestartModalVisible] = useState(false);
+  const [pendingRTL, setPendingRTL] = useState<boolean | null>(null);
 
   React.useEffect(() => {
     (async () => {
@@ -96,13 +101,22 @@ export default function Settings() {
     setLanguageModalVisible(false);
     const willBeRTL = lang === "ar";
     if (wasRTL !== willBeRTL) {
-      I18nManager.forceRTL(willBeRTL);
-      Alert.alert(t("restartRequired"), t("restartMessage"), [
-        { text: t("ok") },
-      ]);
+     
+      setPendingRTL(willBeRTL);
+      setRestartModalVisible(true);
     } else {
       Toast.show({ type: "success", text1: t("language") + " ✅" });
     }
+  };
+
+
+  const confirmRestart = () => {
+    if (pendingRTL !== null) {
+      I18nManager.forceRTL(pendingRTL);
+    }
+    setRestartModalVisible(false);
+    setPendingRTL(null);
+
   };
 
   const handleSelectCurrency = async (curr: string) => {
@@ -111,12 +125,12 @@ export default function Settings() {
     Toast.show({ type: "success", text1: t("currency") + " ✅" });
   };
 
-  // ← ouvre juste la popup
+
   const handleClearCache = () => {
     setClearCacheModalVisible(true);
   };
 
-  // ← logique réelle de nettoyage du cache, appelée depuis la popup
+ 
   const performClearCache = async () => {
     setClearingCache(true);
     try {
@@ -152,12 +166,12 @@ export default function Settings() {
         className="flex-1 px-4 pt-4"
         showsVerticalScrollIndicator={false}
       >
-        {/* GENERAL */}
+      
         <Text className="text-secondary text-xs font-bold uppercase mb-2 ml-1">
           {t("general")}
         </Text>
         <View className="bg-white rounded-xl border border-gray-100 mb-6">
-          {/* Language */}
+         
           <TouchableOpacity
             className="flex-row items-center p-4 border-b border-gray-100"
             onPress={() => setLanguageModalVisible(true)}
@@ -178,7 +192,7 @@ export default function Settings() {
             />
           </TouchableOpacity>
 
-          {/* Currency */}
+          
           <TouchableOpacity
             className="flex-row items-center p-4 border-b border-gray-100"
             onPress={() => setCurrencyModalVisible(true)}
@@ -197,7 +211,7 @@ export default function Settings() {
             />
           </TouchableOpacity>
 
-          {/* Notifications */}
+         
           <View className="flex-row items-center p-4 border-b border-gray-100">
             <TouchableOpacity
               className="flex-row items-center flex-1"
@@ -238,7 +252,6 @@ export default function Settings() {
           </View>
         </View>
 
-        {/* ACCOUNT */}
         <Text className="text-secondary text-xs font-bold uppercase mb-2 ml-1">
           {t("account")}
         </Text>
@@ -286,7 +299,7 @@ export default function Settings() {
           </TouchableOpacity>
         </View>
 
-        {/* SUPPORT */}
+       
         <Text className="text-secondary text-xs font-bold uppercase mb-2 ml-1">
           {t("support")}
         </Text>
@@ -349,7 +362,7 @@ export default function Settings() {
           </TouchableOpacity>
         </View>
 
-        {/* ABOUT */}
+       
         <Text className="text-secondary text-xs font-bold uppercase mb-2 ml-1">
           {t("about")}
         </Text>
@@ -429,102 +442,28 @@ export default function Settings() {
         </View>
       </ScrollView>
 
-      {/* LANGUAGE MODAL */}
-      <Modal visible={languageModalVisible} animationType="slide" transparent>
-        <TouchableOpacity
-          className="flex-1 bg-black/50 justify-end"
-          activeOpacity={1}
-          onPress={() => setLanguageModalVisible(false)}
-        >
-          <View className="bg-white rounded-t-2xl p-4 mb-10">
-            <View className="flex-row justify-between items-center mb-4 pb-4 border-b border-gray-100">
-              <Text className="text-lg font-bold text-primary">
-                {t("selectLanguage")}
-              </Text>
-              <TouchableOpacity onPress={() => setLanguageModalVisible(false)}>
-                <Ionicons name="close" size={24} color={COLORS.secondary} />
-              </TouchableOpacity>
-            </View>
-            {LANGUAGES.map((lang) => (
-              <TouchableOpacity
-                key={lang.code}
-                className={`p-4 rounded-xl mb-2 flex-row justify-between items-center ${
-                  language === lang.code ? "bg-primary/10" : "bg-gray-50"
-                }`}
-                onPress={() => handleSelectLanguage(lang.code)}
-              >
-                <View className="flex-row items-center">
-                  <Text className="text-xl mr-3">{lang.flag}</Text>
-                  <Text
-                    className={`font-medium ${
-                      language === lang.code
-                        ? "text-primary font-bold"
-                        : "text-secondary"
-                    }`}
-                  >
-                    {t(lang.nameKey)}
-                  </Text>
-                </View>
-                {language === lang.code && (
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={20}
-                    color={COLORS.primary}
-                  />
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
+     
+      <LanguageModal
+        visible={languageModalVisible}
+        title={t("selectLanguage")}
+        languages={LANGUAGES}
+        selectedLanguage={language}
+        t={t}
+        onSelect={handleSelectLanguage}
+        onClose={() => setLanguageModalVisible(false)}
+      />
 
-      {/* CURRENCY MODAL */}
-      <Modal visible={currencyModalVisible} animationType="slide" transparent>
-        <TouchableOpacity
-          className="flex-1 bg-black/50 justify-end mb-10"
-          activeOpacity={1}
-          onPress={() => setCurrencyModalVisible(false)}
-        >
-          <View className="bg-white rounded-t-2xl p-4">
-            <View className="flex-row justify-between items-center mb-4 pb-4 border-b border-gray-100">
-              <Text className="text-lg font-bold text-primary">
-                {t("currency")}
-              </Text>
-              <TouchableOpacity onPress={() => setCurrencyModalVisible(false)}>
-                <Ionicons name="close" size={24} color={COLORS.secondary} />
-              </TouchableOpacity>
-            </View>
-            {CURRENCIES.map((curr) => (
-              <TouchableOpacity
-                key={curr}
-                className={`p-4 rounded-xl mb-2 flex-row justify-between items-center ${
-                  currency === curr ? "bg-primary/10" : "bg-gray-50"
-                }`}
-                onPress={() => handleSelectCurrency(curr)}
-              >
-                <Text
-                  className={`font-medium ${
-                    currency === curr
-                      ? "text-primary font-bold"
-                      : "text-secondary"
-                  }`}
-                >
-                  {curr}
-                </Text>
-                {currency === curr && (
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={20}
-                    color={COLORS.primary}
-                  />
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
+    
+      <CurrencyModal
+        visible={currencyModalVisible}
+        title={t("currency")}
+        currencies={CURRENCIES}
+        selectedCurrency={currency}
+        onSelect={handleSelectCurrency}
+        onClose={() => setCurrencyModalVisible(false)}
+      />
 
-      {/* ← Popup de confirmation "clear cache" */}
+      
       <ConfirmDeleteModal
         visible={clearCacheModalVisible}
         title={t("clearCache")}
@@ -537,6 +476,15 @@ export default function Settings() {
         onCancel={() => setClearCacheModalVisible(false)}
         onConfirm={performClearCache}
         loading={clearingCache}
+      />
+
+    
+      <RestartRequiredModal
+        visible={restartModalVisible}
+        title={t("restartRequired")}
+        message={t("restartMessage")}
+        confirmText={t("ok")}
+        onConfirm={confirmRestart}
       />
     </SafeAreaView>
   );

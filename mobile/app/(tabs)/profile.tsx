@@ -36,18 +36,23 @@ export default function Profile() {
     }
   }, [user]);
 
-  // Recharge chaque fois que la page revient au focus (après edit-profile par ex)
+
   useFocusEffect(
     useCallback(() => {
       loadProfile();
     }, [loadProfile])
   );
 
-  const handleLogout = async () => {
-    await signOut();
-    router.replace("/sign-in");
-  };
-
+const handleLogout = async () => {
+    console.log("Logout pressed");
+    try {
+        await signOut();
+        console.log("signOut() success");
+        router.replace("/sign-in");
+    } catch (err) {
+        console.error("Logout error:", err);
+    }
+};
   return (
     <SafeAreaView className="flex-1 bg-surface" edges={["top"]}>
       <Header title={t("account")} />
@@ -81,7 +86,7 @@ export default function Profile() {
           </View>
         ) : (
           <>
-            {/* Profile Info */}
+           
             <View className="items-center mb-8">
               <View className="mb-3">
                 <Image
@@ -95,7 +100,7 @@ export default function Profile() {
               <Text className="text-secondary text-sm">
                 {user.emailAddresses[0].emailAddress}
               </Text>
-              {/* Admin Panel Button if user is admin */}
+            
               {user.publicMetadata?.role === "admin" && (
                 <TouchableOpacity
                   onPress={() => router.push("/admin")}
@@ -105,7 +110,7 @@ export default function Profile() {
                 </TouchableOpacity>
               )}
             </View>
-            {/* Menu */}
+          
             <View className="bg-white rounded-xl border border-gray-100/75 p-2 mb-4">
               {PROFILE_MENU.map((item, index) => (
                 <TouchableOpacity
@@ -131,7 +136,7 @@ export default function Profile() {
                 </TouchableOpacity>
               ))}
             </View>
-            {/* Logout Button */}
+           
             <TouchableOpacity
               className="flex-row items-center justify-center p-4"
               onPress={handleLogout}

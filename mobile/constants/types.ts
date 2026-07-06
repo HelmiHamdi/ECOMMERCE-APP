@@ -78,6 +78,7 @@ export type HeaderProps = {
     showMenu?: boolean;
     showLogo?: boolean;
     rightAction?: ReactNode;
+     onMenuPress?: () => void; 
 };
 
 export interface Address {

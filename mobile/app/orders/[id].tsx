@@ -21,7 +21,7 @@ export default function OrderDetails() {
     const [downloadingInvoice, setDownloadingInvoice] = useState(false);
     const { getToken } = useAuth();
     const { t } = useLanguage();
-    const { formatPrice, currency } = useCurrency(); // ← currency ajouté ici
+    const { formatPrice, currency } = useCurrency(); 
 
     const fetchOrderDetails = async () => {
         console.log("📦 ID reçu via params:", id);
@@ -43,7 +43,7 @@ export default function OrderDetails() {
         if (!order) return;
         setDownloadingInvoice(true);
         try {
-            // ✅ FIX : currency passé → le PDF utilisera $, € ou DT selon la devise active
+          
             await downloadInvoice(order._id, order.orderNumber, getToken, currency);
         } finally {
             setDownloadingInvoice(false);
@@ -110,7 +110,7 @@ export default function OrderDetails() {
                 className="flex-1 px-4 pt-4"
                 contentContainerStyle={{ paddingBottom: 100 }}
             >
-                {/* Order Status */}
+              
                 <View className="bg-white p-4 rounded-xl mb-4 border border-gray-100">
                     <Text className="text-lg font-bold text-primary mb-4">{t("orderStatus")}</Text>
 
@@ -130,7 +130,7 @@ export default function OrderDetails() {
                     ))}
                 </View>
 
-                {/* Items */}
+               
                 <View className="bg-white p-4 rounded-xl mb-4 border border-gray-100">
                     <Text className="text-lg font-bold text-primary mb-4">{t("products")}</Text>
                     {order.items.map((item: any, index: number) => {
@@ -159,7 +159,7 @@ export default function OrderDetails() {
                     })}
                 </View>
 
-                {/* Shipping Details */}
+              
                 <View className="bg-white p-4 rounded-xl mb-4 border border-gray-100">
                     <Text className="text-lg font-bold text-primary mb-2">{t("shippingDetails")}</Text>
                     <View className="flex-row items-center mb-2">
@@ -171,7 +171,7 @@ export default function OrderDetails() {
                     </View>
                 </View>
 
-                {/* Payment Summary */}
+            
                 <View className="bg-white p-4 rounded-xl mb-8 border border-gray-100">
                     <Text className="text-lg font-bold text-primary mb-4">{t("paymentSummary")}</Text>
                     <View className="flex-row justify-between mb-2">
@@ -207,7 +207,7 @@ export default function OrderDetails() {
                     </View>
                 </View>
 
-                {/* Download Invoice Button */}
+              
                 <TouchableOpacity
                     onPress={handleDownloadInvoice}
                     disabled={downloadingInvoice}

@@ -21,7 +21,7 @@ export default function PrivacyPolicy() {
     <SafeAreaView className="flex-1 bg-surface" edges={["top"]}>
       <Header title={t("privacyPolicy")} showBack />
       <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
-        {/* Hero */}
+       
         <View className="bg-primary/5 border border-primary/10 rounded-2xl p-5 mb-5 items-center">
           <View className="w-14 h-14 rounded-full bg-primary/10 items-center justify-center mb-3">
             <Ionicons name="lock-closed-outline" size={26} color={COLORS.primary} />
@@ -34,7 +34,7 @@ export default function PrivacyPolicy() {
           </Text>
         </View>
 
-        {/* Sections */}
+      
         {SECTIONS.map((section, index) => (
           <View
             key={section.titleKey}

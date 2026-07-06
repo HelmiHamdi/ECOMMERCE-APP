@@ -34,7 +34,7 @@ const NotificationContext = createContext<NotificationContextValue>({
   refreshUnreadCount: async () => {},
 });
 
-// Hook pratique pour consommer le compteur ailleurs (ex: badge dans Settings)
+
 export const useNotifications = () => useContext(NotificationContext);
 
 const isExpoGo = Constants.appOwnership === "expo";
@@ -48,13 +48,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Récupère le compteur non-lu depuis le serveur (source de vérité = DB)
+
   const refreshUnreadCount = useCallback(async () => {
     if (!isSignedIn) return;
     try {
       const authToken = await getToken();
       const res = await api.get("/notifications", {
-        params: { page: 1, limit: 1 }, // on a juste besoin du champ unreadCount
+        params: { page: 1, limit: 1 }, 
         headers: { Authorization: `Bearer ${authToken}` },
       });
       setUnreadCount(res.data.unreadCount ?? 0);
@@ -64,7 +64,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, [isSignedIn, getToken]);
 
   const registerForPushNotifications = async () => {
-    // Push notifications désactivées dans Expo Go (SDK 53+) — nécessite un dev build
+    
     if (isExpoGo) {
       console.log("⚠️ Push notifications désactivées dans Expo Go. Utilise un development build.");
       return;
@@ -117,7 +117,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     notificationListener.current = Notifications.addNotificationReceivedListener(
       (notification) => {
         console.log("Notification reçue:", notification.request.content.title);
-        // Une notif arrive pendant que l'app est ouverte → on rafraîchit le badge
+       
         refreshUnreadCount();
       }
     );
@@ -131,7 +131,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             params: { id: String(productId) },
           });
         }
-        // L'utilisateur a tapé la notif → elle sera bientôt marquée lue, on resync
+        
         refreshUnreadCount();
       }
     );

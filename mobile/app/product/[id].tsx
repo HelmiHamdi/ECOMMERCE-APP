@@ -21,7 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
-import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
+import { useCurrency } from "@/context/CurrencyContext"; 
 
 const { width, height } = Dimensions.get("window");
 
@@ -29,7 +29,7 @@ export default function ProductDetail() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { t } = useLanguage();
-  const { formatPrice } = useCurrency(); // ← AJOUT
+  const { formatPrice } = useCurrency(); 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const { addToCart, cartItems, itemCount } = useCart();
@@ -95,7 +95,7 @@ export default function ProductDetail() {
 
   return (
     <View className="flex-1 bg-white">
-      {/* ───── Fullscreen Image Modal ───── */}
+    
       <Modal
         visible={fullscreenVisible}
         transparent={false}
@@ -105,7 +105,7 @@ export default function ProductDetail() {
       >
         <StatusBar hidden />
         <View style={{ flex: 1, backgroundColor: "#000" }}>
-          {/* Slider fullscreen */}
+      
           <ScrollView
             horizontal
             pagingEnabled
@@ -131,7 +131,7 @@ export default function ProductDetail() {
             ))}
           </ScrollView>
 
-          {/* Bouton fermer */}
+      
           <TouchableOpacity
             onPress={() => setFullscreenVisible(false)}
             style={{
@@ -149,7 +149,7 @@ export default function ProductDetail() {
             <Ionicons name="close" size={24} color="#fff" />
           </TouchableOpacity>
 
-          {/* Icone wishlist */}
+       
           <TouchableOpacity
             onPress={() => toggleWishlist(product)}
             style={{
@@ -171,7 +171,7 @@ export default function ProductDetail() {
             />
           </TouchableOpacity>
 
-          {/* Dots fullscreen */}
+        
           <View
             style={{
               position: "absolute",
@@ -197,7 +197,7 @@ export default function ProductDetail() {
             ))}
           </View>
 
-          {/* Compteur image */}
+       
           <View
             style={{
               position: "absolute",
@@ -216,7 +216,7 @@ export default function ProductDetail() {
         </View>
       </Modal>
 
-      {/* ───── Contenu principal ───── */}
+    
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <View className="relative bg-gray-100 mt-14" style={{ height: 450 }}>
           <ScrollView
@@ -233,7 +233,7 @@ export default function ProductDetail() {
             }}
           >
             {product.images?.map((img, index) => (
-              // ✅ Clic sur l'image → ouvre le fullscreen
+             
               <TouchableOpacity
                 key={index}
                 activeOpacity={0.95}
@@ -248,7 +248,7 @@ export default function ProductDetail() {
             ))}
           </ScrollView>
 
-          {/* Boutons header */}
+        
           <View className="absolute top-8 left-4 right-4 flex-row justify-between items-center z-10">
             <TouchableOpacity
               onPress={() => router.back()}
@@ -268,7 +268,7 @@ export default function ProductDetail() {
             </TouchableOpacity>
           </View>
 
-          {/* Dots + icone fullscreen */}
+          
           <View className="absolute bottom-4 left-0 right-0 flex-row justify-center gap-2 items-center">
             {product.images?.map((_, index) => (
               <View
@@ -282,7 +282,7 @@ export default function ProductDetail() {
             ))}
           </View>
 
-          {/* Icone expand en bas à droite */}
+         
           <TouchableOpacity
             onPress={() => openFullscreen(activeImageIndex)}
             style={{
@@ -301,7 +301,6 @@ export default function ProductDetail() {
           </TouchableOpacity>
         </View>
 
-        {/* ───── Détails produit ───── */}
         <View className="px-4">
           <View className="flex-row justify-between items-start mb-2 mt-5">
             <Text className="text-2xl font-bold text-primary flex-1 mr-4">
@@ -314,7 +313,7 @@ export default function ProductDetail() {
             </View>
           </View>
 
-          {/* ✅ FIX : prix formaté selon la devise active */}
+        
           <Text className="text-2xl font-bold ml-1">
             {formatPrice(product.price)}
           </Text>
@@ -357,7 +356,7 @@ export default function ProductDetail() {
         </View>
       </ScrollView>
 
-      {/* ───── Footer Add to Cart ───── */}
+      
       <View className="absolute bottom-10 left-0 flex-row right-0 p-4 bg-white border-t border-gray-100">
         <TouchableOpacity
           onPress={handleAddToCart}

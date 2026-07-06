@@ -111,7 +111,11 @@ export interface INotification extends Document {
   createdAt?: Date;
 }
  
-
+export interface INewsletter extends Document {
+  email: string;
+  subscribedAt: Date;
+  active: boolean;
+}
 export interface IBanner extends Document {
   title: string;
   subtitle?: string;

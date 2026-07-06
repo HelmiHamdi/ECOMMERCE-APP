@@ -26,7 +26,7 @@ export default function Addresses() {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Form state
+ 
   const [type, setType] = useState("Home");
   const [street, setStreet] = useState("");
   const [city, setCity] = useState("");
@@ -36,11 +36,11 @@ export default function Addresses() {
   const [isDefault, setIsDefault] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Edit state
+ 
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // ← état pour la popup de suppression
+
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
     label: string;
@@ -118,7 +118,7 @@ export default function Addresses() {
     }
   };
 
-  // ← ouvre juste la popup, avec un libellé lisible pour l'adresse concernée
+
   const handleDeleteAddress = (item: Address) => {
     setDeleteTarget({
       id: item._id,
@@ -126,7 +126,7 @@ export default function Addresses() {
     });
   };
 
-  // ← logique de suppression réelle, appelée depuis la popup
+  
   const performDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -246,7 +246,7 @@ export default function Addresses() {
         </ScrollView>
       )}
 
-      {/* Add Address Modal */}
+     
       <Modal
         animationType="slide"
         transparent={true}
@@ -379,7 +379,7 @@ export default function Addresses() {
         </View>
       </Modal>
 
-      {/* ← Popup de confirmation custom */}
+
       <ConfirmDeleteModal
         visible={!!deleteTarget}
         title={t("deleteAddress")}

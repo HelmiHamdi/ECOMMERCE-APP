@@ -57,7 +57,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
      if (data.success && data.data) {
   const serverCart = data.data;
   const mappedItems: CartItem[] = serverCart.items
-    .filter((item: any) => item.product != null) // ← ignore les produits supprimés
+    .filter((item: any) => item.product != null) 
     .map((item: any) => ({
       id: item._id,
       productId: item.product._id,

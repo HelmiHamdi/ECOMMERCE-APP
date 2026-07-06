@@ -1,19 +1,19 @@
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ScrollView, Text, View, ActivityIndicator, RefreshControl } from "react-native";
+import { ScrollView, Text, View, ActivityIndicator, RefreshControl, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, getStatusColor } from "@/constants";
 
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
-import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
+import { useCurrency } from "@/context/CurrencyContext";
 
 export default function AdminDashboard() {
     const {getToken} = useAuth();
     const router = useRouter();
     const { t } = useLanguage();
-    const { formatPrice } = useCurrency(); // ← AJOUT
+    const { formatPrice } = useCurrency();
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [stats, setStats] = useState({
@@ -65,17 +65,38 @@ export default function AdminDashboard() {
             contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
         >
-            {/* Header */}
-            <View className="mb-6 mt-2">
-                <Text className="text-secondary text-xs font-semibold uppercase tracking-widest mb-1">
-                    {t("dashboard") || "Tableau de bord"}
-                </Text>
-                <Text className="text-primary font-extrabold text-3xl tracking-tight">
-                    {t("overview")}
-                </Text>
+           
+            <View className="mb-6 mt-2 flex-row items-center justify-between">
+                <View>
+                    <Text className="text-secondary text-xs font-semibold uppercase tracking-widest mb-1">
+                        {t("dashboard") || "Tableau de bord"}
+                    </Text>
+                    <Text className="text-primary font-extrabold text-3xl tracking-tight">
+                        {t("overview")}
+                    </Text>
+                </View>
+                <TouchableOpacity
+                    onPress={() => router.push("/admin/users")}
+                    style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        backgroundColor: COLORS.primary,
+                        paddingVertical: 10,
+                        paddingHorizontal: 16,
+                        borderRadius: 999,
+                        shadowColor: COLORS.primary,
+                        shadowOpacity: 0.25,
+                        shadowRadius: 10,
+                        shadowOffset: { width: 0, height: 5 },
+                        elevation: 3,
+                    }}
+                >
+                    <Ionicons name="people-outline" size={16} color="#fff" style={{ marginRight: 6 }} />
+                    <Text className="text-white font-bold text-[13px]">{t("viewUsers") || "View Users"}</Text>
+                </TouchableOpacity>
             </View>
 
-            {/* Stat cards */}
+          
             <View className="flex-row flex-wrap justify-between mb-8">
                 <StatCard
                     label={t("totalRevenue")}
@@ -107,7 +128,7 @@ export default function AdminDashboard() {
                 />
             </View>
 
-            {/* Recent orders */}
+           
             <View>
                 <View className="flex-row items-center justify-between mb-4">
                     <Text className="text-primary font-extrabold text-2xl tracking-tight">
@@ -159,7 +180,7 @@ export default function AdminDashboard() {
                                 }}
                             >
                                 <View className="p-5">
-                                    {/* Top row: item count + status badge */}
+                                  
                                     <View className="flex-row justify-between items-start mb-4">
                                         <View className="flex-row items-center">
                                             <View className="w-9 h-9 rounded-full bg-primary/5 items-center justify-center mr-2.5">
@@ -183,7 +204,7 @@ export default function AdminDashboard() {
                                         </View>
                                     </View>
 
-                                    {/* Items list */}
+                                  
                                     <View className="bg-surface rounded-2xl px-4 py-3 mb-4">
                                         {order.items.map((item: any) => (
                                             <View
@@ -203,7 +224,7 @@ export default function AdminDashboard() {
                                         ))}
                                     </View>
 
-                                    {/* Bottom row: user + total */}
+                                 
                                     <View className="flex-row justify-between items-center">
                                         <View className="flex-row items-center">
                                             <View className="w-9 h-9 rounded-full bg-primary items-center justify-center mr-2.5">

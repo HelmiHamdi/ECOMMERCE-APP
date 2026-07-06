@@ -3,33 +3,32 @@
 const api = axios.create({baseURL: "https://shop-mobile-server.vercel.app/api"})
 
 export default api;*/
-/* changed */
+
 import axios from "axios"
 import { Platform } from "react-native"
 
 const LOCAL_API_URL = Platform.select({
-    android: "http://192.168.10.136:3000/api",
-    ios: "http://192.168.10.136:3000/api",
+    android: "http://192.168.164.136:3000/api",
+    ios: "http://192.168.164.136:3000/api",
     default:"http://localhost:3000/api"
 })
 
 
-// même en GET — typiquement les données de session utilisateur
-// qui doivent toujours refléter l'état serveur le plus récent.
+
 const NO_CACHE_RESOURCES = ["users"];
 
 
 const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 5 * 60 * 1000;
 
 const api = axios.create({
-  baseURL:"https://shop-mobile-server.vercel.app/api",
+  baseURL: LOCAL_API_URL,
   timeout: 10000,
 });
 
 const getResource = (url: string) => url.replace(/^\//, "").split("/")[0];
 
-// Intercepteur REQUEST — vérifie le cache avant d'envoyer
+
 api.interceptors.request.use((config) => {
   const resource = getResource(config.url || "");
   const isExcluded = NO_CACHE_RESOURCES.includes(resource);
@@ -38,7 +37,7 @@ api.interceptors.request.use((config) => {
     const key = config.url + JSON.stringify(config.params || {});
     const cached = cache.get(key);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      // Retourne les données cachées sans faire de requête réseau
+     
       config.adapter = () =>
         Promise.resolve({
           data: cached.data,

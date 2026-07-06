@@ -7,12 +7,39 @@ import { invalidateCache } from "../middleware/cache.js";
 
 export const getProducts = async (req: Request, res: Response) => {
   try {
-    const { page = 1, limit = 10, category } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      category,
+      search,
+      size,
+      minPrice,
+      maxPrice,
+    } = req.query;
+
     const query: any = { isActive: true };
 
-    // ← AJOUT : filtre par catégorie
+    // Filtre par catégorie
     if (category && category !== "") {
       query.category = { $regex: new RegExp(`^${category}$`, "i") };
+    }
+
+    // Recherche par nom (et description, pour de meilleurs résultats)
+    if (search && String(search).trim() !== "") {
+      const regex = new RegExp(String(search).trim(), "i");
+      query.$or = [{ name: regex }, { description: regex }];
+    }
+
+    // Filtre par taille (le produit doit avoir cette taille dans son tableau "sizes")
+    if (size && size !== "") {
+      query.sizes = { $regex: new RegExp(`^${size}$`, "i") };
+    }
+
+    // Filtre par plage de prix
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice);
+      if (maxPrice) query.price.$lte = Number(maxPrice);
     }
 
     const total = await Product.countDocuments(query);
@@ -33,7 +60,6 @@ export const getProducts = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 export const getProduct = async (req: Request, res: Response) => {
   try {

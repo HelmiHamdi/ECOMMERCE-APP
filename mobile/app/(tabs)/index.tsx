@@ -1,16 +1,19 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { useRouter, useFocusEffect } from "expo-router"; // ✅ AJOUT useFocusEffect
+import { useRouter, useFocusEffect } from "expo-router";
 import Header from "@/components/Header";
+
 import {
   ScrollView,
   View,
   Image,
   Dimensions,
   Text,
+  TextInput,
   TouchableOpacity,
   ActivityIndicator,
   Animated,
+  Keyboard,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { CATEGORIES, COLORS } from "@/constants";
@@ -18,14 +21,19 @@ import CategoryItem from "@/components/CategoryItem";
 import { Product, Banner } from "@/constants/types";
 import ProductCard from "@/components/ProductCard";
 import api from "@/constants/api";
+import Toast from "react-native-toast-message";
 import { useLanguage } from "@/context/LanguageContext";
+import SideMenu from "@/components/Sidemenu";
 
 const { width } = Dimensions.get("window");
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function Home() {
   const router = useRouter();
   const { t } = useLanguage();
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
+  const [menuVisible, setMenuVisible] = useState(false); // ← état du menu latéral
+
   const categories = [
     { id: "all", nameKey: "all", name: t("all"), icon: "grid" },
     ...CATEGORIES,
@@ -35,6 +43,11 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [bannersLoading, setBannersLoading] = useState(true);
   const [bannersError, setBannersError] = useState(false);
+
+
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
+  const [subscribed, setSubscribed] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
@@ -47,7 +60,6 @@ export default function Home() {
     } catch (error) {
       console.error("Error fetching products:", error);
     } finally {
-      console.timeEnd("fetchProducts");
       setLoading(false);
     }
   };
@@ -66,7 +78,6 @@ export default function Home() {
     }
   };
 
-  // ✅ REMPLACE le useEffect([]) — recharge à CHAQUE retour sur Home
   useFocusEffect(
     useCallback(() => {
       fetchProducts();
@@ -74,35 +85,17 @@ export default function Home() {
     }, []),
   );
 
-  // Lance l'animation dès que le chargement des bannières est terminé et qu'il n'y en a pas
   useEffect(() => {
     if (!bannersLoading && banners.length === 0) {
       Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          friction: 6,
-          tension: 60,
-          useNativeDriver: true,
-        }),
+        Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.spring(scaleAnim, { toValue: 1, friction: 6, tension: 60, useNativeDriver: true }),
       ]).start();
 
       Animated.loop(
         Animated.sequence([
-          Animated.timing(floatAnim, {
-            toValue: -8,
-            duration: 1200,
-            useNativeDriver: true,
-          }),
-          Animated.timing(floatAnim, {
-            toValue: 0,
-            duration: 1200,
-            useNativeDriver: true,
-          }),
+          Animated.timing(floatAnim, { toValue: -8, duration: 1200, useNativeDriver: true }),
+          Animated.timing(floatAnim, { toValue: 0, duration: 1200, useNativeDriver: true }),
         ])
       ).start();
     }
@@ -112,11 +105,76 @@ export default function Home() {
     router.push((link || "/shop") as any);
   };
 
+ 
+  const handleSubscribe = async () => {
+    const email = newsletterEmail.trim();
+
+    if (!email) {
+      Toast.show({
+        type: "error",
+        text1: t("missingFields") ?? "Champ requis",
+        text2: t("emailRequired") ?? "Merci de saisir ton email",
+      });
+      return;
+    }
+
+    if (!EMAIL_REGEX.test(email)) {
+      Toast.show({
+        type: "error",
+        text1: t("invalidEmail") ?? "Email invalide",
+        text2: t("invalidEmailHint") ?? "Vérifie le format de ton adresse email",
+      });
+      return;
+    }
+
+    Keyboard.dismiss();
+    setSubscribing(true);
+    try {
+      await api.post("newsletter/subscribe", { email });
+
+      Toast.show({
+        type: "success",
+        text1: t("subscribed") ?? "Inscription réussie",
+        text2: t("subscribedHint") ?? "Merci de rejoindre notre newsletter !",
+      });
+      setSubscribed(true);
+      setNewsletterEmail("");
+    } catch (err: any) {
+      const status = err?.response?.status;
+      if (status === 409) {
+        Toast.show({
+          type: "info",
+          text1: t("alreadySubscribed") ?? "Déjà inscrit",
+          text2: t("alreadySubscribedHint") ?? "Cet email est déjà abonné à la newsletter",
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: t("error") ?? "Erreur",
+          text2: err?.response?.data?.message ?? t("somethingWrong") ?? "Une erreur est survenue",
+        });
+      }
+    } finally {
+      setSubscribing(false);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1" edges={["top"]}>
-      <Header title="Forever" showMenu showCart showLogo />
+  
+      <Header
+        title="Forever"
+        showMenu
+        showCart
+        showLogo
+        onMenuPress={() => setMenuVisible(true)}
+      />
+
+      
+      <SideMenu visible={menuVisible} onClose={() => setMenuVisible(false)} />
+
       <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
-        {/* Banners */}
+      
         {bannersLoading ? (
           <View className="mb-6 h-48 items-center justify-center">
             <ActivityIndicator size="large" color={COLORS.primary} />
@@ -131,8 +189,7 @@ export default function Home() {
               scrollEventThrottle={16}
               onScroll={(event) => {
                 const slide = Math.round(
-                  event.nativeEvent.contentOffset.x /
-                    event.nativeEvent.layoutMeasurement.width,
+                  event.nativeEvent.contentOffset.x / event.nativeEvent.layoutMeasurement.width,
                 );
                 if (slide !== activeBannerIndex) {
                   setActiveBannerIndex(slide);
@@ -145,28 +202,18 @@ export default function Home() {
                   className="relative w-full h-48 bg-gray-200 overflow-hidden"
                   style={{ width: width - 32 }}
                 >
-                  <Image
-                    source={{ uri: banner.image }}
-                    className="w-full h-full"
-                    resizeMode="cover"
-                  />
+                  <Image source={{ uri: banner.image }} className="w-full h-full" resizeMode="cover" />
                   <View className="absolute inset-0 bg-black/40" />
                   <View className="absolute bottom-4 left-4 z-10">
-                    <Text className="text-white text-2xl font-bold">
-                      {banner.title}
-                    </Text>
+                    <Text className="text-white text-2xl font-bold">{banner.title}</Text>
                     {banner.subtitle ? (
-                      <Text className="text-white text-sm font-medium">
-                        {banner.subtitle}
-                      </Text>
+                      <Text className="text-white text-sm font-medium">{banner.subtitle}</Text>
                     ) : null}
                     <TouchableOpacity
                       className="mt-2 bg-white px-4 py-2 rounded-full self-start"
                       onPress={() => handleBannerPress(banner.link)}
                     >
-                      <Text className="text-primary font-bold text-xs">
-                        {t("shopNow")}
-                      </Text>
+                      <Text className="text-primary font-bold text-xs">{t("shopNow")}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -177,9 +224,7 @@ export default function Home() {
                 <View
                   key={index}
                   className={`h-2 rounded-full ${
-                    index === activeBannerIndex
-                      ? "w-6 bg-primary"
-                      : "w-2 bg-gray-300"
+                    index === activeBannerIndex ? "w-6 bg-primary" : "w-2 bg-gray-300"
                   }`}
                 />
               ))}
@@ -197,16 +242,8 @@ export default function Home() {
               borderStyle: "dashed",
             }}
           >
-            <Animated.View
-              style={{
-                transform: [{ translateY: floatAnim }],
-              }}
-              className="w-16 h-16 rounded-full items-center justify-center mb-3"
-            >
-              <View
-                className="w-16 h-16 rounded-full items-center justify-center"
-                style={{ backgroundColor: "#EFEAE4" }}
-              >
+            <Animated.View style={{ transform: [{ translateY: floatAnim }] }} className="w-16 h-16 rounded-full items-center justify-center mb-3">
+              <View className="w-16 h-16 rounded-full items-center justify-center" style={{ backgroundColor: "#EFEAE4" }}>
                 <Ionicons name="images-outline" size={30} color={COLORS.primary} />
               </View>
             </Animated.View>
@@ -219,16 +256,12 @@ export default function Home() {
           </Animated.View>
         )}
 
-        {/* Categories */}
+      
         <View className="mb-6">
           <View className="flex-row items-center justify-between mb-4">
             <Text className="text-xl font-bold mb-4">{t("categories")}</Text>
           </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="w-full rounded-xl"
-          >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="w-full rounded-xl">
             {categories.map((cat: any) => (
               <CategoryItem
                 key={cat.id}
@@ -240,10 +273,7 @@ export default function Home() {
                   } else {
                     router.push({
                       pathname: "/category",
-                      params: {
-                        category: cat.nameKey,
-                        categoryName: cat.nameKey,
-                      },
+                      params: { category: cat.nameKey, categoryName: cat.nameKey },
                     });
                   }
                 }}
@@ -252,7 +282,7 @@ export default function Home() {
           </ScrollView>
         </View>
 
-        {/* Popular */}
+        
         <View className="mb-8">
           <View className="flex-row items-center justify-between mb-4">
             <Text className="text-xl font-bold text-primary">{t("popular")}</Text>
@@ -271,19 +301,61 @@ export default function Home() {
           )}
         </View>
 
-        {/* Newsletter */}
+       
         <View className="bg-gray-100 p-6 rounded-2xl mb-20 items-center">
-          <Text className="text-2xl font-bold text-primary mb-2 text-center">
-            {t("joinRevolution")}
-          </Text>
-          <Text className="text-secondary text-center mb-4">
-            {t("newsletterSubtitle")}
-          </Text>
-          <TouchableOpacity className="bg-primary w-4/5 py-3 rounded-full items-center">
-            <Text className="text-white font-medium text-base">
-              {t("subscribeNow")}
-            </Text>
-          </TouchableOpacity>
+          {subscribed ? (
+            <>
+              <Ionicons name="checkmark-circle" size={40} color={COLORS.primary} style={{ marginBottom: 8 }} />
+              <Text className="text-xl font-bold text-primary mb-1 text-center">
+                {t("thankYou") ?? "Merci !"}
+              </Text>
+              <Text className="text-secondary text-center">
+                {t("subscribedHint") ?? "Tu recevras bientôt nos actualités."}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text className="text-2xl font-bold text-primary mb-2 text-center">
+                {t("joinRevolution")}
+              </Text>
+              <Text className="text-secondary text-center mb-4">
+                {t("newsletterSubtitle")}
+              </Text>
+
+              <View
+                className="w-full flex-row items-center bg-white rounded-xl px-4 mb-3"
+                style={{ borderWidth: 1, borderColor: "#E5E5EA" }}
+              >
+                <Ionicons name="mail-outline" size={18} color={COLORS.secondary} />
+                <TextInput
+                  className="flex-1 py-3 px-3 text-primary"
+                  placeholder={t("emailPlaceholder") ?? "ton@email.com"}
+                  placeholderTextColor="#ABABB2"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  value={newsletterEmail}
+                  onChangeText={setNewsletterEmail}
+                  editable={!subscribing}
+                />
+              </View>
+
+              <TouchableOpacity
+                className="bg-primary w-4/5 py-3 rounded-full items-center"
+                onPress={handleSubscribe}
+                disabled={subscribing}
+                style={{ opacity: subscribing ? 0.7 : 1 }}
+              >
+                {subscribing ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text className="text-white font-medium text-base">
+                    {t("subscribeNow")}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
