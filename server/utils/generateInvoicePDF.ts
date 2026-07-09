@@ -492,14 +492,14 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
 
   function sectionLabel(text: string, x: number, top: number) {
     doc.fillColor(COLORS.orange).font(FONT_BOLD).fontSize(10)
-      .text(text.toUpperCase(), x, top, { characterSpacing: 0.5, align: alignStart });
+      .text(text.toUpperCase(), x, top, { width: colWidth, characterSpacing: 0.5, align: alignStart });
     doc.moveTo(x, top + 16).lineTo(x + colWidth, top + 16)
       .lineWidth(1).strokeColor(COLORS.borderGray).stroke();
   }
 
   function fieldLine(label: string, value: string, x: number, top: number): number {
     if (!value) return top;
-    doc.fillColor(COLORS.textGray).font(FONT_BOLD).fontSize(9).text(label, x, top, { align: alignStart });
+    doc.fillColor(COLORS.textGray).font(FONT_BOLD).fontSize(9).text(label, x, top, { width: colWidth, align: alignStart });
     doc.fillColor(COLORS.textDark).font(FONT_REGULAR).fontSize(10)
       .text(value, x, top + 12, { width: colWidth, align: alignStart });
     return top + 12 + doc.heightOfString(value, { width: colWidth }) + 10;
