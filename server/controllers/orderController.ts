@@ -7,6 +7,14 @@ import stripe from "../config/stripe.js";
 import { generateInvoicePDF } from "../utils/generateInvoicePDF.js";
 import jwt from "jsonwebtoken";
 
+// Langues supportées par la facture PDF — doit correspondre à Language
+// dans utils/generateInvoicePDF.ts et au LanguageContext du frontend.
+const SUPPORTED_INVOICE_LANGS = ["en", "fr", "ar", "es", "it", "de"];
+
+function resolveLang(value: unknown): string {
+  return SUPPORTED_INVOICE_LANGS.includes(value as string) ? (value as string) : "fr";
+}
+
 export const getOrderInvoice = async (req: Request, res: Response) => {
   try {
     const order = await Order.findById(req.params.id)
@@ -28,8 +36,9 @@ export const getOrderInvoice = async (req: Request, res: Response) => {
       : "TND";
 
     const rate = req.query.rate ? parseFloat(req.query.rate as string) : undefined;
+    const lang = resolveLang(req.query.lang);
 
-    await generateInvoicePDF({ ...order, currency, rate } as any, res);
+    await generateInvoicePDF({ ...order, currency, rate, lang } as any, res);
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -53,9 +62,10 @@ export const getInvoiceLink = async (req: Request, res: Response) => {
     );
 
     const { currency = "TND", rate } = req.query;
+    const lang = resolveLang(req.query.lang);
     const baseURL = process.env.BASE_URL || "https://shop-mobile-server.vercel.app";
 
-    const link = `${baseURL}/api/orders/${req.params.id}/invoice/download?token=${tempToken}&currency=${currency}&rate=${rate}`;
+    const link = `${baseURL}/api/orders/${req.params.id}/invoice/download?token=${tempToken}&currency=${currency}&rate=${rate}&lang=${lang}`;
 
     res.json({ success: true, link });
   } catch (error: any) {
@@ -65,7 +75,7 @@ export const getInvoiceLink = async (req: Request, res: Response) => {
 
 export const downloadInvoicePublic = async (req: Request, res: Response) => {
   try {
-    const { token, currency, rate } = req.query;
+    const { token, currency, rate, lang } = req.query;
 
     if (!token)
       return res.status(401).json({ success: false, message: "Token manquant" });
@@ -93,8 +103,9 @@ export const downloadInvoicePublic = async (req: Request, res: Response) => {
       ? (currency as "USD" | "EUR" | "TND")
       : "TND";
     const r = rate ? parseFloat(rate as string) : undefined;
+    const resolvedLang = resolveLang(lang);
 
-    await generateInvoicePDF({ ...order, currency: cur, rate: r } as any, res);
+    await generateInvoicePDF({ ...order, currency: cur, rate: r, lang: resolvedLang } as any, res);
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

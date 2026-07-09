@@ -28,9 +28,12 @@ const LANGUAGES: { code: Language; nameKey: string; flag: string }[] = [
   { code: "en", nameKey: "english", flag: "🇬🇧" },
   { code: "fr", nameKey: "french", flag: "🇫🇷" },
   { code: "ar", nameKey: "arabic", flag: "🇹🇳" },
+  { code: "es", nameKey: "spanish", flag: "🇪🇸" },
+  { code: "it", nameKey: "italian", flag: "🇮🇹" },
+  { code: "de", nameKey: "german", flag: "🇩🇪" },
 ];
 
-const CURRENCIES = ["USD", "EUR", "TND"];
+const CURRENCIES = ["USD", "EUR", "TND", "SAR"];
 
 export default function Settings() {
   const router = useRouter();
@@ -41,22 +44,22 @@ export default function Settings() {
   const [languageModalVisible, setLanguageModalVisible] = useState(false);
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [darkModeEnabled, setDarkModeEnabled] = useState(false);
 
-  
+
+
   const [clearCacheModalVisible, setClearCacheModalVisible] = useState(false);
   const [clearingCache, setClearingCache] = useState(false);
 
- 
+
   const [restartModalVisible, setRestartModalVisible] = useState(false);
   const [pendingRTL, setPendingRTL] = useState<boolean | null>(null);
 
   React.useEffect(() => {
     (async () => {
       const notif = await AsyncStorage.getItem("notificationsEnabled");
-      const dark = await AsyncStorage.getItem("darkModeEnabled");
+
       if (notif !== null) setNotificationsEnabled(notif === "true");
-      if (dark !== null) setDarkModeEnabled(dark === "true");
+
     })();
   }, []);
 
@@ -90,23 +93,14 @@ export default function Settings() {
     });
   };
 
-  const toggleDarkMode = async (value: boolean) => {
-    setDarkModeEnabled(value);
-    await AsyncStorage.setItem("darkModeEnabled", String(value));
-  };
+
 
   const handleSelectLanguage = async (lang: Language) => {
-    const wasRTL = isRTL;
     await setLanguage(lang);
     setLanguageModalVisible(false);
     const willBeRTL = lang === "ar";
-    if (wasRTL !== willBeRTL) {
-     
-      setPendingRTL(willBeRTL);
-      setRestartModalVisible(true);
-    } else {
-      Toast.show({ type: "success", text1: t("language") + " ✅" });
-    }
+    setPendingRTL(willBeRTL);
+    setRestartModalVisible(true);
   };
 
 
@@ -130,7 +124,7 @@ export default function Settings() {
     setClearCacheModalVisible(true);
   };
 
- 
+
   const performClearCache = async () => {
     setClearingCache(true);
     try {
@@ -166,12 +160,12 @@ export default function Settings() {
         className="flex-1 px-4 pt-4"
         showsVerticalScrollIndicator={false}
       >
-      
+
         <Text className="text-secondary text-xs font-bold uppercase mb-2 ml-1">
           {t("general")}
         </Text>
         <View className="bg-white rounded-xl border border-gray-100 mb-6">
-         
+
           <TouchableOpacity
             className="flex-row items-center p-4 border-b border-gray-100"
             onPress={() => setLanguageModalVisible(true)}
@@ -192,7 +186,7 @@ export default function Settings() {
             />
           </TouchableOpacity>
 
-          
+
           <TouchableOpacity
             className="flex-row items-center p-4 border-b border-gray-100"
             onPress={() => setCurrencyModalVisible(true)}
@@ -211,7 +205,7 @@ export default function Settings() {
             />
           </TouchableOpacity>
 
-         
+
           <View className="flex-row items-center p-4 border-b border-gray-100">
             <TouchableOpacity
               className="flex-row items-center flex-1"
@@ -299,7 +293,7 @@ export default function Settings() {
           </TouchableOpacity>
         </View>
 
-       
+
         <Text className="text-secondary text-xs font-bold uppercase mb-2 ml-1">
           {t("support")}
         </Text>
@@ -362,7 +356,7 @@ export default function Settings() {
           </TouchableOpacity>
         </View>
 
-       
+
         <Text className="text-secondary text-xs font-bold uppercase mb-2 ml-1">
           {t("about")}
         </Text>
@@ -442,7 +436,7 @@ export default function Settings() {
         </View>
       </ScrollView>
 
-     
+
       <LanguageModal
         visible={languageModalVisible}
         title={t("selectLanguage")}
@@ -453,7 +447,7 @@ export default function Settings() {
         onClose={() => setLanguageModalVisible(false)}
       />
 
-    
+
       <CurrencyModal
         visible={currencyModalVisible}
         title={t("currency")}
@@ -463,7 +457,7 @@ export default function Settings() {
         onClose={() => setCurrencyModalVisible(false)}
       />
 
-      
+
       <ConfirmDeleteModal
         visible={clearCacheModalVisible}
         title={t("clearCache")}
@@ -478,7 +472,7 @@ export default function Settings() {
         loading={clearingCache}
       />
 
-    
+
       <RestartRequiredModal
         visible={restartModalVisible}
         title={t("restartRequired")}

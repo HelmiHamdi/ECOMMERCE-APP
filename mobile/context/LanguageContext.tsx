@@ -5,12 +5,15 @@ import * as Localization from "expo-localization";
 import en from "@/constants/translations/en.json";
 import fr from "@/constants/translations/fr.json";
 import ar from "@/constants/translations/ar.json";
+import es from "@/constants/translations/es.json";
+import it from "@/constants/translations/it.json";
+import de from "@/constants/translations/de.json";
 
-const i18n = new I18n({ en, fr, ar });
+const i18n = new I18n({ en, fr, ar, es, it, de });
 i18n.enableFallback = true;
 i18n.defaultLocale = "en";
 
-export type Language = "en" | "fr" | "ar";
+export type Language = "en" | "fr" | "ar" | "es" | "it" | "de";
 
 type LanguageContextType = {
   language: Language;
@@ -29,12 +32,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     (async () => {
       try {
         const stored = await AsyncStorage.getItem(STORAGE_KEY);
-        if (stored && ["en", "fr", "ar"].includes(stored)) {
+        if (stored && ["en", "fr", "ar", "es", "it", "de"].includes(stored)) {
           i18n.locale = stored;
           setLanguageState(stored as Language);
         } else {
           const deviceLang = Localization.getLocales()[0]?.languageCode ?? "en";
-          const lang = ["en", "fr", "ar"].includes(deviceLang) ? deviceLang : "en";
+          const lang = ["en", "fr", "ar", "es", "it", "de"].includes(deviceLang) ? deviceLang : "en";
           i18n.locale = lang;
           setLanguageState(lang as Language);
         }

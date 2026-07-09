@@ -6,19 +6,21 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 
-export type SupportedCurrency = "USD" | "EUR" | "TND";
+export type SupportedCurrency = "USD" | "EUR" | "TND" | "SAR";
+export type Language = "en" | "fr" | "ar" | "es" | "it" | "de";
 
 interface InvoiceOrder {
   orderNumber:  string;
   createdAt:    Date;
   currency?:    SupportedCurrency;
-  rate?:        number;   // ← taux envoyé par le frontend (ex: 0.32 pour USD)
+  rate?:        number;
+  lang?:        Language;          // ← langue choisie côté frontend
   items: {
     product:   { name: string; images?: string[] } | null;
     name?:     string;
     image?:    string;
     quantity:  number;
-    price:     number;   // stocké en TND
+    price:     number;
     size?:     string;
   }[];
   shippingAddress: {
@@ -29,18 +31,283 @@ interface InvoiceOrder {
     country: string;
   };
   user:         { name?: string; email?: string; phone?: string } | null;
-  subtotal:     number;   // en TND
-  shippingCost: number;   // en TND
-  tax:          number;   // en TND
-  totalAmount:  number;   // en TND
+  subtotal:     number;
+  shippingCost: number;
+  tax:          number;
+  totalAmount:  number;
   paymentStatus: string;
 }
+
+// ================================================================
+// I18N — Dictionnaire des textes statiques de la facture
+// ================================================================
+type Dict = {
+  invoiceTitle: string;
+  orderPrefix: string;
+  issuedOn: string;
+  currencyLabel: string;
+  statusLabel: string;
+  statusPaid: string;
+  statusPending: string;
+  statusFailed: string;
+  billedTo: string;
+  shippingAddress: string;
+  name: string;
+  defaultClient: string;
+  email: string;
+  phone: string;
+  street: string;
+  city: string;
+  country: string;
+  colArticle: string;
+  colSize: string;
+  colQty: string;
+  colPrice: string;
+  colTotal: string;
+  deletedProduct: string;
+  imgNA: string;
+  subtotal: string;
+  shipping: string;
+  tax: string;
+  total: string;
+  signature: string;
+  thankYou: string;
+  footerLine1: string;
+  footerLine2: string;
+  sizeDash: string;
+};
+
+const TRANSLATIONS: Record<Language, Dict> = {
+  fr: {
+    invoiceTitle: "FACTURE",
+    orderPrefix: "N°",
+    issuedOn: "Date d'émission",
+    currencyLabel: "Devise",
+    statusLabel: "STATUT",
+    statusPaid: "Payé",
+    statusPending: "En attente",
+    statusFailed: "Échoué",
+    billedTo: "Facturé à",
+    shippingAddress: "Adresse de livraison",
+    name: "NOM",
+    defaultClient: "Client",
+    email: "EMAIL",
+    phone: "TÉLÉPHONE",
+    street: "RUE",
+    city: "VILLE",
+    country: "PAYS",
+    colArticle: "ARTICLE",
+    colSize: "TAILLE",
+    colQty: "QTÉ",
+    colPrice: "PRIX",
+    colTotal: "TOTAL",
+    deletedProduct: "Produit supprimé",
+    imgNA: "N/A",
+    subtotal: "Sous-total",
+    shipping: "Livraison",
+    tax: "Taxe",
+    total: "TOTAL",
+    signature: "SIGNATURE AUTORISÉE",
+    thankYou: "Merci pour votre commande !",
+    footerLine1: "Ines Shop — Cette facture a été générée automatiquement",
+    footerLine2: "Pour toute question concernant cette facture, contactez notre service client.",
+    sizeDash: "—",
+  },
+  en: {
+    invoiceTitle: "INVOICE",
+    orderPrefix: "No.",
+    issuedOn: "Issue date",
+    currencyLabel: "Currency",
+    statusLabel: "STATUS",
+    statusPaid: "Paid",
+    statusPending: "Pending",
+    statusFailed: "Failed",
+    billedTo: "Billed to",
+    shippingAddress: "Shipping address",
+    name: "NAME",
+    defaultClient: "Customer",
+    email: "EMAIL",
+    phone: "PHONE",
+    street: "STREET",
+    city: "CITY",
+    country: "COUNTRY",
+    colArticle: "ITEM",
+    colSize: "SIZE",
+    colQty: "QTY",
+    colPrice: "PRICE",
+    colTotal: "TOTAL",
+    deletedProduct: "Deleted product",
+    imgNA: "N/A",
+    subtotal: "Subtotal",
+    shipping: "Shipping",
+    tax: "Tax",
+    total: "TOTAL",
+    signature: "AUTHORIZED SIGNATURE",
+    thankYou: "Thank you for your order!",
+    footerLine1: "Ines Shop — This invoice was generated automatically",
+    footerLine2: "For any question about this invoice, please contact our customer service.",
+    sizeDash: "—",
+  },
+  ar: {
+    invoiceTitle: "فاتورة",
+    orderPrefix: "رقم",
+    issuedOn: "تاريخ الإصدار",
+    currencyLabel: "العملة",
+    statusLabel: "الحالة",
+    statusPaid: "مدفوعة",
+    statusPending: "قيد الانتظار",
+    statusFailed: "فشلت",
+    billedTo: "فوترة إلى",
+    shippingAddress: "عنوان التوصيل",
+    name: "الاسم",
+    defaultClient: "الزبون",
+    email: "البريد الإلكتروني",
+    phone: "الهاتف",
+    street: "الشارع",
+    city: "المدينة",
+    country: "البلد",
+    colArticle: "المنتج",
+    colSize: "المقاس",
+    colQty: "الكمية",
+    colPrice: "السعر",
+    colTotal: "المجموع",
+    deletedProduct: "منتج محذوف",
+    imgNA: "غير متوفر",
+    subtotal: "المجموع الفرعي",
+    shipping: "التوصيل",
+    tax: "الضريبة",
+    total: "المجموع الكلي",
+    signature: "توقيع معتمد",
+    thankYou: "شكراً لطلبكم!",
+    footerLine1: "Ines Shop — تم إنشاء هذه الفاتورة تلقائياً",
+    footerLine2: "لأي استفسار حول هذه الفاتورة، يرجى الاتصال بخدمة العملاء.",
+    sizeDash: "—",
+  },
+  es: {
+    invoiceTitle: "FACTURA",
+    orderPrefix: "N.º",
+    issuedOn: "Fecha de emisión",
+    currencyLabel: "Moneda",
+    statusLabel: "ESTADO",
+    statusPaid: "Pagado",
+    statusPending: "Pendiente",
+    statusFailed: "Fallido",
+    billedTo: "Facturado a",
+    shippingAddress: "Dirección de envío",
+    name: "NOMBRE",
+    defaultClient: "Cliente",
+    email: "CORREO",
+    phone: "TELÉFONO",
+    street: "CALLE",
+    city: "CIUDAD",
+    country: "PAÍS",
+    colArticle: "ARTÍCULO",
+    colSize: "TALLA",
+    colQty: "CANT.",
+    colPrice: "PRECIO",
+    colTotal: "TOTAL",
+    deletedProduct: "Producto eliminado",
+    imgNA: "N/D",
+    subtotal: "Subtotal",
+    shipping: "Envío",
+    tax: "Impuesto",
+    total: "TOTAL",
+    signature: "FIRMA AUTORIZADA",
+    thankYou: "¡Gracias por su pedido!",
+    footerLine1: "Ines Shop — Esta factura fue generada automáticamente",
+    footerLine2: "Para cualquier pregunta sobre esta factura, contacte con nuestro servicio de atención al cliente.",
+    sizeDash: "—",
+  },
+  it: {
+    invoiceTitle: "FATTURA",
+    orderPrefix: "N.",
+    issuedOn: "Data di emissione",
+    currencyLabel: "Valuta",
+    statusLabel: "STATO",
+    statusPaid: "Pagato",
+    statusPending: "In attesa",
+    statusFailed: "Fallito",
+    billedTo: "Fatturato a",
+    shippingAddress: "Indirizzo di spedizione",
+    name: "NOME",
+    defaultClient: "Cliente",
+    email: "EMAIL",
+    phone: "TELEFONO",
+    street: "VIA",
+    city: "CITTÀ",
+    country: "PAESE",
+    colArticle: "ARTICOLO",
+    colSize: "TAGLIA",
+    colQty: "QTÀ",
+    colPrice: "PREZZO",
+    colTotal: "TOTALE",
+    deletedProduct: "Prodotto eliminato",
+    imgNA: "N/D",
+    subtotal: "Subtotale",
+    shipping: "Spedizione",
+    tax: "Imposta",
+    total: "TOTALE",
+    signature: "FIRMA AUTORIZZATA",
+    thankYou: "Grazie per il tuo ordine!",
+    footerLine1: "Ines Shop — Questa fattura è stata generata automaticamente",
+    footerLine2: "Per qualsiasi domanda su questa fattura, contatta il nostro servizio clienti.",
+    sizeDash: "—",
+  },
+  de: {
+    invoiceTitle: "RECHNUNG",
+    orderPrefix: "Nr.",
+    issuedOn: "Ausstellungsdatum",
+    currencyLabel: "Währung",
+    statusLabel: "STATUS",
+    statusPaid: "Bezahlt",
+    statusPending: "Ausstehend",
+    statusFailed: "Fehlgeschlagen",
+    billedTo: "Rechnung an",
+    shippingAddress: "Lieferadresse",
+    name: "NAME",
+    defaultClient: "Kunde",
+    email: "E-MAIL",
+    phone: "TELEFON",
+    street: "STRASSE",
+    city: "STADT",
+    country: "LAND",
+    colArticle: "ARTIKEL",
+    colSize: "GRÖSSE",
+    colQty: "MENGE",
+    colPrice: "PREIS",
+    colTotal: "GESAMT",
+    deletedProduct: "Gelöschtes Produkt",
+    imgNA: "N/V",
+    subtotal: "Zwischensumme",
+    shipping: "Versand",
+    tax: "Steuer",
+    total: "GESAMT",
+    signature: "AUTORISIERTE UNTERSCHRIFT",
+    thankYou: "Danke für Ihre Bestellung!",
+    footerLine1: "Ines Shop — Diese Rechnung wurde automatisch erstellt",
+    footerLine2: "Bei Fragen zu dieser Rechnung wenden Sie sich bitte an unseren Kundenservice.",
+    sizeDash: "—",
+  },
+};
+
+// Locale pour le formatage de date
+const DATE_LOCALES: Record<Language, string> = {
+  fr: "fr-FR",
+  en: "en-US",
+  ar: "ar-TN",
+  es: "es-ES",
+  it: "it-IT",
+  de: "de-DE",
+};
+
+const SUPPORTED_LANGS: Language[] = ["en", "fr", "ar", "es", "it", "de"];
 
 // Symboles par défaut côté backend (fallback)
 const CURRENCY_SYMBOLS: Record<SupportedCurrency, string> = {
   TND: "DT",
   USD: "$",
   EUR: "€",
+  SAR: "ر.س",
 };
 
 // Taux de fallback si le frontend n'envoie pas le taux
@@ -48,6 +315,7 @@ const FALLBACK_RATES: Record<SupportedCurrency, number> = {
   TND: 1,
   USD: 0.32,
   EUR: 0.30,
+  SAR: 1.20,
 };
 
 const COLORS = {
@@ -69,14 +337,19 @@ const COLORS = {
 const LOGO_PATH      = path.join(__dirname, "logo.png");
 const SIGNATURE_PATH = path.join(__dirname, "signature.png");
 
-function formatStatus(status: string): { label: string; color: string; bg: string } {
+// Police arabe à fournir (Noto Sans Arabic conseillée) — nécessaire car
+// Helvetica ne sait pas afficher les caractères arabes dans PDFKit.
+const ARABIC_FONT_REGULAR = path.join(__dirname, "fonts", "NotoSansArabic-Regular.ttf");
+const ARABIC_FONT_BOLD    = path.join(__dirname, "fonts", "NotoSansArabic-Bold.ttf");
+
+function formatStatus(status: string, t: Dict): { label: string; color: string; bg: string } {
   const s = status.toLowerCase();
-  if (s.includes("paid") || s.includes("payé") || s.includes("paye"))
-    return { label: "Payé", color: COLORS.greenStatus, bg: COLORS.greenStatusBg };
-  if (s.includes("pending") || s.includes("attente"))
-    return { label: "En attente", color: COLORS.amberStatus, bg: COLORS.amberStatusBg };
-  if (s.includes("fail") || s.includes("échou") || s.includes("refus"))
-    return { label: "Échoué", color: COLORS.redStatus, bg: COLORS.redStatusBg };
+  if (s.includes("paid") || s.includes("payé") || s.includes("paye") || s.includes("pagad") || s.includes("bezahlt") || s.includes("مدفوع"))
+    return { label: t.statusPaid, color: COLORS.greenStatus, bg: COLORS.greenStatusBg };
+  if (s.includes("pending") || s.includes("attente") || s.includes("pendiente") || s.includes("attesa") || s.includes("ausstehend") || s.includes("انتظار"))
+    return { label: t.statusPending, color: COLORS.amberStatus, bg: COLORS.amberStatusBg };
+  if (s.includes("fail") || s.includes("échou") || s.includes("refus") || s.includes("fallid") || s.includes("fehlgeschlagen") || s.includes("فشل"))
+    return { label: t.statusFailed, color: COLORS.redStatus, bg: COLORS.redStatusBg };
   return { label: status, color: COLORS.textGray, bg: COLORS.rowAlt };
 }
 
@@ -91,13 +364,18 @@ async function fetchImageBuffer(url: string): Promise<Buffer | null> {
 export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
 
   // ================================================================
+  // ✅ LANGUE
+  // lang vient du frontend (ex: query param ?lang=fr, transmis dans order.lang)
+  // ================================================================
+  const lang: Language = SUPPORTED_LANGS.includes(order.lang as Language)
+    ? (order.lang as Language)
+    : "fr";
+  const t = TRANSLATIONS[lang];
+  const dateLocale = DATE_LOCALES[lang];
+  const isRTL = lang === "ar";
+
+  // ================================================================
   // ✅ DEVISE & CONVERSION
-  // currency  = "USD" | "EUR" | "TND"  → vient du frontend via query param
-  // rate      = taux envoyé par le frontend (ex: 0.32 pour USD)
-  //             si absent → fallback sur les taux du backend
-  // symbol    = "$" | "€" | "DT"
-  // convert() = multiplie le montant TND par le taux → donne le montant
-  //             dans la devise choisie, formaté en string
   // ================================================================
   const currency = order.currency ?? "TND";
   const rate     = order.rate ?? FALLBACK_RATES[currency];
@@ -122,6 +400,25 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
   const contentWidth = pageWidth - marginX * 2;
   const FOOTER_RESERVE = 110;
 
+  // ================================================================
+  // ✅ POLICES — enregistrement de la police arabe si nécessaire
+  // ================================================================
+  let FONT_REGULAR = "Helvetica";
+  let FONT_BOLD    = "Helvetica-Bold";
+  if (isRTL) {
+    try {
+      doc.registerFont("Arabic",      ARABIC_FONT_REGULAR);
+      doc.registerFont("Arabic-Bold", ARABIC_FONT_BOLD);
+      FONT_REGULAR = "Arabic";
+      FONT_BOLD    = "Arabic-Bold";
+    } catch {
+      // Si les fichiers de police ne sont pas présents, on retombe sur
+      // Helvetica (les caractères arabes ne s'afficheront pas correctement).
+    }
+  }
+  const alignStart = isRTL ? "right" : "left";
+  const alignEnd   = isRTL ? "left"  : "right";
+
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", `attachment; filename=facture-${order.orderNumber}.pdf`);
   doc.pipe(res);
@@ -133,33 +430,32 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
   doc.rect(0, 0, pageWidth, headerHeight).fill(COLORS.navy);
   try { doc.image(LOGO_PATH, marginX, 22, { width: 86, height: 86 }); } catch {}
 
-  doc.fillColor(COLORS.white).font("Helvetica-Bold").fontSize(26)
-    .text("FACTURE", marginX, 34, { width: contentWidth, align: "right" });
+  doc.fillColor(COLORS.white).font(FONT_BOLD).fontSize(26)
+    .text(t.invoiceTitle, marginX, 34, { width: contentWidth, align: alignEnd });
 
-  doc.fillColor(COLORS.orange).font("Helvetica-Bold").fontSize(11)
-    .text(`N° ${order.orderNumber}`, marginX, 66, { width: contentWidth, align: "right" });
+  doc.fillColor(COLORS.orange).font(FONT_BOLD).fontSize(11)
+    .text(`${t.orderPrefix} ${order.orderNumber}`, marginX, 66, { width: contentWidth, align: alignEnd });
 
-  doc.fillColor("#9fb3d6").font("Helvetica").fontSize(9)
+  doc.fillColor("#9fb3d6").font(FONT_REGULAR).fontSize(9)
     .text(
-      `Date d'émission : ${new Date(order.createdAt).toLocaleDateString("fr-FR", {
+      `${t.issuedOn} : ${new Date(order.createdAt).toLocaleDateString(dateLocale, {
         day: "2-digit", month: "long", year: "numeric",
       })}`,
-      marginX, 83, { width: contentWidth, align: "right" }
+      marginX, 83, { width: contentWidth, align: alignEnd }
     );
 
-  // Devise affichée dans l'en-tête
-  doc.fillColor(COLORS.orange).font("Helvetica-Bold").fontSize(9)
-    .text(`Devise : ${symbol}`, marginX, 110, { width: contentWidth, align: "right" });
+  doc.fillColor(COLORS.orange).font(FONT_BOLD).fontSize(9)
+    .text(`${t.currencyLabel} : ${symbol}`, marginX, 110, { width: contentWidth, align: alignEnd });
 
   // ================================================================
   // STATUT
   // ================================================================
-  const status = formatStatus(order.paymentStatus);
+  const status = formatStatus(order.paymentStatus, t);
   let y = headerHeight + 24;
 
   doc.fillColor(status.bg).roundedRect(marginX, y, 150, 22, 4).fill();
-  doc.fillColor(status.color).font("Helvetica-Bold").fontSize(9)
-    .text(`STATUT : ${status.label.toUpperCase()}`, marginX, y + 6, { width: 150, align: "center" });
+  doc.fillColor(status.color).font(FONT_BOLD).fontSize(9)
+    .text(`${t.statusLabel} : ${status.label.toUpperCase()}`, marginX, y + 6, { width: 150, align: "center" });
 
   // ================================================================
   // BLOCS FACTURÉ À / LIVRAISON
@@ -171,33 +467,33 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
   const blockTop = y;
 
   function sectionLabel(text: string, x: number, top: number) {
-    doc.fillColor(COLORS.orange).font("Helvetica-Bold").fontSize(10)
-      .text(text.toUpperCase(), x, top, { characterSpacing: 0.5 });
+    doc.fillColor(COLORS.orange).font(FONT_BOLD).fontSize(10)
+      .text(text.toUpperCase(), x, top, { characterSpacing: 0.5, align: alignStart });
     doc.moveTo(x, top + 16).lineTo(x + colWidth, top + 16)
       .lineWidth(1).strokeColor(COLORS.borderGray).stroke();
   }
 
   function fieldLine(label: string, value: string, x: number, top: number): number {
     if (!value) return top;
-    doc.fillColor(COLORS.textGray).font("Helvetica-Bold").fontSize(9).text(label, x, top);
-    doc.fillColor(COLORS.textDark).font("Helvetica").fontSize(10)
-      .text(value, x, top + 12, { width: colWidth });
+    doc.fillColor(COLORS.textGray).font(FONT_BOLD).fontSize(9).text(label, x, top, { align: alignStart });
+    doc.fillColor(COLORS.textDark).font(FONT_REGULAR).fontSize(10)
+      .text(value, x, top + 12, { width: colWidth, align: alignStart });
     return top + 12 + doc.heightOfString(value, { width: colWidth }) + 10;
   }
 
-  sectionLabel("Facturé à", col1X, blockTop);
+  sectionLabel(t.billedTo, col1X, blockTop);
   let y1 = blockTop + 28;
-  y1 = fieldLine("NOM",        order.user?.name  || "Client", col1X, y1);
-  if (order.user?.email) y1 = fieldLine("EMAIL",     order.user.email,  col1X, y1);
-  if (order.user?.phone) y1 = fieldLine("TÉLÉPHONE", order.user.phone,  col1X, y1);
+  y1 = fieldLine(t.name,  order.user?.name  || t.defaultClient, col1X, y1);
+  if (order.user?.email) y1 = fieldLine(t.email, order.user.email,  col1X, y1);
+  if (order.user?.phone) y1 = fieldLine(t.phone, order.user.phone,  col1X, y1);
 
-  sectionLabel("Adresse de livraison", col2X, blockTop);
+  sectionLabel(t.shippingAddress, col2X, blockTop);
   let y2 = blockTop + 28;
-  y2 = fieldLine("RUE",  order.shippingAddress.street, col2X, y2);
-  y2 = fieldLine("VILLE",
+  y2 = fieldLine(t.street, order.shippingAddress.street, col2X, y2);
+  y2 = fieldLine(t.city,
     `${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.zipCode}`,
     col2X, y2);
-  y2 = fieldLine("PAYS", order.shippingAddress.country, col2X, y2);
+  y2 = fieldLine(t.country, order.shippingAddress.country, col2X, y2);
 
   y = Math.max(y1, y2) + 15;
 
@@ -220,31 +516,28 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
     },
   };
 
-  // Helper : dessiner l'en-tête du tableau
   function drawTableHeader(headerY: number) {
     doc.rect(marginX, headerY, contentWidth, 26).fill(COLORS.navy);
-    doc.fillColor(COLORS.white).font("Helvetica-Bold").fontSize(9);
-    doc.text("ARTICLE", cols.article.x, headerY + 9, { width: cols.article.w });
-    doc.text("TAILLE",  cols.size.x,    headerY + 9, { width: cols.size.w,      align: "center" });
-    doc.text("QTÉ",     cols.qty.x,     headerY + 9, { width: cols.qty.w,       align: "center" });
-    doc.text("PRIX",    cols.price.x,   headerY + 9, { width: cols.price.w,     align: "right"  });
-    doc.text("TOTAL",   cols.total.x,   headerY + 9, { width: cols.total.w - 10, align: "right" });
+    doc.fillColor(COLORS.white).font(FONT_BOLD).fontSize(9);
+    doc.text(t.colArticle, cols.article.x, headerY + 9, { width: cols.article.w, align: alignStart });
+    doc.text(t.colSize,    cols.size.x,    headerY + 9, { width: cols.size.w,      align: "center" });
+    doc.text(t.colQty,     cols.qty.x,     headerY + 9, { width: cols.qty.w,       align: "center" });
+    doc.text(t.colPrice,   cols.price.x,   headerY + 9, { width: cols.price.w,     align: "right"  });
+    doc.text(t.colTotal,   cols.total.x,   headerY + 9, { width: cols.total.w - 10, align: "right" });
   }
 
   const tableHeaderY = y;
   drawTableHeader(tableHeaderY);
   y = tableHeaderY + 26;
 
-  let currentTableHeaderY = tableHeaderY; // pour la bordure finale
+  let currentTableHeaderY = tableHeaderY;
 
   order.items.forEach((item, idx) => {
-    const name       = item.name || item.product?.name || "Produit supprimé";
+    const name       = item.name || item.product?.name || t.deletedProduct;
     const nameHeight = doc.heightOfString(name, { width: cols.article.w - 10 });
     const rowHeight  = Math.max(ROW_HEIGHT, nameHeight + 20);
 
-    // Nouvelle page si nécessaire
     if (y + rowHeight > pageHeight - FOOTER_RESERVE - 80) {
-      // Fermer le tableau courant
       doc.rect(marginX, currentTableHeaderY, contentWidth, y - currentTableHeaderY)
         .lineWidth(1).strokeColor(COLORS.navy).stroke();
 
@@ -255,10 +548,8 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
       y += 26;
     }
 
-    // Fond alterné
     if (idx % 2 === 1) doc.rect(marginX, y, contentWidth, rowHeight).fill(COLORS.rowAlt);
 
-    // Image clippée
     const imgX = cols.img.x + IMG_PADDING;
     const imgY = y + (rowHeight - IMG_SIZE) / 2;
     const imgBuffer = imageBuffers[idx];
@@ -273,23 +564,21 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
       }
     } else {
       doc.rect(imgX, imgY, IMG_SIZE, IMG_SIZE).fillAndStroke("#f3f4f6", COLORS.borderGray);
-      doc.fillColor(COLORS.textGray).font("Helvetica").fontSize(7)
-        .text("N/A", imgX, imgY + IMG_SIZE / 2 - 4, { width: IMG_SIZE, align: "center" });
+      doc.fillColor(COLORS.textGray).font(FONT_REGULAR).fontSize(7)
+        .text(t.imgNA, imgX, imgY + IMG_SIZE / 2 - 4, { width: IMG_SIZE, align: "center" });
     }
 
-    // Texte centré verticalement
     const textY = y + (rowHeight - 22) / 2;
 
-    doc.fillColor(COLORS.textDark).font("Helvetica-Bold").fontSize(9)
-      .text(name, cols.article.x, textY, { width: cols.article.w - 10 });
+    doc.fillColor(COLORS.textDark).font(FONT_BOLD).fontSize(9)
+      .text(name, cols.article.x, textY, { width: cols.article.w - 10, align: alignStart });
 
-    doc.font("Helvetica").fontSize(9).fillColor(COLORS.textDark);
-    doc.text(item.size || "—",       cols.size.x,  textY + 2, { width: cols.size.w,  align: "center" });
-    doc.text(String(item.quantity),  cols.qty.x,   textY + 2, { width: cols.qty.w,   align: "center" });
+    doc.font(FONT_REGULAR).fontSize(9).fillColor(COLORS.textDark);
+    doc.text(item.size || t.sizeDash,   cols.size.x,  textY + 2, { width: cols.size.w,  align: "center" });
+    doc.text(String(item.quantity),     cols.qty.x,   textY + 2, { width: cols.qty.w,   align: "center" });
 
-    // ✅ Montants convertis dans la devise active
     doc.text(`${convert(item.price)} ${symbol}`,              cols.price.x, textY + 2, { width: cols.price.w,     align: "right" });
-    doc.font("Helvetica-Bold").fillColor(COLORS.navy)
+    doc.font(FONT_BOLD).fillColor(COLORS.navy)
       .text(`${convert(item.price * item.quantity)} ${symbol}`, cols.total.x, textY + 2, { width: cols.total.w - 10, align: "right" });
 
     y += rowHeight;
@@ -298,7 +587,6 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
       .lineWidth(0.5).strokeColor(COLORS.borderGray).stroke();
   });
 
-  // Bordure finale du tableau
   doc.rect(marginX, currentTableHeaderY, contentWidth, y - currentTableHeaderY)
     .lineWidth(1).strokeColor(COLORS.navy).stroke();
 
@@ -319,18 +607,17 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
 
   function totalLine(label: string, value: string, bold = false) {
     doc.fillColor(bold ? COLORS.textDark : COLORS.textGray)
-      .font(bold ? "Helvetica-Bold" : "Helvetica").fontSize(10)
-      .text(label, totalsX, ty, { width: totalsW - 90 });
+      .font(bold ? FONT_BOLD : FONT_REGULAR).fontSize(10)
+      .text(label, totalsX, ty, { width: totalsW - 90, align: alignStart });
     doc.fillColor(bold ? COLORS.navy : COLORS.textDark)
-      .font(bold ? "Helvetica-Bold" : "Helvetica").fontSize(10)
+      .font(bold ? FONT_BOLD : FONT_REGULAR).fontSize(10)
       .text(value, totalsX + totalsW - 90, ty, { width: 90, align: "right" });
     ty += 18;
   }
 
-  // ✅ Totaux convertis
-  totalLine("Sous-total", `${convert(order.subtotal)} ${symbol}`);
-  totalLine("Livraison",  `${convert(order.shippingCost)} ${symbol}`);
-  if (order.tax > 0) totalLine("Taxe", `${convert(order.tax)} ${symbol}`);
+  totalLine(t.subtotal, `${convert(order.subtotal)} ${symbol}`);
+  totalLine(t.shipping,  `${convert(order.shippingCost)} ${symbol}`);
+  if (order.tax > 0) totalLine(t.tax, `${convert(order.tax)} ${symbol}`);
 
   ty += 4;
   doc.moveTo(totalsX, ty).lineTo(totalsX + totalsW, ty)
@@ -338,10 +625,9 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
   ty += 10;
 
   doc.rect(totalsX - 12, ty - 8, totalsW + 12, 32).fill(COLORS.navy);
-  doc.fillColor(COLORS.white).font("Helvetica-Bold").fontSize(12)
-    .text("TOTAL", totalsX, ty, { width: totalsW - 90 });
-  // ✅ Total final converti
-  doc.fillColor(COLORS.orange).font("Helvetica-Bold").fontSize(13)
+  doc.fillColor(COLORS.white).font(FONT_BOLD).fontSize(12)
+    .text(t.total, totalsX, ty, { width: totalsW - 90, align: alignStart });
+  doc.fillColor(COLORS.orange).font(FONT_BOLD).fontSize(13)
     .text(`${convert(order.totalAmount)} ${symbol}`, totalsX + totalsW - 90, ty - 1, {
       width: 90, align: "right",
     });
@@ -378,8 +664,8 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
     if (scale < 0.85) { fSigW = signatureWidth * 0.85; fSigH = signatureHeight * 0.85; }
   }
 
-  doc.fillColor(COLORS.textGray).font("Helvetica-Bold").fontSize(8)
-    .text("SIGNATURE AUTORISÉE", signatureX, fSigLabelY, {
+  doc.fillColor(COLORS.textGray).font(FONT_BOLD).fontSize(8)
+    .text(t.signature, signatureX, fSigLabelY, {
       width: fSigW, align: "center", characterSpacing: 0.3,
     });
   try { doc.image(SIGNATURE_PATH, signatureX, fSigImgY, { width: fSigW, height: fSigH }); } catch {}
@@ -391,12 +677,12 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
   // ================================================================
   doc.moveTo(marginX, fFooterY).lineTo(marginX + contentWidth, fFooterY)
     .lineWidth(1).strokeColor(COLORS.borderGray).stroke();
-  doc.fillColor(COLORS.navy).font("Helvetica-Bold").fontSize(11)
-    .text("Merci pour votre commande !", marginX, fFooterY + 14, { width: contentWidth, align: "center" });
-  doc.fillColor(COLORS.textGray).font("Helvetica").fontSize(8.5)
-    .text("Ines Shop — Cette facture a été générée automatiquement", marginX, fFooterY + 32, { width: contentWidth, align: "center" });
-  doc.fillColor(COLORS.textGray).font("Helvetica").fontSize(8)
-    .text("Pour toute question concernant cette facture, contactez notre service client.", marginX, fFooterY + 46, { width: contentWidth, align: "center" });
+  doc.fillColor(COLORS.navy).font(FONT_BOLD).fontSize(11)
+    .text(t.thankYou, marginX, fFooterY + 14, { width: contentWidth, align: "center" });
+  doc.fillColor(COLORS.textGray).font(FONT_REGULAR).fontSize(8.5)
+    .text(t.footerLine1, marginX, fFooterY + 32, { width: contentWidth, align: "center" });
+  doc.fillColor(COLORS.textGray).font(FONT_REGULAR).fontSize(8)
+    .text(t.footerLine2, marginX, fFooterY + 46, { width: contentWidth, align: "center" });
 
   doc.end();
 }

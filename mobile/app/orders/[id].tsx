@@ -20,7 +20,7 @@ export default function OrderDetails() {
     const [loading, setLoading] = useState(true);
     const [downloadingInvoice, setDownloadingInvoice] = useState(false);
     const { getToken } = useAuth();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage(); // ← language ajouté
     const { formatPrice, currency } = useCurrency(); 
 
     const fetchOrderDetails = async () => {
@@ -44,7 +44,8 @@ export default function OrderDetails() {
         setDownloadingInvoice(true);
         try {
           
-            await downloadInvoice(order._id, order.orderNumber, getToken, currency);
+            await downloadInvoice(order._id, order.orderNumber, getToken, currency, language);
+            //                                                                      ^^^^^^^^ ajouté
         } finally {
             setDownloadingInvoice(false);
         }

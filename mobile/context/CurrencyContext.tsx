@@ -1,19 +1,27 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export type Currency = "USD" | "EUR" | "TND";
-
+export type Currency = "USD" | "EUR" | "TND" | "SAR";
 
 export const RATES_FROM_TND: Record<Currency, number> = {
   TND: 1,
-  USD: 0.32,  
-  EUR: 0.30, 
+  USD: 0.32,
+  EUR: 0.30,
+  SAR: 1.20,
 };
 
 export const SYMBOLS: Record<Currency, string> = {
   TND: "DT",
   USD: "$",
   EUR: "€",
+  SAR: "ر.س",
+};
+
+export const FLAGS: Record<Currency, string> = {
+  TND: "🇹🇳",
+  USD: "🇺🇸",
+  EUR: "🇪🇺",
+  SAR: "🇸🇦",
 };
 
 type CurrencyContextType = {

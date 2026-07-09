@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { Text, TouchableOpacity, View, Modal, Animated, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "@/constants";
+import { FLAGS, Currency } from "@/context/CurrencyContext";
 
 interface CurrencyModalProps {
   visible: boolean;
@@ -48,7 +49,7 @@ export default function CurrencyModal({
     <Modal visible={visible} transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
       <Pressable
         onPress={onClose}
-        style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" }}
+        style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end", marginBottom: 20 }}
       >
         <Animated.View
           style={{
@@ -85,6 +86,7 @@ export default function CurrencyModal({
 
             {currencies.map((curr) => {
               const isSelected = selectedCurrency === curr;
+              const flag = FLAGS[curr as Currency] ?? "🏳️";
               return (
                 <TouchableOpacity
                   key={curr}
@@ -97,14 +99,9 @@ export default function CurrencyModal({
                   <View className="flex-row items-center">
                     <View
                       className="w-9 h-9 rounded-full items-center justify-center mr-3"
-                      style={{ backgroundColor: isSelected ? COLORS.primary : "#EFEFEF" }}
+                      style={{ backgroundColor: isSelected ? `${COLORS.primary}1A` : "#EFEFEF" }}
                     >
-                      <Text
-                        className="font-bold text-xs"
-                        style={{ color: isSelected ? "#fff" : COLORS.secondary }}
-                      >
-                        {curr}
-                      </Text>
+                      <Text className="text-lg">{flag}</Text>
                     </View>
                     <Text
                       className={`font-medium ${
