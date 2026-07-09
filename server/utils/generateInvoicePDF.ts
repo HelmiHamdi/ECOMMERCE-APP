@@ -1,6 +1,7 @@
 import PDFDocument from "pdfkit";
 import { Response } from "express";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -406,15 +407,30 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
   let FONT_REGULAR = "Helvetica";
   let FONT_BOLD    = "Helvetica-Bold";
   if (isRTL) {
-    try {
-      doc.registerFont("Arabic",      ARABIC_FONT_REGULAR);
-      doc.registerFont("Arabic-Bold", ARABIC_FONT_BOLD);
-      FONT_REGULAR = "Arabic";
-      FONT_BOLD    = "Arabic-Bold";
-    } catch {
-      // Si les fichiers de police ne sont pas présents, on retombe sur
-      // Helvetica (les caractères arabes ne s'afficheront pas correctement).
+    // IMPORTANT : pdfkit ne lit le fichier .ttf qu'au premier doc.font(...),
+    // pas au moment de registerFont(). Si le fichier est absent, l'erreur
+    // surviendrait donc plus tard, APRÈS l'envoi des en-têtes PDF, ce qui
+    // casse la réponse HTTP en plein streaming (ERR_INVALID_RESPONSE côté
+    // client). On vérifie donc l'existence du fichier AVANT d'enregistrer
+    // la police, pour ne jamais tenter de la charger si elle n'existe pas.
+    const hasArabicFonts =
+      fs.existsSync(ARABIC_FONT_REGULAR) && fs.existsSync(ARABIC_FONT_BOLD);
+
+    if (hasArabicFonts) {
+      try {
+        doc.registerFont("Arabic",      ARABIC_FONT_REGULAR);
+        doc.registerFont("Arabic-Bold", ARABIC_FONT_BOLD);
+        FONT_REGULAR = "Arabic";
+        FONT_BOLD    = "Arabic-Bold";
+      } catch {
+        // Sécurité supplémentaire : en cas d'échec malgré tout, on reste
+        // sur Helvetica (les caractères arabes ne s'afficheront pas
+        // correctement, mais le PDF sera généré sans planter).
+      }
     }
+    // Si les fichiers sont absents, on garde Helvetica : le PDF sera généré
+    // (sans planter) mais le texte arabe n'affichera pas les bons glyphes
+    // tant que les polices ne sont pas ajoutées sur le serveur (voir plus bas).
   }
   const alignStart = isRTL ? "right" : "left";
   const alignEnd   = isRTL ? "left"  : "right";
@@ -422,6 +438,14 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", `attachment; filename=facture-${order.orderNumber}.pdf`);
   doc.pipe(res);
+
+  // Filet de sécurité : si une erreur survient pendant le streaming (après
+  // l'envoi des en-têtes), on ne peut plus renvoyer un res.status(500).json
+  // proprement — on ferme juste le flux pour éviter une réponse HTTP cassée.
+  doc.on("error", (err) => {
+    console.error("Erreur génération PDF facture:", err);
+    try { res.end(); } catch { /* noop */ }
+  });
 
   // ================================================================
   // EN-TÊTE
