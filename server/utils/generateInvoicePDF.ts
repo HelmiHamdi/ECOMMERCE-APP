@@ -73,7 +73,8 @@ type Dict = {
   total: string;
   signature: string;
   thankYou: string;
-  footerLine1: string;
+  footerBrand: string;
+  footerDescription: string;
   footerLine2: string;
   sizeDash: string;
 };
@@ -110,7 +111,8 @@ const TRANSLATIONS: Record<Language, Dict> = {
     total: "TOTAL",
     signature: "SIGNATURE AUTORISÉE",
     thankYou: "Merci pour votre commande !",
-    footerLine1: "Ines Shop — Cette facture a été générée automatiquement",
+    footerBrand: "Ines Shop",
+    footerDescription: "Cette facture a été générée automatiquement",
     footerLine2: "Pour toute question concernant cette facture, contactez notre service client.",
     sizeDash: "—",
   },
@@ -145,7 +147,8 @@ const TRANSLATIONS: Record<Language, Dict> = {
     total: "TOTAL",
     signature: "AUTHORIZED SIGNATURE",
     thankYou: "Thank you for your order!",
-    footerLine1: "Ines Shop — This invoice was generated automatically",
+    footerBrand: "Ines Shop",
+    footerDescription: "This invoice was generated automatically",
     footerLine2: "For any question about this invoice, please contact our customer service.",
     sizeDash: "—",
   },
@@ -158,7 +161,7 @@ const TRANSLATIONS: Record<Language, Dict> = {
     statusPaid: "مدفوعة",
     statusPending: "قيد الانتظار",
     statusFailed: "فشلت",
-    billedTo: "فوترة إلى",
+    billedTo: "الفوترة إلى",
     shippingAddress: "عنوان التوصيل",
     name: "الاسم",
     defaultClient: "الزبون",
@@ -178,9 +181,10 @@ const TRANSLATIONS: Record<Language, Dict> = {
     shipping: "التوصيل",
     tax: "الضريبة",
     total: "المجموع الكلي",
-    signature: "توقيع معتمد",
+    signature: "التوقيع المعتمد",
     thankYou: "شكراً لطلبكم!",
-    footerLine1: "Ines Shop — تم إنشاء هذه الفاتورة تلقائياً",
+    footerBrand: "Ines Shop",
+    footerDescription: "تم إنشاء هذه الفاتورة تلقائياً",
     footerLine2: "لأي استفسار حول هذه الفاتورة، يرجى الاتصال بخدمة العملاء.",
     sizeDash: "—",
   },
@@ -215,7 +219,8 @@ const TRANSLATIONS: Record<Language, Dict> = {
     total: "TOTAL",
     signature: "FIRMA AUTORIZADA",
     thankYou: "¡Gracias por su pedido!",
-    footerLine1: "Ines Shop — Esta factura fue generada automáticamente",
+    footerBrand: "Ines Shop",
+    footerDescription: "Esta factura fue generada automáticamente",
     footerLine2: "Para cualquier pregunta sobre esta factura, contacte con nuestro servicio de atención al cliente.",
     sizeDash: "—",
   },
@@ -250,7 +255,8 @@ const TRANSLATIONS: Record<Language, Dict> = {
     total: "TOTALE",
     signature: "FIRMA AUTORIZZATA",
     thankYou: "Grazie per il tuo ordine!",
-    footerLine1: "Ines Shop — Questa fattura è stata generata automaticamente",
+    footerBrand: "Ines Shop",
+    footerDescription: "Questa fattura è stata generata automaticamente",
     footerLine2: "Per qualsiasi domanda su questa fattura, contatta il nostro servizio clienti.",
     sizeDash: "—",
   },
@@ -285,7 +291,8 @@ const TRANSLATIONS: Record<Language, Dict> = {
     total: "GESAMT",
     signature: "AUTORISIERTE UNTERSCHRIFT",
     thankYou: "Danke für Ihre Bestellung!",
-    footerLine1: "Ines Shop — Diese Rechnung wurde automatisch erstellt",
+    footerBrand: "Ines Shop",
+    footerDescription: "Diese Rechnung wurde automatisch erstellt",
     footerLine2: "Bei Fragen zu dieser Rechnung wenden Sie sich bitte an unseren Kundenservice.",
     sizeDash: "—",
   },
@@ -434,6 +441,11 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
   }
   const alignStart = isRTL ? "right" : "left";
   const alignEnd   = isRTL ? "left"  : "right";
+  // Le logo reste toujours épinglé à gauche, quelle que soit la langue —
+  // le texte d'en-tête doit donc TOUJOURS s'aligner à droite pour ne
+  // jamais le chevaucher (contrairement à alignEnd, qui s'inverserait
+  // en arabe et viendrait recouvrir le logo).
+  const headerAlign = "right";
 
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", `attachment; filename=facture-${order.orderNumber}.pdf`);
@@ -455,21 +467,21 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
   try { doc.image(LOGO_PATH, marginX, 22, { width: 86, height: 86 }); } catch {}
 
   doc.fillColor(COLORS.white).font(FONT_BOLD).fontSize(26)
-    .text(t.invoiceTitle, marginX, 34, { width: contentWidth, align: alignEnd });
+    .text(t.invoiceTitle, marginX, 34, { width: contentWidth, align: headerAlign });
 
   doc.fillColor(COLORS.orange).font(FONT_BOLD).fontSize(11)
-    .text(`${t.orderPrefix} ${order.orderNumber}`, marginX, 66, { width: contentWidth, align: alignEnd });
+    .text(`${t.orderPrefix} ${order.orderNumber}`, marginX, 66, { width: contentWidth, align: headerAlign });
 
   doc.fillColor("#9fb3d6").font(FONT_REGULAR).fontSize(9)
     .text(
       `${t.issuedOn} : ${new Date(order.createdAt).toLocaleDateString(dateLocale, {
         day: "2-digit", month: "long", year: "numeric",
       })}`,
-      marginX, 83, { width: contentWidth, align: alignEnd }
+      marginX, 83, { width: contentWidth, align: headerAlign }
     );
 
   doc.fillColor(COLORS.orange).font(FONT_BOLD).fontSize(9)
-    .text(`${t.currencyLabel} : ${symbol}`, marginX, 110, { width: contentWidth, align: alignEnd });
+    .text(`${t.currencyLabel} : ${symbol}`, marginX, 110, { width: contentWidth, align: headerAlign });
 
   // ================================================================
   // STATUT
@@ -528,17 +540,37 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
   const IMG_PADDING = 6;
   const ROW_HEIGHT  = IMG_SIZE + IMG_PADDING * 2;
 
-  const cols = {
-    img:     { x: marginX,                                    w: IMG_SIZE + IMG_PADDING * 2 },
-    article: { x: marginX + IMG_SIZE + IMG_PADDING * 2,       w: 170 },
-    size:    { x: marginX + IMG_SIZE + IMG_PADDING * 2 + 170, w: 55  },
-    qty:     { x: marginX + IMG_SIZE + IMG_PADDING * 2 + 225, w: 45  },
-    price:   { x: marginX + IMG_SIZE + IMG_PADDING * 2 + 270, w: 80  },
-    total:   {
-      x: marginX + IMG_SIZE + IMG_PADDING * 2 + 350,
-      w: contentWidth - (IMG_SIZE + IMG_PADDING * 2) - 350,
-    },
+  // Largeurs des colonnes (indépendantes de la direction de lecture)
+  const COL_WIDTHS = {
+    img:     IMG_SIZE + IMG_PADDING * 2,
+    article: 170,
+    size:    55,
+    qty:     45,
+    price:   80,
   };
+  const totalColWidth =
+    contentWidth - COL_WIDTHS.img - COL_WIDTHS.article - COL_WIDTHS.size - COL_WIDTHS.qty - COL_WIDTHS.price;
+
+  // En LTR, l'ordre visuel (gauche → droite) est : image, article, taille, qté, prix, total.
+  // En RTL, on inverse cet ordre pour qu'un lecteur arabe rencontre d'abord le
+  // produit (à droite) puis, en lisant vers la gauche, arrive au total en dernier —
+  // exactement comme en LTR mais en miroir.
+  const columnOrder: Array<keyof typeof COL_WIDTHS | "total"> = isRTL
+    ? ["total", "price", "qty", "size", "article", "img"]
+    : ["img", "article", "size", "qty", "price", "total"];
+
+  const colWidthsFull = { ...COL_WIDTHS, total: totalColWidth };
+
+  const cols: Record<"img" | "article" | "size" | "qty" | "price" | "total", { x: number; w: number }> =
+    {} as any;
+  {
+    let curX = marginX;
+    for (const key of columnOrder) {
+      const w = colWidthsFull[key];
+      cols[key] = { x: curX, w };
+      curX += w;
+    }
+  }
 
   function drawTableHeader(headerY: number) {
     doc.rect(marginX, headerY, contentWidth, 26).fill(COLORS.navy);
@@ -703,10 +735,12 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
     .lineWidth(1).strokeColor(COLORS.borderGray).stroke();
   doc.fillColor(COLORS.navy).font(FONT_BOLD).fontSize(11)
     .text(t.thankYou, marginX, fFooterY + 14, { width: contentWidth, align: "center" });
+  doc.fillColor(COLORS.textGray).font("Helvetica-Bold").fontSize(8.5)
+    .text(t.footerBrand, marginX, fFooterY + 32, { width: contentWidth, align: "center" });
   doc.fillColor(COLORS.textGray).font(FONT_REGULAR).fontSize(8.5)
-    .text(t.footerLine1, marginX, fFooterY + 32, { width: contentWidth, align: "center" });
+    .text(t.footerDescription, marginX, fFooterY + 44, { width: contentWidth, align: "center" });
   doc.fillColor(COLORS.textGray).font(FONT_REGULAR).fontSize(8)
-    .text(t.footerLine2, marginX, fFooterY + 46, { width: contentWidth, align: "center" });
+    .text(t.footerLine2, marginX, fFooterY + 58, { width: contentWidth, align: "center" });
 
   doc.end();
 }
