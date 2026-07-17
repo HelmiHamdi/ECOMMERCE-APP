@@ -17,7 +17,7 @@ CartRouter.post('/add', protect, addToCart);
 CartRouter.put('/item/:productId', protect, updateCartItem);
 CartRouter.delete('/item/:productId', protect, removeCartItem);
 
-// 👇 AJOUT — routes dédiées aux items "offre libre" (sans produit)
+
 CartRouter.put('/offer-item/:offerId', protect, updateOfferCartItem);
 CartRouter.delete('/offer-item/:offerId', protect, removeOfferCartItem);
 

@@ -1,4 +1,4 @@
-// config/stripe.ts
+
 import Stripe from "stripe";
 
 if (!process.env.STRIPE_SECRET_KEY) {

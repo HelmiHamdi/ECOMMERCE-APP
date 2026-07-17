@@ -1,4 +1,4 @@
-// controllers/paymentController.ts
+
 import stripe from "../config/stripe.js";
 import Order from "../models/Order.js";
 import Cart from "../models/Cart.js";
@@ -7,7 +7,7 @@ import { invalidateCache } from "../middleware/cache.js";
 import Stripe from "stripe";
 
 
-// ─── Créer un PaymentIntent ───────────────────────────────────────────────────
+
 export const createPaymentIntent = async (req: Request, res: Response) => {
   try {
     const cart = await Cart.findOne({ user: req.user._id })

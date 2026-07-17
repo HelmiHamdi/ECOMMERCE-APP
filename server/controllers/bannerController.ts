@@ -3,7 +3,7 @@ import Banner from "../models/Banner.js";
 import cloudinary from "../config/cloudinary.js";
 import { invalidateCache } from "../middleware/cache.js";
 
-// GET /api/banners → liste publique, triée, actives seulement
+
 export const getBanners = async (req: Request, res: Response) => {
   try {
     const banners = await Banner.find({ isActive: true }).sort({ order: 1, createdAt: -1 });
@@ -13,7 +13,7 @@ export const getBanners = async (req: Request, res: Response) => {
   }
 };
 
-// GET /api/banners/all → liste complète pour l'admin (actives + inactives)
+
 export const getAllBannersAdmin = async (req: Request, res: Response) => {
   try {
     const banners = await Banner.find().sort({ order: 1, createdAt: -1 });
@@ -77,7 +77,7 @@ export const updateBanner = async (req: Request, res: Response) => {
     if (updates.isActive !== undefined) updates.isActive = updates.isActive === "true" || updates.isActive === true;
 
     if (req.file) {
-      // supprimer l'ancienne image de Cloudinary
+     
       const existing = await Banner.findById(req.params.id);
       if (existing?.image) {
         const publicIdMatch = existing.image.match(/\/v\d+\/(.+)\.[a-z]+$/);

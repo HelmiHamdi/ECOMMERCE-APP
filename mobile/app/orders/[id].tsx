@@ -5,7 +5,7 @@ import { Image, ScrollView, Text, View, ActivityIndicator, TouchableOpacity } fr
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/Header";
 import { COLORS } from "@/constants";
-import type { Order, Product } from "@/constants/types";
+import type { Order} from "@/constants/types";
 
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";

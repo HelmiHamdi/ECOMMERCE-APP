@@ -1,9 +1,5 @@
-// scripts/fixOfferDates.ts
-//
-// Script à exécuter UNE SEULE FOIS pour corriger les offres déjà en base
-// dont startDate/endDate ont été enregistrées à minuit (00:00:00).
-// Usage : npx ts-node scripts/fixOfferDates.ts
-//
+
+
 import mongoose from "mongoose";
 import Offer from "../models/Offer.js";
 

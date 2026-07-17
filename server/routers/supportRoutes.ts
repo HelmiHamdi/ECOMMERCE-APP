@@ -13,12 +13,10 @@ import { authorize, protect } from "../middleware/auth.js";
 
 const SupportRouter = express.Router();
 
-// Toutes les routes nécessitent d'être connecté
+
 SupportRouter.use(protect);
 
-// Empêche tout cache (OS mobile, proxy réseau, CDN) sur les routes support.
-// Sans ça, un GET /support ou /support/:id répété peut renvoyer une
-// réponse mise en cache au lieu de l'état réel après un changement de statut.
+
 SupportRouter.use((req, res, next) => {
   res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
   res.set("Pragma", "no-cache");

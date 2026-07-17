@@ -10,7 +10,7 @@ interface SeedUser {
   image: string;
 }
 
-// 20 utilisateurs factices — modifiez librement noms/téléphones/images
+
 const usersToSeed: SeedUser[] = [
   { firstName: "Helmi", lastName: "Hamdi", phone: "+21620111222", image: "https://i.pravatar.cc/300?img=1" },
   { firstName: "Wassim", lastName: "Nazi", phone: "+21622333444", image: "https://i.pravatar.cc/300?img=2" },
@@ -39,7 +39,7 @@ function buildEmail(firstName: string, lastName: string) {
 }
 
 function buildPassword(firstName: string, lastName: string) {
-  // Ex: Helmi + Hamdi -> "HelmiHamdi999"
+  
   return `${firstName}${lastName}999`;
 }
 

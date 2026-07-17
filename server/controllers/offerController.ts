@@ -1,9 +1,7 @@
 import { Request, Response } from "express";
 import Offer from "../models/Offer.js";
 import { invalidateCache } from "../middleware/cache.js";
-import cloudinary from "../config/cloudinary.js"; // 👈 adaptez le chemin si besoin
-
-// ------- Upload d'un buffer (mémoire, via multer memoryStorage) vers Cloudinary -------
+import cloudinary from "../config/cloudinary.js";
 const uploadBufferToCloudinary = (
   buffer: Buffer,
   folder: string
@@ -36,8 +34,7 @@ const destroyCloudinaryImage = async (imageUrl: string) => {
   }
 };
 
-// Calcule finalPrice manuellement (le plugin mongoose-lean-virtuals n'est pas
-// installé, donc les virtuals ne sont pas inclus sur les documents .lean()).
+
 const withFinalPrice = <T extends Record<string, any>>(offer: T) => {
   const originalPrice = Number(offer.originalPrice) || 0;
   const discountPercentage = Number(offer.discountPercentage) || 0;
@@ -46,13 +43,7 @@ const withFinalPrice = <T extends Record<string, any>>(offer: T) => {
   return { ...offer, finalPrice };
 };
 
-// 👇 AJOUT — Une offre "libre" (sans produit lié) n'a aucun moyen de "revenir"
-// à un prix normal une fois expirée (contrairement à une offre liée à un
-// produit, qui redevient simplement invisible / le produit reprend son prix
-// normal automatiquement — voir attachActiveOffers dans productController).
-// On la supprime donc automatiquement dès qu'elle expire, avec ses images
-// Cloudinary associées. Appelé (lazy cleanup) à chaque lecture des listes
-// d'offres — pas besoin de tâche planifiée séparée.
+
 const cleanupExpiredFreeOffers = async () => {
   const now = new Date();
   const expired = await Offer.find({
@@ -72,7 +63,7 @@ const cleanupExpiredFreeOffers = async () => {
   invalidateCache("offers");
 };
 
-// ------- Route publique (client) — uniquement les offres actives et valides aujourd'hui -------
+
 export const getOffers = async (req: Request, res: Response) => {
   try {
     await cleanupExpiredFreeOffers(); // 👈 AJOUT
@@ -93,7 +84,7 @@ export const getOffers = async (req: Request, res: Response) => {
   }
 };
 
-// ------- Route admin — TOUTES les offres (actives, inactives, expirées, futures) -------
+
 export const getAllOffers = async (req: Request, res: Response) => {
   try {
     await cleanupExpiredFreeOffers(); // 👈 AJOUT
@@ -111,8 +102,7 @@ export const getAllOffers = async (req: Request, res: Response) => {
 
 export const getOffer = async (req: Request, res: Response) => {
   try {
-    // Pas de populate ici : le formulaire d'édition a besoin de l'id brut du produit
-    // (pas d'un objet populate) pour pré-remplir un sélecteur de produit.
+
     const offer = await Offer.findById(req.params.id).lean();
     if (!offer) {
       return res.status(404).json({ success: false, message: "Offer not found" });
@@ -135,15 +125,11 @@ export const createOffer = async (req: Request, res: Response) => {
       endDate: req.body.endDate,
     };
 
-    // Produit lié optionnel : on ne l'ajoute au payload que s'il est fourni,
-    // pour éviter d'envoyer une string vide à un champ ObjectId (CastError).
+  
     if (req.body.product) {
       payload.product = req.body.product;
     }
 
-    // 👇 AJOUT — jusqu'à 10 images, utiles UNIQUEMENT si l'offre n'a PAS de
-    // produit lié (sinon les images du produit sont utilisées à l'affichage).
-    // req.files vient de multer (memoryStorage, champ "images", array(10)).
     const files = (req.files as Express.Multer.File[]) || [];
     if (files.length > 10) {
       return res.status(400).json({
@@ -159,7 +145,6 @@ export const createOffer = async (req: Request, res: Response) => {
       payload.images = uploaded.map((u) => u.secure_url);
     }
 
-    // Il faut au moins un produit OU une image pour qu'une offre ait du contenu visuel
     if (!payload.product && (!payload.images || payload.images.length === 0)) {
       return res.status(400).json({
         success: false,
@@ -169,7 +154,7 @@ export const createOffer = async (req: Request, res: Response) => {
 
     const offer = await Offer.create(payload);
     invalidateCache("offers");
-    invalidateCache("products"); // 👈 le prix du produit lié change côté client
+    invalidateCache("products");
     res.status(201).json({ success: true, data: withFinalPrice(offer.toObject()) });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
@@ -193,9 +178,7 @@ export const updateOffer = async (req: Request, res: Response) => {
       endDate: req.body.endDate,
     };
 
-    // 👇 Produit optionnel : "" (chaîne vide) signifie que le client retire
-    // volontairement le produit lié → on force `null`. Si le champ n'est pas
-    // envoyé du tout, on ne touche pas au produit existant.
+
     if (req.body.product) {
       payload.product = req.body.product;
     } else if (req.body.product === "") {
@@ -206,8 +189,7 @@ export const updateOffer = async (req: Request, res: Response) => {
       payload.isActive = req.body.isActive === "true" || req.body.isActive === true;
     }
 
-    // 👇 AJOUT — gestion des images multiples (conservées + nouvelles),
-    // sur le même principe que "existingImages" pour les produits.
+
     const files = (req.files as Express.Multer.File[]) || [];
 
     let keptImages: string[] = existing.images || [];
@@ -233,7 +215,7 @@ export const updateOffer = async (req: Request, res: Response) => {
         : [];
       payload.images = [...keptImages, ...uploaded.map((u) => u.secure_url)];
 
-      // Supprime sur Cloudinary les images que l'utilisateur a retirées
+      
       const removedImages = (existing.images || []).filter(
         (url: string) => !keptImages.includes(url)
       );
@@ -242,7 +224,7 @@ export const updateOffer = async (req: Request, res: Response) => {
       }
     }
 
-    // Vérifie qu'après update l'offre garde bien un produit ou une image
+   
     const willHaveProduct =
       payload.product !== undefined ? !!payload.product : !!existing.product;
     const finalImages = payload.images !== undefined ? payload.images : existing.images || [];
@@ -276,7 +258,7 @@ export const deleteOffer = async (req: Request, res: Response) => {
     if (!offer) {
       return res.status(404).json({ success: false, message: "Offer not found" });
     }
-    // 👇 AJOUT — nettoie les images Cloudinary de l'offre supprimée
+   
     if (offer.images && offer.images.length > 0) {
       await Promise.all(offer.images.map((url) => destroyCloudinaryImage(url)));
     }

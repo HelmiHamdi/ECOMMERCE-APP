@@ -17,7 +17,6 @@ const notificationSchema = new Schema<INotification>(
   { timestamps: true }
 );
 
-// Pour charger rapidement "mes notifications, les plus récentes d'abord"
 notificationSchema.index({ user: 1, createdAt: -1 });
 
 const Notification = mongoose.model<INotification>("Notification", notificationSchema);

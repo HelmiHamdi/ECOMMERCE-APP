@@ -9,10 +9,7 @@ const offerSchema = new Schema(
     title: { type: String, required: true, trim: true },
     description: { type: String, required: true },
 
-    // 👇 CORRECTION — une offre peut désormais avoir PLUSIEURS images (max 10),
-    // affichées en carrousel côté app. Utile UNIQUEMENT pour une offre "libre"
-    // (sans produit lié) : si un produit est lié, ce sont SES images qui sont
-    // affichées à la place (voir populate côté controller / mobile).
+   
     images: {
       type: [String],
       default: [],

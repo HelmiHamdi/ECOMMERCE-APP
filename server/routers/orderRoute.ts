@@ -20,7 +20,7 @@ OrderRouter.get("/my", protect, getOrders);
 OrderRouter.get("/admin/all", protect, authorize("admin"), getAllOrders);
 OrderRouter.get("/", protect, getOrders);
 
-// ---- Routes protégées par Clerk, dynamiques ----
+
 OrderRouter.get("/:id/invoice/link", protect, getInvoiceLink);
 OrderRouter.get("/:id/invoice", protect, getOrderInvoice);
 OrderRouter.get("/:id", protect, getOrder);

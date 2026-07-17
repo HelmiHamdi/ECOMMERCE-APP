@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import Product from "../models/Products.js";
 import Order from "../models/Order.js";
+
+import Offer from "../models/Offer.js";
 import { OPENROUTER_API_KEY, OPENROUTER_URL, CHAT_MODEL } from "../config/openrouter.js";
 
 const SHIPPING_COST = "2 TND";
@@ -21,12 +23,27 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 let shopContextCache: { data: string; expiresAt: number } | null = null;
 
+
+const formatOfferLine = (o: any): string => {
+  const finalPrice =
+    Math.round((o.originalPrice - (o.originalPrice * o.discountPercentage) / 100) * 100) / 100;
+  const productName = o.product?.name ? ` (produit lié: ${o.product.name})` : "";
+  const endDate = new Date(o.endDate).toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  return `  - "${o.title}" | Code: ${o.code} | -${o.discountPercentage}% → ${finalPrice} TND (au lieu de ${o.originalPrice} TND) | Valable jusqu'au ${endDate}${productName}`;
+};
+
 const buildShopContext = async (): Promise<string> => {
   if (shopContextCache && shopContextCache.expiresAt > Date.now()) {
     return shopContextCache.data;
   }
 
-  // 6 requêtes en parallèle au lieu de séquentielles
+  const now = new Date();
+
+
   const [
     totalProducts,
     categoryStats,
@@ -34,6 +51,7 @@ const buildShopContext = async (): Promise<string> => {
     allSizes,
     outOfStockCount,
     featuredProducts,
+    activeOffers, 
   ] = await Promise.all([
     Product.countDocuments({ isActive: true }),
     Product.aggregate([
@@ -66,6 +84,16 @@ const buildShopContext = async (): Promise<string> => {
       .limit(6)
       .select("name price category sizes stock")
       .lean(),
+
+    Offer.find({
+      isActive: true,
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+    })
+      .populate("product", "name")
+      .sort("-createdAt")
+      .limit(15)
+      .lean(),
   ]);
 
   const stats = priceStats[0] || { minPrice: 0, maxPrice: 0, avgPrice: 0 };
@@ -89,6 +117,13 @@ const buildShopContext = async (): Promise<string> => {
     )
     .join("\n");
 
+  
+  const newOffers = activeOffers.slice(0, 5);
+  const otherOffers = activeOffers.slice(5);
+
+  const newOffersLines = newOffers.map(formatOfferLine).join("\n");
+  const otherOffersLines = otherOffers.map(formatOfferLine).join("\n");
+
   const context = `
 === CATALOGUE DE LA BOUTIQUE (Ines Shop) ===
 Nombre total de produits actifs: ${totalProducts}
@@ -101,6 +136,16 @@ ${categoryLines || "  Aucune catégorie disponible"}
 
 Produits mis en avant (featured):
 ${featuredLines || "  Aucun produit mis en avant"}
+
+=== OFFRES / PROMOS EN COURS ===
+${activeOffers.length === 0 ? "  Aucune offre active pour le moment." : ""}
+${
+  newOffers.length > 0
+    ? `Nouvelles offres (les plus récemment ajoutées) :\n${newOffersLines}`
+    : ""
+}
+${otherOffers.length > 0 ? `\nAutres offres actives :\n${otherOffersLines}` : ""}
+Pour utiliser une offre, le client doit renseigner le code promo indiqué lors du paiement.
 
 === LIVRAISON ===
 - Frais de livraison: ${SHIPPING_COST}
@@ -117,6 +162,7 @@ ${featuredLines || "  Aucun produit mis en avant"}
 - Pour toute question non résolue, le client peut écrire à: ${CONTACT_EMAIL}
 
 Si le client demande des détails précis sur un produit spécifique non listé ci-dessus (recherche par nom exact, mot-clé précis), utilise la fonction de recherche de produits pour obtenir des informations à jour avant de répondre.
+Si le client demande des détails précis sur une offre non listée ci-dessus, ou si la liste des offres semble incomplète, utilise la fonction de recherche d'offres pour obtenir des informations à jour avant de répondre.
 `.trim();
 
   shopContextCache = { data: context, expiresAt: Date.now() + 10 * 60 * 1000 };
@@ -124,10 +170,11 @@ Si le client demande des détails précis sur un produit spécifique non listé 
 };
 
 const SHOP_SYSTEM_PROMPT_BASE = `Tu es l'assistant virtuel de la boutique "Ines Shop", spécialisée dans la vente de vêtements, chaussures et accessoires en ligne.
-Ton rôle est d'aider les clients à comprendre ce que propose la boutique : catégories de produits, prix, tailles disponibles, stock, livraison, paiement, retours, et état de leurs commandes.
+Ton rôle est d'aider les clients à comprendre ce que propose la boutique : catégories de produits, prix, tailles disponibles, stock, offres/promos en cours, livraison, paiement, retours, et état de leurs commandes.
+Quand un client demande s'il y a des promotions, réductions, codes promo, ou "quoi de neuf", base-toi sur la section OFFRES / PROMOS EN COURS fournie ci-dessous, en mettant en avant les nouvelles offres si le client demande spécifiquement les nouveautés.
 Réponds uniquement aux questions liées à la boutique. Si une question est hors sujet (politique, météo, sujets non liés à la boutique), réponds poliment que tu ne peux aider que sur les sujets liés à la boutique.
 Sois concis, amical et professionnel. Réponds dans la langue utilisée par le client (français, anglais ou arabe).
-N'invente jamais de prix, de stock, de produits, de délais ou de politiques : utilise uniquement les informations fournies ci-dessous ou la fonction de recherche.`;
+N'invente jamais de prix, de stock, de produits, d'offres, de délais ou de politiques : utilise uniquement les informations fournies ci-dessous ou les fonctions de recherche.`;
 
 const PRODUCT_SEARCH_TOOL = {
   type: "function",
@@ -141,6 +188,26 @@ const PRODUCT_SEARCH_TOOL = {
         query: {
           type: "string",
           description: "Mot-clé de recherche (nom de produit, catégorie, type de vêtement, etc.)",
+        },
+      },
+      required: ["query"],
+    },
+  },
+};
+
+
+const OFFER_SEARCH_TOOL = {
+  type: "function",
+  function: {
+    name: "search_offers",
+    description:
+      "Recherche des offres/promotions actives par titre, code promo ou nom de produit lié. Retourne titre, code, réduction, prix final, dates de validité.",
+    parameters: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "Mot-clé de recherche (titre de l'offre, code promo, nom de produit, etc.)",
         },
       },
       required: ["query"],
@@ -175,6 +242,30 @@ const searchProducts = async (query: string) => {
     .join("\n");
 };
 
+
+const searchOffers = async (query: string) => {
+  const now = new Date();
+  const offers = await Offer.find({
+    isActive: true,
+    startDate: { $lte: now },
+    endDate: { $gte: now },
+    $or: [
+      { title: { $regex: query, $options: "i" } },
+      { code: { $regex: query, $options: "i" } },
+      { description: { $regex: query, $options: "i" } },
+    ],
+  })
+    .populate("product", "name")
+    .limit(8)
+    .lean();
+
+  if (offers.length === 0) {
+    return "Aucune offre active trouvée pour cette recherche.";
+  }
+
+  return offers.map(formatOfferLine).join("\n");
+};
+
 const fetchOpenRouter = async (body: object): Promise<any> => {
   const response = await fetch(OPENROUTER_URL, {
     method: "POST",
@@ -202,7 +293,7 @@ export const sendChatMessage = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: "Message is required" });
     }
 
-    // shopContext + recentOrders en parallèle
+    
     const [shopContext, recentOrders] = await Promise.all([
       buildShopContext(),
       req.user
@@ -235,24 +326,33 @@ export const sendChatMessage = async (req: Request, res: Response) => {
     let data = await fetchOpenRouter({
       model: CHAT_MODEL,
       messages,
-      tools: [PRODUCT_SEARCH_TOOL],
+     
+      tools: [PRODUCT_SEARCH_TOOL, OFFER_SEARCH_TOOL],
       max_tokens: 600,
     });
 
     let choice = data?.choices?.[0];
 
-    // Tool call : recherche produit demandée par le modèle
-    if (choice?.message?.tool_calls?.length > 0) {
-      const toolCall = choice.message.tool_calls[0];
-      const args = JSON.parse(toolCall.function.arguments || "{}");
-      const searchResult = await searchProducts(args.query || "");
 
+    if (choice?.message?.tool_calls?.length > 0) {
       messages.push(choice.message);
-      messages.push({
-        role: "tool",
-        tool_call_id: toolCall.id,
-        content: searchResult,
-      });
+
+      for (const toolCall of choice.message.tool_calls) {
+        const args = JSON.parse(toolCall.function.arguments || "{}");
+        let toolResult: string;
+
+        if (toolCall.function.name === "search_offers") {
+          toolResult = await searchOffers(args.query || "");
+        } else {
+          toolResult = await searchProducts(args.query || "");
+        }
+
+        messages.push({
+          role: "tool",
+          tool_call_id: toolCall.id,
+          content: toolResult,
+        });
+      }
 
       data = await fetchOpenRouter({
         model: CHAT_MODEL,
