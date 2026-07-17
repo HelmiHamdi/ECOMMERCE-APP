@@ -1,21 +1,20 @@
-/*import axios from "axios"
-
-const api = axios.create({baseURL: "https://shop-mobile-server.vercel.app/api"})
-
-export default api;*/
-
 import axios from "axios"
 import { Platform } from "react-native"
 
 const LOCAL_API_URL = Platform.select({
-    android: "http://192.168.164.136:3000/api",
-    ios: "http://192.168.164.136:3000/api",
+    android: "http://192.168.95.136:3000/api",
+    ios: "http://192.168.95.136:3000/api",
     default:"http://localhost:3000/api"
 })
 
-
-
-const NO_CACHE_RESOURCES = ["users"];
+// 👇 CORRECTION — "cart" ajouté aux ressources exclues du cache.
+// Le panier est une donnée personnelle propre à chaque utilisateur connecté.
+// La clé de cache ("/cart" + params) ne dépend pas du token d'auth, donc
+// après un changement de compte (logout/login), ce cache en mémoire
+// renvoyait encore le panier du compte précédent sans même faire de
+// requête réseau. Comme pour "users" et "support", il ne doit jamais
+// être mis en cache côté client.
+const NO_CACHE_RESOURCES = ["users", "support", "cart"];
 
 
 const cache = new Map<string, { data: any; timestamp: number }>();

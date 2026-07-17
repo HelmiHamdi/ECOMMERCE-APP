@@ -1,7 +1,7 @@
 import { COLORS } from "@/constants";
 import { useAuth } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
@@ -20,6 +20,7 @@ import { useLanguage } from "@/context/LanguageContext";
 const INK = "#13131A";
 const MUTED = "#8D8D96";
 const SURFACE = "#F5F5F8";
+const BORDER = "#ECECF1";
 
 type AdminUser = {
     _id: string;
@@ -80,7 +81,7 @@ export default function AdminUsersScreen() {
         const timeout = setTimeout(() => {
             setLoading(true);
             fetchUsers();
-        }, 300); 
+        }, 300);
         return () => clearTimeout(timeout);
     }, [search, roleFilter]);
 
@@ -91,30 +92,79 @@ export default function AdminUsersScreen() {
 
     return (
         <SafeAreaView className="flex-1 bg-surface" edges={["top"]}>
-          
-            <View className="flex-row items-center px-4 pt-2 pb-4">
+            {/* Désactive le header natif d'expo-router pour ne garder QUE
+               la flèche de retour personnalisée ci-dessous. */}
+            <Stack.Screen options={{ headerShown: false }} />
+
+            {/* Header */}
+            <View className="flex-row items-center px-4 pt-2 pb-5">
                 <TouchableOpacity
                     onPress={() => router.back()}
-                    className="w-11 h-11 rounded-full items-center justify-center mr-3 bg-white border border-gray-100"
+                    activeOpacity={0.7}
+                    style={{
+                        width: 42,
+                        height: 42,
+                        borderRadius: 21,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginRight: 12,
+                        backgroundColor: "#fff",
+                        borderWidth: 1,
+                        borderColor: BORDER,
+                        shadowColor: "#000",
+                        shadowOpacity: 0.05,
+                        shadowRadius: 6,
+                        shadowOffset: { width: 0, height: 2 },
+                        elevation: 1,
+                    }}
                 >
                     <Ionicons name="arrow-back" size={20} color={INK} />
                 </TouchableOpacity>
+
                 <View className="flex-1">
-                    <Text className="text-secondary text-xs font-semibold uppercase tracking-widest">
+                    <Text
+                        style={{
+                            fontSize: 11,
+                            fontWeight: "700",
+                            color: COLORS.primary,
+                            textTransform: "uppercase",
+                            letterSpacing: 1,
+                        }}
+                    >
                         {t("admin") || "Admin"}
                     </Text>
-                    <Text className="text-primary font-extrabold text-2xl tracking-tight">
+                    <Text
+                        style={{
+                            fontSize: 26,
+                            fontWeight: "800",
+                            color: INK,
+                            letterSpacing: -0.5,
+                            marginTop: 1,
+                        }}
+                    >
                         {t("users") || "Utilisateurs"}
                     </Text>
                 </View>
+
                 {!loading && (
-                    <View className="bg-white border border-gray-100 px-3 py-1.5 rounded-full">
-                        <Text className="text-secondary text-xs font-bold">{users.length}</Text>
+                    <View
+                        style={{
+                            backgroundColor: "#fff",
+                            borderWidth: 1,
+                            borderColor: BORDER,
+                            paddingHorizontal: 12,
+                            paddingVertical: 7,
+                            borderRadius: 999,
+                        }}
+                    >
+                        <Text style={{ fontSize: 12, fontWeight: "800", color: MUTED }}>
+                            {users.length}
+                        </Text>
                     </View>
                 )}
             </View>
 
-          
+            {/* Barre de recherche */}
             <View className="px-4 mb-4">
                 <View
                     style={{
@@ -125,7 +175,7 @@ export default function AdminUsersScreen() {
                         paddingHorizontal: 14,
                         height: 52,
                         borderWidth: 1.5,
-                        borderColor: searchFocused ? COLORS.primary : "#E8E8EC",
+                        borderColor: searchFocused ? COLORS.primary : BORDER,
                         shadowColor: searchFocused ? COLORS.primary : "#000",
                         shadowOpacity: searchFocused ? 0.15 : 0.04,
                         shadowRadius: searchFocused ? 10 : 6,
@@ -179,7 +229,7 @@ export default function AdminUsersScreen() {
                 </View>
             </View>
 
-           
+            {/* Filtres par rôle */}
             <View className="flex-row px-4 mb-4" style={{ gap: 8 }}>
                 {ROLE_FILTERS.map((f) => {
                     const active = roleFilter === f.key;
@@ -187,13 +237,14 @@ export default function AdminUsersScreen() {
                         <TouchableOpacity
                             key={f.key}
                             onPress={() => setRoleFilter(f.key)}
+                            activeOpacity={0.8}
                             style={{
                                 paddingVertical: 9,
                                 paddingHorizontal: 18,
                                 borderRadius: 999,
                                 backgroundColor: active ? COLORS.primary : "#fff",
                                 borderWidth: 1.5,
-                                borderColor: active ? COLORS.primary : "#E8E8EC",
+                                borderColor: active ? COLORS.primary : BORDER,
                                 shadowColor: COLORS.primary,
                                 shadowOpacity: active ? 0.25 : 0,
                                 shadowRadius: 8,
@@ -262,35 +313,50 @@ const UserCard = ({ user, t }: { user: AdminUser; t: (key: string) => string }) 
     const hasPushToken = !!user.expoPushToken;
     const joined = new Date(user.createdAt).toLocaleDateString();
     const wishlistLabel = `${wishlistCount} ${
-        wishlistCount > 1 ? t("wishlistItems") || "articles en liste de souhaits" : t("wishlistItem") || "article en liste de souhaits"
+        wishlistCount > 1
+            ? t("wishlistItems") || "articles en liste de souhaits"
+            : t("wishlistItem") || "article en liste de souhaits"
     }`;
 
     return (
         <View
-            className="bg-white rounded-3xl border border-gray-100 mb-4 overflow-hidden"
             style={{
+                backgroundColor: "#fff",
+                borderRadius: 24,
+                borderWidth: 1,
+                borderColor: BORDER,
+                marginBottom: 14,
+                overflow: "hidden",
                 shadowColor: "#000",
-                shadowOpacity: 0.04,
-                shadowRadius: 10,
-                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: 0.05,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 4 },
                 elevation: 2,
             }}
         >
-            <View className="p-5">
-               
+            {/* Bandeau de couleur discret selon le rôle */}
+            <View
+                style={{
+                    height: 4,
+                    backgroundColor: isAdmin ? "#7C3AED" : COLORS.primary,
+                }}
+            />
+
+            <View style={{ padding: 18 }}>
+                {/* En-tête : avatar + nom + badge rôle */}
                 <View className="flex-row items-center mb-4">
                     {user.image ? (
                         <Image
                             source={{ uri: user.image }}
-                            style={{ width: 46, height: 46, borderRadius: 23, marginRight: 12 }}
+                            style={{ width: 48, height: 48, borderRadius: 24, marginRight: 12 }}
                         />
                     ) : (
                         <View
                             className="items-center justify-center mr-3"
                             style={{
-                                width: 46,
-                                height: 46,
-                                borderRadius: 23,
+                                width: 48,
+                                height: 48,
+                                borderRadius: 24,
                                 backgroundColor: isAdmin ? "#7C3AED" : COLORS.primary,
                             }}
                         >
@@ -298,10 +364,16 @@ const UserCard = ({ user, t }: { user: AdminUser; t: (key: string) => string }) 
                         </View>
                     )}
                     <View className="flex-1">
-                        <Text className="font-bold text-primary text-[15px]" numberOfLines={1}>
+                        <Text
+                            style={{ fontWeight: "700", color: INK, fontSize: 15.5 }}
+                            numberOfLines={1}
+                        >
                             {user.name || "—"}
                         </Text>
-                        <Text className="text-secondary text-xs mt-0.5" numberOfLines={1}>
+                        <Text
+                            style={{ color: MUTED, fontSize: 12.5, marginTop: 2 }}
+                            numberOfLines={1}
+                        >
                             {user.email}
                         </Text>
                     </View>
@@ -310,7 +382,7 @@ const UserCard = ({ user, t }: { user: AdminUser; t: (key: string) => string }) 
                             paddingVertical: 5,
                             paddingHorizontal: 10,
                             borderRadius: 999,
-                            backgroundColor: isAdmin ? "#EDE9FE" : "#F0F0F2",
+                            backgroundColor: isAdmin ? "#EDE9FE" : SURFACE,
                         }}
                     >
                         <Text
@@ -327,14 +399,26 @@ const UserCard = ({ user, t }: { user: AdminUser; t: (key: string) => string }) 
                     </View>
                 </View>
 
-              
-                <View className="bg-surface rounded-2xl px-4 py-3" style={{ gap: 8 }}>
+                {/* Détails */}
+                <View
+                    style={{
+                        backgroundColor: SURFACE,
+                        borderRadius: 16,
+                        paddingHorizontal: 14,
+                        paddingVertical: 12,
+                        gap: 9,
+                    }}
+                >
                     <DetailRow icon="call-outline" label={user.phone || "—"} />
                     <DetailRow icon="calendar-outline" label={joined} />
                     <DetailRow icon="heart-outline" label={wishlistLabel} />
                     <DetailRow
                         icon={hasPushToken ? "notifications-outline" : "notifications-off-outline"}
-                        label={hasPushToken ? t("notificationsEnabled") || "Notifications activées" : t("notificationsDisabled") || "Notifications désactivées"}
+                        label={
+                            hasPushToken
+                                ? t("notificationsEnabled") || "Notifications activées"
+                                : t("notificationsDisabled") || "Notifications désactivées"
+                        }
                         muted={!hasPushToken}
                     />
                 </View>
@@ -353,10 +437,14 @@ const DetailRow = ({
     muted?: boolean;
 }) => (
     <View className="flex-row items-center">
-        <Ionicons name={icon} size={14} color={muted ? "#C4C4CB" : COLORS.primary} style={{ marginRight: 8 }} />
+        <Ionicons
+            name={icon}
+            size={14}
+            color={muted ? "#C4C4CB" : COLORS.primary}
+            style={{ marginRight: 8 }}
+        />
         <Text
-            className="text-xs"
-            style={{ color: muted ? "#C4C4CB" : "#5A5A62", flex: 1 }}
+            style={{ color: muted ? "#C4C4CB" : "#5A5A62", fontSize: 12.5, flex: 1 }}
             numberOfLines={1}
         >
             {label}

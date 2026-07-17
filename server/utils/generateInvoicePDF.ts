@@ -17,12 +17,16 @@ interface InvoiceOrder {
   rate?:        number;
   lang?:        Language;          // ← langue choisie côté frontend
   items: {
-    product:   { name: string; images?: string[] } | null;
+    // 👇 CORRECTION — product peut être null (item lié à un produit supprimé)
+    // OU absent/undefined (offre "libre" sans produit, après populate mongoose)
+    product?:  { name: string; images?: string[] } | null;
     name?:     string;
     image?:    string;
     quantity:  number;
     price:     number;
     size?:     string;
+    offerId?:    string | null;    // 👈 AJOUT — traçabilité (non affiché sur le PDF)
+    offerTitle?: string | null;    // 👈 AJOUT — fallback de nom pour une offre libre
   }[];
   shippingAddress: {
     street:  string;
@@ -392,11 +396,13 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
   const convert = (amountTND: number): string =>
     (amountTND * rate).toFixed(2);
 
-  // Pré-chargement images
+  // Pré-chargement images — fonctionne pour un produit classique (item.image
+  // ou item.product.images[0]) COMME pour une offre libre (item.image seul,
+  // car item.product est absent/null dans ce cas)
   const imageBuffers: (Buffer | null)[] = await Promise.all(
     order.items.map(async (item) => {
-      const url = item.image ?? (Array.isArray((item.product as any)?.images)
-        ? (item.product as any).images[0] : null);
+      const url = item.image ?? (Array.isArray(item.product?.images)
+        ? item.product!.images![0] : null);
       return url ? fetchImageBuffer(url) : null;
     })
   );
@@ -589,7 +595,12 @@ export async function generateInvoicePDF(order: InvoiceOrder, res: Response) {
   let currentTableHeaderY = tableHeaderY;
 
   order.items.forEach((item, idx) => {
-    const name       = item.name || item.product?.name || t.deletedProduct;
+    // 👇 CORRECTION — ordre de fallback du nom :
+    // 1) snapshot item.name (toujours rempli, produit ou offre libre)
+    // 2) item.product?.name (si jamais item.name était vide malgré tout)
+    // 3) item.offerTitle (offre libre sans produit)
+    // 4) t.deletedProduct en dernier recours
+    const name       = item.name || item.product?.name || item.offerTitle || t.deletedProduct;
     const nameHeight = doc.heightOfString(name, { width: cols.article.w - 10 });
     const rowHeight  = Math.max(ROW_HEIGHT, nameHeight + 20);
 

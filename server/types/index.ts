@@ -1,4 +1,4 @@
-import { Document, Types } from "mongoose";
+import mongoose, { Document, Types } from "mongoose";
 
 export interface IAddress extends Document {
   user: Types.ObjectId;
@@ -13,12 +13,14 @@ export interface IAddress extends Document {
 }
 
 export interface ICartItem {
-  product: Types.ObjectId;
+  product?: mongoose.Types.ObjectId | null; // 👈 optionnel — null pour une offre libre
   quantity: number;
   price: number;
   size?: string;
+  offerId?: mongoose.Types.ObjectId | null;
+  offerTitle?: string | null;   // 👈 snapshot pour offre libre
+  offerImage?: string | null;   // 👈 snapshot pour offre libre
 }
-
 export interface ICart extends Document {
   user: Types.ObjectId;
   items: ICartItem[];
@@ -29,12 +31,14 @@ export interface ICart extends Document {
 }
 
 export interface IOrderItem {
-  product: Types.ObjectId;
+  product?: Types.ObjectId | null; // 👈 CORRECTION — optionnel, null pour une offre libre
   name: string;
   image: string | null;
   quantity: number;
   price: number;
   size?: string;
+  offerId?: Types.ObjectId | null;   // 👈 AJOUT — traçabilité de l'offre appliquée
+  offerTitle?: string | null;        // 👈 AJOUT — utile si offre libre (pas de produit)
 }
 
 export interface IOrder extends Document {
@@ -67,9 +71,13 @@ export interface IProduct extends Document {
   description: string;
   price: number;
   comparePrice?: number;
+  hasActiveOffer?: boolean;
+  discountPercentage?: number;
+  finalPrice?: number;
+  offerId?: string;
   images: string[];
   sizes: string[];
-  video?: string; 
+  video?: string;
   category: "Men" | "Women" | "Kids" | "Shoes" | "Bags" | "Other";
   stock: number;
   ratings: {
@@ -101,16 +109,30 @@ export interface IWishlist extends Document {
   createdAt: Date;
 }
 
+// 👇 AJOUT du type "support" pour les notifications liées aux tickets
 export interface INotification extends Document {
   user: Types.ObjectId;
   title: string;
   body: string;
-  type: "new_product" | "daily_reminder" | "order" | "general";
+  type: "new_product" | "daily_reminder" | "order" | "general" | "support";
   data?: Record<string, any>;
   isRead: boolean;
   createdAt?: Date;
 }
- 
+
+ export interface ISupportTicket extends Document {
+  user: Types.ObjectId;
+  subject: string;
+  message: string;
+  category: "order" | "return" | "defective" | "delivery" | "payment" | "other";
+  orderNumber?: string;
+  priority: "low" | "normal" | "high";
+   status: "open" | "in_progress" | "closed";
+  reply?: string;
+   createdAt: Date;
+   updatedAt: Date;
+ }
+
 export interface INewsletter extends Document {
   email: string;
   subscribedAt: Date;
@@ -120,7 +142,7 @@ export interface IBanner extends Document {
   title: string;
   subtitle?: string;
   image: string;
-  link?: string;   // ex: "/shop" ou une catégorie précise
-  order: number;   // pour l'ordre d'affichage dans le scroll
+  link?: string;
+  order: number;
   isActive: boolean;
 }

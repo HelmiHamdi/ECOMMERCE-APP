@@ -135,8 +135,10 @@ export default function OrderDetails() {
                 <View className="bg-white p-4 rounded-xl mb-4 border border-gray-100">
                     <Text className="text-lg font-bold text-primary mb-4">{t("products")}</Text>
                     {order.items.map((item: any, index: number) => {
-                        const productData = item.product as Product;
-                        const image = productData?.images?.[0];
+                        // 👇 CORRECTION — on utilise le snapshot stocké sur l'item de commande
+                        // (item.image / item.name), qui fonctionne AUSSI bien pour un produit
+                        // classique que pour une offre libre (item.product === null dans ce cas)
+                        const image = item.image;
 
                         return (
                             <View key={index} className={`flex-row ${index !== order.items.length - 1 && "border-b border-gray-100 pb-4 mb-4"}`}>
@@ -149,7 +151,10 @@ export default function OrderDetails() {
                                 )}
                                 <View className="flex-1 ml-3 justify-center">
                                     <Text className="text-primary font-medium" numberOfLines={1}>{item.name}</Text>
-                                    <Text className="text-secondary text-xs">{t("sizeLabel")}: {item.size}</Text>
+                                    {/* 👇 CORRECTION — pas de taille pour une offre libre */}
+                                    {item.size ? (
+                                        <Text className="text-secondary text-xs">{t("sizeLabel")}: {item.size}</Text>
+                                    ) : null}
                                     <View className="flex-row justify-between items-center mt-2">
                                         <Text className="text-primary font-bold">{formatPrice(item.price)}</Text>
                                         <Text className="text-secondary text-xs">{t("qtyLabel")}: {item.quantity}</Text>

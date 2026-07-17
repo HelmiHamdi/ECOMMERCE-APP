@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -14,10 +14,13 @@ import Header from "@/components/Header";
 import { COLORS } from "@/constants";
 import { useLanguage } from "@/context/LanguageContext";
 import api from "@/constants/api";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useNotifications } from "@/context/NotificationContext";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import Toast from "react-native-toast-message";
+
+// Intervalle du polling de secours (ms) pendant que l'écran est ouvert.
+const POLL_INTERVAL = 15000;
 
 interface NotificationItem {
   _id: string;
@@ -52,38 +55,94 @@ export default function NotificationsScreen() {
   const { t, language } = useLanguage();
   const { getToken } = useAuth();
   const router = useRouter();
-  const { refreshUnreadCount } = useNotifications();
+  const { refreshUnreadCount, refreshTrigger } = useNotifications();
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
- 
   const [notificationToDelete, setNotificationToDelete] =
     useState<NotificationItem | null>(null);
   const [deletingOne, setDeletingOne] = useState(false);
 
-  
   const [clearAllModalVisible, setClearAllModalVisible] = useState(false);
   const [clearingAll, setClearingAll] = useState(false);
 
+  // Permet d'ignorer le résultat d'un fetch devenu obsolète
+  // (ex: un fetch lancé au montage qui répond APRÈS une suppression).
+  const fetchRequestId = useRef(0);
+
   const fetchNotifications = useCallback(async () => {
+    const requestId = ++fetchRequestId.current;
     try {
       const token = await getToken();
       const res = await api.get("/notifications", {
-        headers: { Authorization: `Bearer ${token}` },
+        // _t : cache-buster pour forcer une vraie requête réseau à chaque appel
+        // (évite qu'un cache HTTP renvoie une liste périmée après delete/clear-all)
+        params: { _t: Date.now() },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
       });
+
+      // Si une suppression (ou un autre fetch) a eu lieu entre-temps,
+      // on ignore ce résultat qui est maintenant périmé.
+      if (requestId !== fetchRequestId.current) {
+        console.log("⏭️ fetchNotifications ignoré (obsolète)");
+        return;
+      }
+
+      console.log(
+        "📥 fetchNotifications OK — count:",
+        res.data.data?.length,
+        "unread:",
+        res.data.unreadCount
+      );
       setNotifications(res.data.data);
-    } catch (error) {
-      console.error("FETCH NOTIFICATIONS ERROR:", error);
+    } catch (error: any) {
+      console.error(
+        "FETCH NOTIFICATIONS ERROR:",
+        error?.response?.status,
+        error?.response?.data || error.message
+      );
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (requestId === fetchRequestId.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
   }, [getToken]);
 
   useEffect(() => {
     fetchNotifications();
+  }, [fetchNotifications]);
+
+  // Refetch à chaque fois que l'écran reprend le focus (retour depuis un
+  // autre écran, ou retour au premier plan). Marche même en Expo Go où
+  // les push réelles ne fonctionnent pas.
+  useFocusEffect(
+    useCallback(() => {
+      fetchNotifications();
+    }, [fetchNotifications])
+  );
+
+  // Refetch dès qu'une push est reçue pendant que l'app tourne
+  // (déclenché depuis NotificationContext via bumpRefreshTrigger).
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      console.log("🔔 refreshTrigger changé, refetch de la liste");
+      fetchNotifications();
+    }
+  }, [refreshTrigger, fetchNotifications]);
+
+  // Filet de sécurité : polling léger tant que l'écran est ouvert.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchNotifications();
+    }, POLL_INTERVAL);
+    return () => clearInterval(interval);
   }, [fetchNotifications]);
 
   const handleRefresh = () => {
@@ -92,7 +151,6 @@ export default function NotificationsScreen() {
   };
 
   const handlePress = async (item: NotificationItem) => {
-    
     if (!item.isRead) {
       setNotifications((prev) =>
         prev.map((n) => (n._id === item._id ? { ...n, isRead: true } : n))
@@ -124,64 +182,96 @@ export default function NotificationsScreen() {
         headers: { Authorization: `Bearer ${token}` },
       });
       refreshUnreadCount();
+      // Resynchronisation avec le serveur pour être sûr que l'état
+      // affiché correspond bien à la base après le "tout marquer lu".
+      await fetchNotifications();
     } catch (error) {
       console.error("MARK ALL READ ERROR:", error);
+      fetchNotifications();
     }
   };
-
 
   const handleAskDelete = (item: NotificationItem) => {
     setNotificationToDelete(item);
   };
 
- 
   const performDeleteOne = async () => {
     if (!notificationToDelete) return;
     const id = notificationToDelete._id;
     setDeletingOne(true);
+    // On invalide tout fetch en vol pour qu'il ne vienne pas
+    // écraser notre suppression une fois qu'il répondra.
+    fetchRequestId.current++;
+
     try {
       const token = await getToken();
-      await api.delete(`/notifications/${id}`, {
+      const res = await api.delete(`/notifications/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("🗑️ DELETE notif réponse:", res.status, res.data);
+
+      // Mise à jour optimiste locale
       setNotifications((prev) => prev.filter((n) => n._id !== id));
       refreshUnreadCount();
-    } catch (error) {
-      console.error("DELETE NOTIFICATION ERROR:", error);
+
+      // On revérifie auprès du serveur pour confirmer que la suppression
+      // a bien été persistée (utile pour débusquer un vrai bug backend).
+      await fetchNotifications();
+    } catch (error: any) {
+      console.error(
+        "DELETE NOTIFICATION ERROR:",
+        error?.response?.status,
+        error?.response?.data || error.message
+      );
       Toast.show({
         type: "error",
         text1: t("error") ?? "Erreur",
-        text2: t("deleteNotificationError") ?? "Impossible de supprimer la notification",
+        text2:
+          error?.response?.data?.message ||
+          t("deleteNotificationError") ||
+          "Impossible de supprimer la notification",
       });
+      // On resynchronise pour éviter un état local désynchronisé du serveur.
+      fetchNotifications();
     } finally {
       setDeletingOne(false);
       setNotificationToDelete(null);
     }
   };
 
-
   const handleAskClearAll = () => {
     setClearAllModalVisible(true);
   };
 
-  
   const performClearAll = async () => {
     setClearingAll(true);
+    fetchRequestId.current++;
+
     try {
       const token = await getToken();
-      await api.delete("/notifications/clear-all", {
+      const res = await api.delete("/notifications/clear-all", {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("🗑️ CLEAR ALL réponse:", res.status, res.data);
+
       setNotifications([]);
       refreshUnreadCount();
-    } catch (error) {
-      console.error("CLEAR ALL NOTIFICATIONS ERROR:", error);
+
+      await fetchNotifications();
+    } catch (error: any) {
+      console.error(
+        "CLEAR ALL NOTIFICATIONS ERROR:",
+        error?.response?.status,
+        error?.response?.data || error.message
+      );
       Toast.show({
         type: "error",
         text1: t("error") ?? "Erreur",
-        text2: t("clearAllError") ?? "Impossible d'effacer les notifications",
+        text2:
+          error?.response?.data?.message ||
+          t("clearAllError") ||
+          "Impossible d'effacer les notifications",
       });
-   
       fetchNotifications();
     } finally {
       setClearingAll(false);
@@ -233,6 +323,7 @@ export default function NotificationsScreen() {
       <FlatList
         data={notifications}
         keyExtractor={(item) => item._id}
+        extraData={notifications}
         contentContainerStyle={{ padding: 16, flexGrow: 1 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
@@ -289,7 +380,6 @@ export default function NotificationsScreen() {
               </View>
             </TouchableOpacity>
 
-            
             <TouchableOpacity
               onPress={() => handleAskDelete(item)}
               className="p-2 ml-2"
@@ -301,7 +391,6 @@ export default function NotificationsScreen() {
         )}
       />
 
-    
       <ConfirmDeleteModal
         visible={!!notificationToDelete}
         title={t("deleteNotification") ?? "Supprimer la notification"}
@@ -317,7 +406,6 @@ export default function NotificationsScreen() {
         loading={deletingOne}
       />
 
-  
       <ConfirmDeleteModal
         visible={clearAllModalVisible}
         title={t("clearAll") ?? "Effacer tout"}

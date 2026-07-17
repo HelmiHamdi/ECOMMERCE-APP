@@ -5,13 +5,18 @@ const orderItemSchema = new mongoose.Schema({
   product: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Product",
-    required: true,
+    required: false, // 👈 CORRECTION — optionnel : une offre libre n'a pas de produit
+    default: null,
   },
-  name: { type: String, required: true },   // ← AJOUT
-  image: { type: String, default: null },   // ← AJOUT
+  name: { type: String, required: true },
+  image: { type: String, default: null },
   quantity: { type: Number, required: true, min: 1 },
   price: { type: Number, required: true },
   size: { type: String },
+
+  // 👇 AJOUT — traçabilité de l'offre appliquée à cet item de commande
+  offerId: { type: mongoose.Schema.Types.ObjectId, ref: "Offer", default: null },
+  offerTitle: { type: String, default: null },
 });
 
 const orderSchema = new mongoose.Schema<IOrder>({

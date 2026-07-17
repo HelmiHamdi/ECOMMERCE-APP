@@ -9,8 +9,8 @@ import {
   Modal,
   StatusBar,
 } from "react-native";
-import React, { useEffect, useState } from "react";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { COLORS } from "@/constants";
 import { Product } from "@/constants/types";
 import { useCart } from "@/context/CartContext";
@@ -26,7 +26,11 @@ import { useCurrency } from "@/context/CurrencyContext";
 const { width, height } = Dimensions.get("window");
 
 export default function ProductDetail() {
-  const { id } = useLocalSearchParams();
+  // 👇 CORRECTION — offerId lu depuis l'URL (transmis par OffersScreen quand
+  // le produit a des tailles et qu'il faut passer par cette page avant
+  // d'ajouter au panier). Sans ça, l'offre était perdue et le prix normal
+  // était appliqué au lieu du prix promo.
+  const { id, offerId } = useLocalSearchParams<{ id: string; offerId?: string }>();
   const router = useRouter();
   const { t } = useLanguage();
   const { formatPrice } = useCurrency(); 
@@ -39,8 +43,13 @@ export default function ProductDetail() {
   const [fullscreenVisible, setFullscreenVisible] = useState(false);
   const [fullscreenIndex, setFullscreenIndex] = useState(0);
 
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     try {
+      // 👇 Pas besoin de casser le cache manuellement ici : le middleware
+      // `cacheMiddleware` invalide déjà la clé "/api/products/:id" dès
+      // qu'une offre est créée/modifiée/supprimée (invalidateCache("products")
+      // côté offerController). Le seul problème était que ce composant ne
+      // refetchait pas au retour sur l'écran — résolu par useFocusEffect.
       const { data } = await api.get(`/products/${id}`);
       setProduct(data.data);
     } catch (error: any) {
@@ -52,11 +61,18 @@ export default function ProductDetail() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchProduct();
   }, [id]);
+
+  // 👇 CORRECTION — useFocusEffect au lieu de useEffect : re-fetch le
+  // produit à CHAQUE fois que cet écran reprend le focus (retour depuis la
+  // page "Gérer les offres" après suppression d'une offre, par exemple),
+  // pas uniquement au premier montage du composant.
+  useFocusEffect(
+    useCallback(() => {
+      setLoading(true);
+      fetchProduct();
+    }, [fetchProduct])
+  );
 
   if (loading) {
     return (
@@ -76,6 +92,9 @@ export default function ProductDetail() {
 
   const isLiked = isInWishlist(product._id);
 
+  // l'offre active vient du backend (attachActiveOffers dans productController)
+  const hasActiveOffer = !!product.hasActiveOffer && product.finalPrice != null;
+
   const handleAddToCart = () => {
     if (!selectedSize) {
       Toast.show({
@@ -85,7 +104,10 @@ export default function ProductDetail() {
       });
       return;
     }
-    addToCart(product, selectedSize || "");
+    // 👇 CORRECTION — on transmet l'offerId (venant de l'URL, donc de
+    // l'écran Offres) à addToCart, pour que le backend calcule et applique
+    // bien le prix promo sur l'item du panier au lieu du prix normal.
+    addToCart(product, selectedSize || "", offerId);
   };
 
   const openFullscreen = (index: number) => {
@@ -268,6 +290,25 @@ export default function ProductDetail() {
             </TouchableOpacity>
           </View>
 
+          {/* badge -X% en overlay sur l'image si offre active */}
+          {hasActiveOffer && (
+            <View
+              style={{
+                position: "absolute",
+                top: 56,
+                left: 16,
+                backgroundColor: "#EF4444",
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 999,
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "800", fontSize: 12 }}>
+                -{product.discountPercentage}%
+              </Text>
+            </View>
+          )}
+
           
           <View className="absolute bottom-4 left-0 right-0 flex-row justify-center gap-2 items-center">
             {product.images?.map((_, index) => (
@@ -313,10 +354,57 @@ export default function ProductDetail() {
             </View>
           </View>
 
-        
-          <Text className="text-2xl font-bold ml-1">
-            {formatPrice(product.price)}
-          </Text>
+          {/* affiche le prix promo si l'offre est active */}
+          {hasActiveOffer ? (
+            <View className="flex-row items-center flex-wrap" style={{ gap: 8 }}>
+              <Text
+                style={{
+                  fontSize: 15,
+                  color: "#9CA3AF",
+                  textDecorationLine: "line-through",
+                }}
+              >
+                {formatPrice(product.price)}
+              </Text>
+              <Text className="text-2xl font-bold">
+                {formatPrice(product.finalPrice!)}
+              </Text>
+              <View
+                style={{
+                  backgroundColor: "#EF4444",
+                  paddingHorizontal: 8,
+                  paddingVertical: 3,
+                  borderRadius: 999,
+                }}
+              >
+                <Text style={{ color: "#fff", fontWeight: "800", fontSize: 11 }}>
+                  -{product.discountPercentage}%
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <Text className="text-2xl font-bold ml-1">
+              {formatPrice(product.price)}
+            </Text>
+          )}
+
+          {/* 👇 AJOUT — petit rappel visuel quand on arrive depuis une offre,
+              pour que l'utilisateur comprenne pourquoi il doit choisir une
+              taille avant que le prix promo soit appliqué au panier */}
+          {offerId && (
+            <View
+              className="flex-row items-center self-start mt-2 px-2 py-1 rounded-lg"
+              style={{ backgroundColor: `${COLORS.primary}12` }}
+            >
+              <Ionicons name="pricetag" size={12} color={COLORS.primary} />
+              <Text
+                className="ml-1 font-bold text-[11px]"
+                style={{ color: COLORS.primary }}
+              >
+                {t("offerApplied") || "Offre appliquée"}
+              </Text>
+            </View>
+          )}
 
           {product.sizes && product.sizes.length > 0 && (
             <>

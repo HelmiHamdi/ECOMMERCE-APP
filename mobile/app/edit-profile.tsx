@@ -339,7 +339,7 @@ export default function EditProfileScreen() {
                 type: "success",
                 text1: t("profileUpdated"),
             });
-            router.push("/settings");
+            router.push("/profile");
         } catch (err: any) {
             Toast.show({
                 type: "error",
@@ -365,7 +365,7 @@ export default function EditProfileScreen() {
                
                 <View className="flex-row items-center px-6 pt-2 pb-3">
                     <TouchableOpacity
-                        onPress={() => router.push("/settings")}
+                        onPress={() => router.push("/profile")}
                         className="w-11 h-11 rounded-full items-center justify-center mr-3"
                         style={{ backgroundColor: SURFACE }}
                         activeOpacity={0.7}

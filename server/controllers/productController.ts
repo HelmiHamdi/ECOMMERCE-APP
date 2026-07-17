@@ -1,9 +1,49 @@
 import { Request, Response } from "express";
 import Product from "../models/Products.js";
+import Offer from "../models/Offer.js"; // 👈 AJOUT
 import cloudinary from "../config/cloudinary.js";
-import { UploadStream } from "cloudinary";
 import { sendNewProductNotification } from "../utils/sendNotification.js";
 import { invalidateCache } from "../middleware/cache.js";
+
+// 👇 AJOUT — pour chaque produit, cherche s'il a une offre active en ce moment
+// (isActive=true ET date du jour comprise entre startDate et endDate) et,
+// si oui, ajoute finalPrice / discountPercentage calculés à la volée.
+// Rien n'est modifié en base : dès que endDate est dépassée, cette fonction
+// ne trouve plus l'offre et le produit "revient" automatiquement à son
+// prix normal, sans aucune tâche planifiée nécessaire.
+const attachActiveOffers = async (products: any[]) => {
+  if (products.length === 0) return products;
+
+  const now = new Date();
+  const ids = products.map((p) => p._id);
+
+  const activeOffers = await Offer.find({
+    product: { $in: ids },
+    isActive: true,
+    startDate: { $lte: now },
+    endDate: { $gte: now },
+  }).lean();
+
+  const offerByProduct = new Map(activeOffers.map((o) => [String(o.product), o]));
+
+  return products.map((p) => {
+    const offer = offerByProduct.get(String(p._id));
+    if (!offer) return p;
+
+    const originalPrice = Number(p.price) || 0;
+    const discountPercentage = Number(offer.discountPercentage) || 0;
+    const finalPrice =
+      Math.round((originalPrice - (originalPrice * discountPercentage) / 100) * 100) / 100;
+
+    return {
+      ...p,
+      hasActiveOffer: true,
+      discountPercentage,
+      finalPrice,
+      offerId: offer._id,
+    };
+  });
+};
 
 export const getProducts = async (req: Request, res: Response) => {
   try {
@@ -45,11 +85,14 @@ export const getProducts = async (req: Request, res: Response) => {
     const total = await Product.countDocuments(query);
     const products = await Product.find(query)
       .skip((Number(page) - 1) * Number(limit))
-      .limit(Number(limit));
+      .limit(Number(limit))
+      .lean(); // 👈 nécessaire pour pouvoir ajouter des champs dynamiques (finalPrice, etc.)
+
+    const withOffers = await attachActiveOffers(products); // 👈 AJOUT
 
     res.json({
       success: true,
-      data: products,
+      data: withOffers,
       pagination: {
         total,
         page: Number(page),
@@ -63,16 +106,17 @@ export const getProducts = async (req: Request, res: Response) => {
 
 export const getProduct = async (req: Request, res: Response) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).lean();
     if (!product) {
       return res.status(404).json({
-        success: true,
+        success: false, // 👈 CORRECTION — c'était `true` par erreur dans le code d'origine
         message: "Product not found",
       });
     }
+    const [withOffer] = await attachActiveOffers([product]); // 👈 AJOUT
     res.json({
       success: true,
-      data: product,
+      data: withOffer,
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });

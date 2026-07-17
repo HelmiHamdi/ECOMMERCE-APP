@@ -7,8 +7,6 @@ import stripe from "../config/stripe.js";
 import { generateInvoicePDF } from "../utils/generateInvoicePDF.js";
 import jwt from "jsonwebtoken";
 
-// Langues supportées par la facture PDF — doit correspondre à Language
-// dans utils/generateInvoicePDF.ts et au LanguageContext du frontend.
 const SUPPORTED_INVOICE_LANGS = ["en", "fr", "ar", "es", "it", "de"];
 
 function resolveLang(value: unknown): string {
@@ -157,6 +155,8 @@ export const createOrder = async (req: Request, res: Response) => {
         return res.status(400).json({ success: false, message: "Payment not confirmed yet" });
     }
 
+    // 👇 CORRECTION — populate conditionnel : un item "offre libre" (sans
+    // produit) ne doit pas planter le populate mongoose.
     const cart = await Cart.findOne({ user: req.user._id })
       .populate("items.product")
       .lean();
@@ -164,33 +164,56 @@ export const createOrder = async (req: Request, res: Response) => {
     if (!cart || cart.items.length === 0)
       return res.status(404).json({ success: false, message: "Cart is empty" });
 
-    const productIds = cart.items.map((item: any) => item.product._id);
-    const products   = await Product.find({ _id: { $in: productIds } });
+    // 👇 CORRECTION — on ne récupère les produits QUE pour les items qui en ont un
+    const productIds = cart.items
+      .filter((item: any) => item.product)
+      .map((item: any) => item.product._id);
+
+    const products   = productIds.length > 0 ? await Product.find({ _id: { $in: productIds } }) : [];
     const productMap = new Map(products.map((p) => [p._id.toString(), p]));
 
     const orderItems: any[]            = [];
     const stockUpdates: Promise<any>[] = [];
 
     for (const item of cart.items as any[]) {
-      const product = productMap.get(item.product._id.toString());
-      if (!product || product.stock < item.quantity)
-        return res.status(400).json({
-          success: false,
-          message: `Insufficient stock for ${item.product.name}`,
+      // ---- Cas 1 : item lié à un produit (avec ou sans offre) ----
+      if (item.product) {
+        const product = productMap.get(item.product._id.toString());
+        if (!product || product.stock < item.quantity)
+          return res.status(400).json({
+            success: false,
+            message: `Insufficient stock for ${item.product.name}`,
+          });
+
+        orderItems.push({
+          product:    item.product._id,
+          name:       item.product.name,
+          image:      item.product.images?.[0] ?? null,
+          quantity:   item.quantity,
+          price:      item.price,
+          size:       item.size,
+          offerId:    item.offerId || null,
+          offerTitle: null,
         });
 
-      orderItems.push({
-        product:  item.product._id,
-        name:     item.product.name,
-        image:    item.product.images?.[0] ?? null,
-        quantity: item.quantity,
-        price:    item.price,
-        size:     item.size,
-      });
+        stockUpdates.push(
+          Product.findByIdAndUpdate(item.product._id, { $inc: { stock: -item.quantity } })
+        );
+        continue;
+      }
 
-      stockUpdates.push(
-        Product.findByIdAndUpdate(item.product._id, { $inc: { stock: -item.quantity } })
-      );
+      // ---- Cas 2 : offre "libre" (sans produit lié) ----
+      // Pas de stock à vérifier/décrémenter : ce n'est pas un produit physique du catalogue.
+      orderItems.push({
+        product:    null,
+        name:       item.offerTitle || "Offre",
+        image:      item.offerImage ?? null,
+        quantity:   item.quantity,
+        price:      item.price,
+        size:       undefined,
+        offerId:    item.offerId || null,
+        offerTitle: item.offerTitle || null,
+      });
     }
 
     const subtotal     = cart.totalAmount;

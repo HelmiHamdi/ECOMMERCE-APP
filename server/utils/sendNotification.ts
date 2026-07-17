@@ -4,7 +4,12 @@ import Notification from "../models/Notification.js";
 const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 const EXPO_PUSH_BATCH_SIZE = 100; // Expo recommande des lots de 100 max par requête
 
-type NotificationType = "new_product" | "daily_reminder" | "order" | "general";
+type NotificationType =
+  | "new_product"
+  | "daily_reminder"
+  | "order"
+  | "general"
+  | "support";
 
 interface PushMessage {
   to: string;
@@ -96,6 +101,83 @@ export const broadcastNotification = async (
     }
   } catch (error) {
     console.error("BROADCAST NOTIFICATION ERROR:", error);
+  }
+};
+
+/**
+ * Envoie une notification à UN utilisateur précis (ex: propriétaire d'un
+ * ticket support) + sauvegarde en DB (historique) + push si token dispo.
+ */
+export const sendUserNotification = async (
+  userId: string,
+  title: string,
+  body: string,
+  type: NotificationType = "general",
+  data?: Record<string, any>
+) => {
+  try {
+    const user = await User.findById(userId, "_id expoPushToken");
+    if (!user) return;
+
+    await Notification.create({
+      user: user._id,
+      title,
+      body,
+      type,
+      data: data || {},
+    });
+
+    if (user.expoPushToken) {
+      await sendExpoPushBatch([
+        { to: user.expoPushToken, sound: "default", title, body, data: data || {} },
+      ]);
+    }
+  } catch (error) {
+    console.error("SEND USER NOTIFICATION ERROR:", error);
+  }
+};
+
+/**
+ * Envoie une notification à TOUS les admins (ex: nouveau ticket support
+ * créé par un utilisateur).
+ */
+export const sendAdminNotification = async (
+  title: string,
+  body: string,
+  type: NotificationType = "general",
+  data?: Record<string, any>
+) => {
+  try {
+    const admins = await User.find({ role: "admin" }, "_id expoPushToken");
+    if (admins.length === 0) return;
+
+    const notifDocs = admins.map((a) => ({
+      user: a._id,
+      title,
+      body,
+      type,
+      data: data || {},
+    }));
+    await Notification.insertMany(notifDocs);
+
+    const tokens = admins
+      .map((a) => a.expoPushToken)
+      .filter((t): t is string => !!t);
+
+    const messages: PushMessage[] = tokens.map((to) => ({
+      to,
+      sound: "default",
+      title,
+      body,
+      data: data || {},
+    }));
+
+    for (let i = 0; i < messages.length; i += EXPO_PUSH_BATCH_SIZE) {
+      const batch = messages.slice(i, i + EXPO_PUSH_BATCH_SIZE);
+      await sendExpoPushBatch(batch);
+    }
+  } catch (error) {
+    console.error("SEND ADMIN NOTIFICATION ERROR:", error);
   }
 };
 

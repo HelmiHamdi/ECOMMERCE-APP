@@ -256,7 +256,7 @@ export default function ChangePasswordScreen() {
             setNewPassword("");
             setConfirmPassword("");
 
-           router.push("/settings");
+           router.push("/profile");
         } catch (err: any) {
             const message =
                 err?.errors?.[0]?.longMessage ??
@@ -275,7 +275,7 @@ export default function ChangePasswordScreen() {
                
                 <View className="flex-row items-center px-6 pt-2 pb-3">
                     <TouchableOpacity
-                        onPress={() => router.push("/settings")}
+                        onPress={() => router.push("/profile")}
                         className="w-11 h-11 rounded-full items-center justify-center mr-3"
                         style={{ backgroundColor: SURFACE }}
                         activeOpacity={0.7}

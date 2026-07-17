@@ -247,54 +247,6 @@ export default function Settings() {
         </View>
 
         <Text className="text-secondary text-xs font-bold uppercase mb-2 ml-1">
-          {t("account")}
-        </Text>
-        <View className="bg-white rounded-xl border border-gray-100 mb-6">
-          <TouchableOpacity
-            className="flex-row items-center p-4 border-b border-gray-100"
-            onPress={() => router.push("/edit-profile")}
-          >
-            <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
-              <Ionicons
-                name="person-outline"
-                size={20}
-                color={COLORS.primary}
-              />
-            </View>
-            <Text className="flex-1 text-primary font-medium">
-              {t("editProfile")}
-            </Text>
-            <Ionicons
-              name="chevron-forward"
-              size={20}
-              color={COLORS.secondary}
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className="flex-row items-center p-4"
-            onPress={() => router.push("/change-password")}
-          >
-            <View className="w-10 h-10 bg-surface rounded-full items-center justify-center mr-4">
-              <Ionicons
-                name="lock-closed-outline"
-                size={20}
-                color={COLORS.primary}
-              />
-            </View>
-            <Text className="flex-1 text-primary font-medium">
-              {t("changePassword")}
-            </Text>
-            <Ionicons
-              name="chevron-forward"
-              size={20}
-              color={COLORS.secondary}
-            />
-          </TouchableOpacity>
-        </View>
-
-
-        <Text className="text-secondary text-xs font-bold uppercase mb-2 ml-1">
           {t("support")}
         </Text>
         <View className="bg-white rounded-xl border border-gray-100 mb-6">

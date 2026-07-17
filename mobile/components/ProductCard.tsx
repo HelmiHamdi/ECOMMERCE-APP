@@ -14,6 +14,9 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { formatPrice } = useCurrency(); 
   const isLiked = isInWishlist(product._id); 
 
+  // 👇 AJOUT — l'offre active vient du backend (attachActiveOffers dans productController)
+  const hasActiveOffer = !!product.hasActiveOffer && product.finalPrice != null;
+
   return (
     <Link href={`/product/${product._id}`} asChild>
       <TouchableOpacity className="w-[48%] mb-4 rounded-lg overflow-hidden bg-white ">
@@ -44,6 +47,17 @@ export default function ProductCard({ product }: ProductCardProps) {
               </Text>
             </View>
           )}
+          {/* 👇 AJOUT — badge -X% en overlay si offre active, décalé si "featured" est déjà présent */}
+          {hasActiveOffer && (
+            <View
+              className={`absolute left-2 px-2 py-1 rounded ${product.isFeatured ? "top-9" : "top-2"}`}
+              style={{ backgroundColor: "#EF4444" }}
+            >
+              <Text className="text-white text-xs font-bold">
+                -{product.discountPercentage}%
+              </Text>
+            </View>
+          )}
         </View>
         <View className="p-3">
           <View className="flex-row items-center mb-1">
@@ -56,11 +70,30 @@ export default function ProductCard({ product }: ProductCardProps) {
           >
             {product.name}
           </Text>
-          <View className="flex-row items-center">
-            <Text className="text-primary text-base font-bold">
-              {formatPrice(product.price)}
-            </Text>
-          </View>
+
+          {/* 👇 CORRECTION — affiche le prix promo si l'offre est active */}
+          {hasActiveOffer ? (
+            <View className="flex-row items-center flex-wrap" style={{ gap: 6 }}>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: "#9CA3AF",
+                  textDecorationLine: "line-through",
+                }}
+              >
+                {formatPrice(product.price)}
+              </Text>
+              <Text className="text-primary text-base font-bold">
+                {formatPrice(product.finalPrice!)}
+              </Text>
+            </View>
+          ) : (
+            <View className="flex-row items-center">
+              <Text className="text-primary text-base font-bold">
+                {formatPrice(product.price)}
+              </Text>
+            </View>
+          )}
         </View>
       </TouchableOpacity>
     </Link>

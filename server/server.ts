@@ -23,6 +23,8 @@ import compression from "compression";
 import PaymentRouter from "./routers/paymentRoute.js";
 import { scheduleDailyReminder } from "./scripts/dailyReminder.js"; 
 import NewsletterRouter from "./routers/newsletterRoutes.js";
+import OfferRouter from "./routers/offerRoutes.js";
+import SupportRouter from "./routers/supportRoutes.js";
 
 const app = express();
 console.time("connectDB");
@@ -63,6 +65,8 @@ app.use("/api/banners", BannerRouter);
 app.use("/api/payments", PaymentRouter);
 app.use("/api/notifications", NotificationRouter); 
 app.use("/api/newsletter", NewsletterRouter);
+app.use("/api/offers", OfferRouter);
+app.use("/api/support", SupportRouter);
 await makeAdmin();
 
 await backfillOrderItemNames();

@@ -1,8 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { INotification } from "../types/index.js";
 
-
-
 const notificationSchema = new Schema<INotification>(
   {
     user: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
@@ -10,7 +8,7 @@ const notificationSchema = new Schema<INotification>(
     body: { type: String, required: true },
     type: {
       type: String,
-      enum: ["new_product", "daily_reminder", "order", "general"],
+      enum: ["new_product", "daily_reminder", "order", "general", "support"],
       default: "general",
     },
     data: { type: Schema.Types.Mixed, default: {} },

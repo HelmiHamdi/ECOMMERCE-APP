@@ -27,13 +27,19 @@ Notifications.setNotificationHandler({
 interface NotificationContextValue {
   unreadCount: number;
   refreshUnreadCount: () => Promise<void>;
+  // Incrémenté à chaque fois qu'une notif arrive (push reçue en foreground).
+  // Les écrans (ex: NotificationsScreen) peuvent observer cette valeur
+  // pour se refetch automatiquement, sans devoir recharger toute l'app.
+  refreshTrigger: number;
+  bumpRefreshTrigger: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextValue>({
   unreadCount: 0,
   refreshUnreadCount: async () => {},
+  refreshTrigger: 0,
+  bumpRefreshTrigger: () => {},
 });
-
 
 export const useNotifications = () => useContext(NotificationContext);
 
@@ -47,15 +53,25 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const responseListener = useRef<any>(null);
 
   const [unreadCount, setUnreadCount] = useState(0);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  const bumpRefreshTrigger = useCallback(() => {
+    setRefreshTrigger((prev) => prev + 1);
+  }, []);
 
   const refreshUnreadCount = useCallback(async () => {
     if (!isSignedIn) return;
     try {
       const authToken = await getToken();
       const res = await api.get("/notifications", {
-        params: { page: 1, limit: 1 }, 
-        headers: { Authorization: `Bearer ${authToken}` },
+        // page/limit=1 : on ne veut que le compteur unreadCount, pas la liste
+        // _t : cache-buster pour éviter toute réponse mise en cache (OS/proxy)
+        params: { page: 1, limit: 1, _t: Date.now() },
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+        },
       });
       setUnreadCount(res.data.unreadCount ?? 0);
     } catch (error) {
@@ -64,9 +80,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, [isSignedIn, getToken]);
 
   const registerForPushNotifications = async () => {
-    
     if (isExpoGo) {
-      console.log("⚠️ Push notifications désactivées dans Expo Go. Utilise un development build.");
+      console.log(
+        "⚠️ Push notifications désactivées dans Expo Go. Utilise un development build."
+      );
       return;
     }
 
@@ -96,7 +113,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         projectId ? { projectId } : undefined
       );
       const expoPushToken = tokenData.data;
-      console.log("🔔 MON PUSH TOKEN:", expoPushToken); 
+      console.log("🔔 MON PUSH TOKEN:", expoPushToken);
 
       const authToken = await getToken();
       await api.post(
@@ -117,8 +134,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     notificationListener.current = Notifications.addNotificationReceivedListener(
       (notification) => {
         console.log("Notification reçue:", notification.request.content.title);
-       
         refreshUnreadCount();
+        // On prévient les écrans ouverts (ex: NotificationsScreen) qu'une
+        // nouvelle notif est arrivée, pour qu'ils se refetch en live.
+        bumpRefreshTrigger();
       }
     );
 
@@ -131,8 +150,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             params: { id: String(productId) },
           });
         }
-        
         refreshUnreadCount();
+        bumpRefreshTrigger();
       }
     );
 
@@ -143,7 +162,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, [isSignedIn]);
 
   return (
-    <NotificationContext.Provider value={{ unreadCount, refreshUnreadCount }}>
+    <NotificationContext.Provider
+      value={{ unreadCount, refreshUnreadCount, refreshTrigger, bumpRefreshTrigger }}
+    >
       {children}
     </NotificationContext.Provider>
   );

@@ -22,6 +22,10 @@ export interface Product {
     description: string;
     price: number;
     comparePrice?: number;
+    finalPrice?: number;
+    hasActiveOffer?: boolean;
+    discountPercentage?: number;
+    offerId?: string;
     images: string[];
     sizes?: string[];
     video?: string; 
@@ -53,14 +57,35 @@ export interface Banner {
   order: number;
   isActive: boolean;
 }
+
+// 👇 CORRECTION — product devient optionnel : un item du panier peut être
+// une offre "libre" (sans produit sélectionné dans la liste), auquel cas
+// offerId + offerTitle + offerImage sont utilisés à la place.
 export interface CartItem {
-    product: Product;
+    id: string;
+    productId: string | null; // 👈 AJOUT
+    product: Product | null; // 👈 CORRECTION — optionnel désormais
     quantity: number;
     size: string;
+    price: number; // 👈 AJOUT — prix appliqué dans le panier (remisé ou non)
+    offerId?: string | null;
+    offerTitle?: string | null; // 👈 AJOUT — snapshot nom de l'offre (si pas de produit)
+    offerImage?: string | null; // 👈 AJOUT — snapshot image de l'offre (si pas de produit)
 }
 
+// 👇 CORRECTION — product optionnel, ajout offerId/offerTitle/offerImage
+// pour pouvoir afficher un item "offre libre" dans CartItem.tsx
 export type CartItemProps = {
-    item: { id: string; product: { name: string; price: number; images: string[] }; quantity: number; size: string };
+    item: {
+        id: string;
+        product: { name: string; price: number; images: string[] } | null;
+        quantity: number;
+        size: string;
+        price: number;
+        offerId?: string | null;
+        offerTitle?: string | null;
+        offerImage?: string | null;
+    };
     onRemove?: () => void;
     onUpdateQuantity?: (newQty: number) => void;
 };

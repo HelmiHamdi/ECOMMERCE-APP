@@ -418,5 +418,155 @@
   "alreadySubscribed": "مشترك بالفعل",
   "alreadySubscribedHint": "هذا البريد الإلكتروني مشترك بالفعل",
   "thankYou": "شكرًا لك!",
-  "emailPlaceholder": "بريدك@الإلكتروني.com", "seeProfile": "عرض الملف الشخصي" 
+  "emailPlaceholder": "بريدك@الإلكتروني.com", "seeProfile": "عرض الملف الشخصي",
+  "longPressToSelect": "اضغط مطولاً على الرمز لتحديده",
+  "offers": "العروض",
+  "noOffersAvailable": "لا توجد عروض متاحة حالياً",
+  "expiresOn": "تنتهي في",
+  
+  "subjectAndMessageRequired": "الموضوع والرسالة مطلوبان",
+  "ticketSent": "تم إرسال الرسالة، سنرد عليك قريباً",
+
+  "contactSupport": "التواصل مع الدعم",
+  "subject": "الموضوع",
+  "subjectPlaceholder": "مثال: مشكلة في الطلب",
+  "message": "الرسالة",
+  "messagePlaceholder": "صف مشكلتك...",
+  "send": "إرسال",
+  "myTickets": "طلباتي",
+  "noTicketsYet": "لا توجد طلبات حتى الآن",
+  "supportReply": "رد الدعم",
+  "trackOrder": "تتبع طلبي",
+
+  "noOrdersYet": "ليس لديك أي طلبات حتى الآن",
+  "statusOpen": "مفتوح",
+  "statusInProgress": "قيد المعالجة",
+  "statusClosed": "تم الحل",
+  "orderCancelled": "تم إلغاء الطلب",
+  "stepConfirmed": "تم التأكيد",
+  "stepProcessing": "قيد التحضير",
+  "stepShipped": "تم الشحن",
+  "stepDelivered": "تم التسليم",
+  "inviteFriends": "دعوة صديق",
+  "inviteTitle": "ادعُ أصدقاءك",
+  "inviteSubtitle": "شارك رمزك واحصلا معًا على مزايا حصرية.",
+  "shareInviteLink": "شارك رابطي",
+  "inviteMessage": "انضم إليّ على التطبيق واستمتع بمزايا حصرية!",
+   
+  "editOffer": "تعديل العرض",
+  
+  "promoCode": "رمز الخصم",
+  "discountPercentage": "نسبة الخصم (%)",
+  "startDate": "تاريخ البدء",
+  "endDate": "تاريخ الانتهاء",
+
+  "offerUpdated": "تم تحديث العرض",
+  "newOffer": "عرض جديد",
+  
+  "photoAccessRequired": "الوصول إلى الصور مطلوب",
+  
+  "allFieldsRequired": "جميع الحقول مطلوبة",
+  "offerCreated": "تم إنشاء العرض بنجاح",
+  "addImage": "إضافة صورة",
+  "create": "إنشاء",
+  "manageOffers": "إدارة العروض",
+  "confirmDelete": "تأكيد الحذف",
+  "confirmDeleteOfferMsg": "هل تريد حذف العرض \"{title}\"؟",
+  
+  "offerDeleted": "تم حذف العرض",
+  
+  "ticketDetail": "تفاصيل الطلب",
+  "yourReply": "ردك",
+  "replyPlaceholder": "اكتب ردك...",
+  "sendReply": "إرسال الرد",
+  "replyRequired": "الرد مطلوب",
+  "replySent": "تم إرسال الرد",
+  "confirmClose": "إغلاق الطلب",
+  "confirmCloseMsg": "هل تريد إغلاق هذا الطلب؟",
+  "close": "إغلاق",
+  "ticketClosed": "تم إغلاق الطلب",
+  "markAsClosed": "وضع علامة كمحلول",
+  "manageSupport": "إدارة الدعم",
+  
+  "selectDate": "اختر تاريخًا",
+  "invalidDates": "تواريخ غير صالحة",
+  "endDateBeforeStart": "يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء",
+  "outOfDateRange": "خارج الفترة",
+  "lastDay": "آخر يوم",
+  "left": "متبقية",
+  
+  "today": "اليوم",
+
+  "quickMenu": "القائمة السريعة",
+  
+  
+  
+  "noOffersTitle": "لا توجد عروض بعد",
+  "visibleToUsers": "مرئي (الفترة سارية)",
+ 
+
+  "invalidPrice": "سعر غير صالح",
+  "enterValidPrice": "أدخل سعرًا أصليًا صالحًا",
+  "invalidDiscount": "نسبة خصم غير صالحة",
+  "discountBetween0And100": "يجب أن تكون نسبة الخصم بين 0 و100",
+
+  "offerApplied": "تم تطبيق العرض",
+
+  "validUntil": "العرض ساري حتى",
+  "requestReason": "سبب الطلب",
+"categoryOrder": "الطلبية",
+"categoryReturn": "إرجاع / استرداد",
+"categoryDefective": "منتج معيب",
+"categoryDelivery": "التوصيل",
+"categoryPayment": "الدفع",
+"categoryOther": "أخرى",
+"orderNumber": "رقم الطلبية (اختياري)",
+"orderNumberPlaceholder": "مثال: CMD-20394",
+"supportIntro": "طلبية، إرجاع، منتج معيب... نرد عليك في أسرع وقت",
+"filterAll": "الكل",
+"filterOpen": "مفتوحة",
+"filterInProgress": "قيد المعالجة",
+"filterClosed": "محلولة",
+"filterAllCategories": "كل الأسباب",
+"categoryReturnShort": "إرجاع/استرداد",
+"categoryDefectiveShort": "معيب",
+"supportRequests": "خدمة ما بعد البيع",
+"noTicketsAvailable": "لا توجد طلبات حاليًا",
+"replied": "تم الرد",
+"awaitingReply": "بانتظار الرد",
+"statusOptionPending": "قيد الانتظار",
+"priorityLow": "منخفضة",
+"priorityNormal": "عادية",
+"priorityHigh": "عاجلة",
+"orderPrefix": "الطلبية",
+
+"changeStatus": "تغيير الحالة",
+"changePriority": "تغيير الأولوية",
+"currentReply": "الرد الحالي",
+"editReply": "تعديل الرد",
+
+"updateReply": "تحديث",
+"Edit": "تعديل",
+"ticketAlreadyClosed": "هذا الطلب تم حله بالفعل",
+
+"statusUpdated": "تم تحديث الحالة",
+"priorityUpdated": "تم تحديث الأولوية",
+ 
+  "linkedProduct": "منتج مرتبط (اختياري)",
+  "selectProduct": "اختر منتجًا",
+  "productImagesUsed": "سيتم استخدام صور المنتج المرتبط",
+  "offerImages": "صور العرض",
+  "upTo10Images": "حتى 10 صور",
+  "imageLimitReached": "تم بلوغ الحد الأقصى 10 صور",
+  
+  "originalPrice": "السعر الأصلي (د.ت)",
+  "originalPricePlaceholder": "مثال: 120.00",
+  
+  "priceAfterDiscount": "السعر بعد الخصم",
+  
+  "productOrImageRequired": "اختر منتجًا أو أضف صورة واحدة على الأقل",
+  
+  "searchProduct": "البحث عن منتج..."
+  
+
 }

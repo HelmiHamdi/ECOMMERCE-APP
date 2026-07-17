@@ -141,7 +141,7 @@ export default function AdminBannersIndex() {
                           color={COLORS.primary}
                         />
                         <Text className="text-primary font-medium text-sm ml-1">
-                          {t("edit") || "Modifier"}
+                          {t("Edit") || "Modifier"}
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
