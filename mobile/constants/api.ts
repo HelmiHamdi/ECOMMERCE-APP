@@ -7,13 +7,7 @@ const LOCAL_API_URL = Platform.select({
     default:"http://localhost:3000/api"
 })
 
-// 👇 CORRECTION — "cart" ajouté aux ressources exclues du cache.
-// Le panier est une donnée personnelle propre à chaque utilisateur connecté.
-// La clé de cache ("/cart" + params) ne dépend pas du token d'auth, donc
-// après un changement de compte (logout/login), ce cache en mémoire
-// renvoyait encore le panier du compte précédent sans même faire de
-// requête réseau. Comme pour "users" et "support", il ne doit jamais
-// être mis en cache côté client.
+
 const NO_CACHE_RESOURCES = ["users", "support", "cart"];
 
 
@@ -21,7 +15,7 @@ const cache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
 
 const api = axios.create({
-  baseURL: LOCAL_API_URL,
+  baseURL: "https://shop-mobile-server.vercel.app/api",
   timeout: 10000,
 });
 
