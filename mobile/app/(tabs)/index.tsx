@@ -18,7 +18,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { CATEGORIES, COLORS } from "@/constants";
 import CategoryItem from "@/components/CategoryItem";
-import { Product, Banner } from "@/constants/types";
+import { Product, Banner, Gif } from "@/constants/types";
 import ProductCard from "@/components/ProductCard";
 import api from "@/constants/api";
 import Toast from "react-native-toast-message";
@@ -44,6 +44,9 @@ export default function Home() {
   const [bannersLoading, setBannersLoading] = useState(true);
   const [bannersError, setBannersError] = useState(false);
 
+  // ------- Gif promo -------
+  const [gif, setGif] = useState<Gif | null>(null);
+  const [gifLoading, setGifLoading] = useState(true);
 
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [subscribing, setSubscribing] = useState(false);
@@ -77,26 +80,75 @@ export default function Home() {
       setBannersLoading(false);
     }
   };
+const gifScrollAnim = useRef(new Animated.Value(0)).current;
+const GIF_ITEM_HEIGHT = 50;
+const GIF_ITEM_WIDTH = 100;
+const GIF_GAP = 14; 
+const GIF_STEP = GIF_ITEM_WIDTH + GIF_GAP; 
+useEffect(() => {
+  if (!gifLoading && gif) {
+    gifScrollAnim.setValue(0);
+    Animated.loop(
+      Animated.timing(gifScrollAnim, {
+        toValue: -GIF_STEP,
+        duration: 6000,
+        useNativeDriver: true,
+      })
+    ).start();
+  }
+}, [gifLoading, gif]);
+  const fetchGif = async () => {
+    try {
+
+      const { data } = await api.get("gifs", {
+        params: { _t: Date.now() },
+      });
+      setGif(data.data); // null si aucun gif actif
+    } catch (error) {
+      console.error("Error fetching gif:", error);
+      setGif(null);
+    } finally {
+      setGifLoading(false);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
       fetchProducts();
       fetchBanners();
+      fetchGif();
     }, []),
   );
 
   useEffect(() => {
     if (!bannersLoading && banners.length === 0) {
       Animated.parallel([
-        Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-        Animated.spring(scaleAnim, { toValue: 1, friction: 6, tension: 60, useNativeDriver: true }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 6,
+          tension: 60,
+          useNativeDriver: true,
+        }),
       ]).start();
 
       Animated.loop(
         Animated.sequence([
-          Animated.timing(floatAnim, { toValue: -8, duration: 1200, useNativeDriver: true }),
-          Animated.timing(floatAnim, { toValue: 0, duration: 1200, useNativeDriver: true }),
-        ])
+          Animated.timing(floatAnim, {
+            toValue: -8,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(floatAnim, {
+            toValue: 0,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+        ]),
       ).start();
     }
   }, [bannersLoading, banners.length]);
@@ -105,7 +157,6 @@ export default function Home() {
     router.push((link || "/shop") as any);
   };
 
- 
   const handleSubscribe = async () => {
     const email = newsletterEmail.trim();
 
@@ -122,7 +173,8 @@ export default function Home() {
       Toast.show({
         type: "error",
         text1: t("invalidEmail") ?? "Email invalide",
-        text2: t("invalidEmailHint") ?? "Vérifie le format de ton adresse email",
+        text2:
+          t("invalidEmailHint") ?? "Vérifie le format de ton adresse email",
       });
       return;
     }
@@ -145,13 +197,18 @@ export default function Home() {
         Toast.show({
           type: "info",
           text1: t("alreadySubscribed") ?? "Déjà inscrit",
-          text2: t("alreadySubscribedHint") ?? "Cet email est déjà abonné à la newsletter",
+          text2:
+            t("alreadySubscribedHint") ??
+            "Cet email est déjà abonné à la newsletter",
         });
       } else {
         Toast.show({
           type: "error",
           text1: t("error") ?? "Erreur",
-          text2: err?.response?.data?.message ?? t("somethingWrong") ?? "Une erreur est survenue",
+          text2:
+            err?.response?.data?.message ??
+            t("somethingWrong") ??
+            "Une erreur est survenue",
         });
       }
     } finally {
@@ -161,7 +218,6 @@ export default function Home() {
 
   return (
     <SafeAreaView className="flex-1" edges={["top"]}>
-  
       <Header
         title="Forever"
         showMenu
@@ -170,11 +226,33 @@ export default function Home() {
         onMenuPress={() => setMenuVisible(true)}
       />
 
-      
       <SideMenu visible={menuVisible} onClose={() => setMenuVisible(false)} />
 
       <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
-      
+        {/* ------- Gif promo (affiché uniquement si un gif est actif) ------- */}
+{!gifLoading && gif && (
+  <View className="mb-3 items-center" style={{ height: GIF_ITEM_HEIGHT, overflow: "hidden" }}>
+    <Animated.View
+      style={{
+        flexDirection: "row",
+        transform: [{ translateX: gifScrollAnim }],
+      }}
+    >
+      {[0, 1, 2, 3].map((i) => (
+        <Image
+          key={i}
+          source={{ uri: gif.image }}
+          style={{
+            width: GIF_ITEM_WIDTH,
+            height: GIF_ITEM_HEIGHT,
+            marginRight: GIF_GAP,
+          }}
+          resizeMode="contain"
+        />
+      ))}
+    </Animated.View>
+  </View>
+)}
         {bannersLoading ? (
           <View className="mb-6 h-48 items-center justify-center">
             <ActivityIndicator size="large" color={COLORS.primary} />
@@ -189,7 +267,8 @@ export default function Home() {
               scrollEventThrottle={16}
               onScroll={(event) => {
                 const slide = Math.round(
-                  event.nativeEvent.contentOffset.x / event.nativeEvent.layoutMeasurement.width,
+                  event.nativeEvent.contentOffset.x /
+                    event.nativeEvent.layoutMeasurement.width,
                 );
                 if (slide !== activeBannerIndex) {
                   setActiveBannerIndex(slide);
@@ -202,18 +281,28 @@ export default function Home() {
                   className="relative w-full h-48 bg-gray-200 overflow-hidden"
                   style={{ width: width - 32 }}
                 >
-                  <Image source={{ uri: banner.image }} className="w-full h-full" resizeMode="cover" />
+                  <Image
+                    source={{ uri: banner.image }}
+                    className="w-full h-full"
+                    resizeMode="cover"
+                  />
                   <View className="absolute inset-0 bg-black/40" />
                   <View className="absolute bottom-4 left-4 z-10">
-                    <Text className="text-white text-2xl font-bold">{banner.title}</Text>
+                    <Text className="text-white text-2xl font-bold">
+                      {banner.title}
+                    </Text>
                     {banner.subtitle ? (
-                      <Text className="text-white text-sm font-medium">{banner.subtitle}</Text>
+                      <Text className="text-white text-sm font-medium">
+                        {banner.subtitle}
+                      </Text>
                     ) : null}
                     <TouchableOpacity
                       className="mt-2 bg-white px-4 py-2 rounded-full self-start"
                       onPress={() => handleBannerPress(banner.link)}
                     >
-                      <Text className="text-primary font-bold text-xs">{t("shopNow")}</Text>
+                      <Text className="text-primary font-bold text-xs">
+                        {t("shopNow")}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -224,7 +313,9 @@ export default function Home() {
                 <View
                   key={index}
                   className={`h-2 rounded-full ${
-                    index === activeBannerIndex ? "w-6 bg-primary" : "w-2 bg-gray-300"
+                    index === activeBannerIndex
+                      ? "w-6 bg-primary"
+                      : "w-2 bg-gray-300"
                   }`}
                 />
               ))}
@@ -242,26 +333,40 @@ export default function Home() {
               borderStyle: "dashed",
             }}
           >
-            <Animated.View style={{ transform: [{ translateY: floatAnim }] }} className="w-16 h-16 rounded-full items-center justify-center mb-3">
-              <View className="w-16 h-16 rounded-full items-center justify-center" style={{ backgroundColor: "#EFEAE4" }}>
-                <Ionicons name="images-outline" size={30} color={COLORS.primary} />
+            <Animated.View
+              style={{ transform: [{ translateY: floatAnim }] }}
+              className="w-16 h-16 rounded-full items-center justify-center mb-3"
+            >
+              <View
+                className="w-16 h-16 rounded-full items-center justify-center"
+                style={{ backgroundColor: "#EFEAE4" }}
+              >
+                <Ionicons
+                  name="images-outline"
+                  size={30}
+                  color={COLORS.primary}
+                />
               </View>
             </Animated.View>
             <Text className="text-primary font-bold text-base">
               {t("noBannersYet") || "Aucune bannière pour le moment"}
             </Text>
             <Text className="text-secondary text-xs mt-1 text-center px-8">
-              {t("noBannersSubtitle") || "Reviens bientôt pour découvrir nos offres"}
+              {t("noBannersSubtitle") ||
+                "Reviens bientôt pour découvrir nos offres"}
             </Text>
           </Animated.View>
         )}
 
-      
         <View className="mb-6">
           <View className="flex-row items-center justify-between mb-4">
             <Text className="text-xl font-bold mb-4">{t("categories")}</Text>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="w-full rounded-xl">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="w-full rounded-xl"
+          >
             {categories.map((cat: any) => (
               <CategoryItem
                 key={cat.id}
@@ -273,7 +378,10 @@ export default function Home() {
                   } else {
                     router.push({
                       pathname: "/category",
-                      params: { category: cat.nameKey, categoryName: cat.nameKey },
+                      params: {
+                        category: cat.nameKey,
+                        categoryName: cat.nameKey,
+                      },
                     });
                   }
                 }}
@@ -282,10 +390,11 @@ export default function Home() {
           </ScrollView>
         </View>
 
-        
         <View className="mb-8">
           <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-xl font-bold text-primary">{t("popular")}</Text>
+            <Text className="text-xl font-bold text-primary">
+              {t("popular")}
+            </Text>
             <TouchableOpacity onPress={() => router.push("/shop")}>
               <Text className="text-secondary text-sm">{t("seeAll")}</Text>
             </TouchableOpacity>
@@ -301,11 +410,15 @@ export default function Home() {
           )}
         </View>
 
-       
         <View className="bg-gray-100 p-6 rounded-2xl mb-20 items-center">
           {subscribed ? (
             <>
-              <Ionicons name="checkmark-circle" size={40} color={COLORS.primary} style={{ marginBottom: 8 }} />
+              <Ionicons
+                name="checkmark-circle"
+                size={40}
+                color={COLORS.primary}
+                style={{ marginBottom: 8 }}
+              />
               <Text className="text-xl font-bold text-primary mb-1 text-center">
                 {t("thankYou") ?? "Merci !"}
               </Text>
@@ -326,7 +439,11 @@ export default function Home() {
                 className="w-full flex-row items-center bg-white rounded-xl px-4 mb-3"
                 style={{ borderWidth: 1, borderColor: "#E5E5EA" }}
               >
-                <Ionicons name="mail-outline" size={18} color={COLORS.secondary} />
+                <Ionicons
+                  name="mail-outline"
+                  size={18}
+                  color={COLORS.secondary}
+                />
                 <TextInput
                   className="flex-1 py-3 px-3 text-primary"
                   placeholder={t("emailPlaceholder") ?? "ton@email.com"}

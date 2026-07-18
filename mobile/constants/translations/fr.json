@@ -543,7 +543,8 @@
 "Edit": "Modifier",
 "statusUpdated": "Statut mis à jour",
 "priorityUpdated": "Priorité mise à jour",
-
+ "loginRequired": "Connexion requise",
+    "loginRequiredWishlist": "Vous devez vous connecter pour ajouter aux favoris",
   "linkedProduct": "Produit lié (optionnel)",
   "selectProduct": "Sélectionner un produit",
   "productImagesUsed": "Les images du produit lié seront utilisées",
@@ -556,6 +557,32 @@
  
   "priceAfterDiscount": "Prix après réduction",
 
-  "productOrImageRequired": "Sélectionnez un produit ou ajoutez au moins une image"
+  "productOrImageRequired": "Sélectionnez un produit ou ajoutez au moins une image",
+    "gifs": "Gifs",
+  "addGif": "Ajouter un gif",
+  "editGif": "Modifier le gif",
+  "noGifs": "Aucun gif pour le moment",
+  "chooseGif": "Choisir un gif (.gif)",
+  "gifTitlePlaceholder": "Titre du gif (optionnel)",
+  "gifRequired": "Veuillez sélectionner un gif",
+  "invalidFile": "Fichier invalide",
+  "gifOnly": "Veuillez choisir un fichier .gif",
+  "gifCreated": "Gif ajouté avec succès",
+  "gifUpdated": "Gif modifié avec succès",
+  "gifDeleted": "Gif supprimé avec succès",
+  "failedToCreateGif": "Échec de l'ajout du gif",
+  "failedToUpdateGif": "Échec de la modification du gif",
+  "failedToDeleteGif": "Échec de la suppression du gif",
+  "failedToFetchGif": "Échec du chargement du gif",
+  "deleteGifTitle": "Supprimer le gif",
+  "deleteGifMessage": "Cette action est irréversible. Voulez-vous continuer ?",
+  "displayedOnHome": "Affiché sur l'accueil",
+  "notDisplayed": "Non affiché",
+  "gifCurrentlyActive": "Ce gif est actuellement affiché sur l'accueil",
+  "gifActivateHint": "Après l'ajout, active le gif depuis la liste pour qu'il s'affiche sur l'accueil.",
+  "untitled": "Sans titre",
+    "makeup": "Maquillage",
+    "accessories": "Accessoires",
+    "baby": "Bébé"
 
 }

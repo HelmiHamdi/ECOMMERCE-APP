@@ -15,7 +15,7 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 import Toast from "react-native-toast-message";
-import { COLORS, CATEGORIES } from "@/constants";
+import { COLORS, CATEGORIES, SIZE_REQUIRED_CATEGORIES } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import Header from "@/components/Header";
@@ -45,7 +45,7 @@ export default function EditProduct() {
 
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [newImages, setNewImages] = useState<string[]>([]);
-
+  const requiresSizes = SIZE_REQUIRED_CATEGORIES.includes(category);
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -60,14 +60,14 @@ export default function EditProduct() {
             (typeof product.category === "object"
               ? product.category.name
               : product.category
-            ).toLowerCase()
+            ).toLowerCase(),
           );
           setIsFeatured(product.isFeatured);
           if (product.sizes)
             setSizes(
               Array.isArray(product.sizes)
                 ? product.sizes.join(", ")
-                : product.sizes
+                : product.sizes,
             );
           if (product.images && Array.isArray(product.images)) {
             setExistingImages(product.images);
@@ -116,7 +116,7 @@ export default function EditProduct() {
   };
 
   const handleSubmit = async () => {
-    if (!name || !price || sizes.length < 1) {
+    if (!name || !price || (requiresSizes && sizes.trim().length < 1)) {
       Toast.show({
         type: "error",
         text1: t("missingFields"),
@@ -134,7 +134,7 @@ export default function EditProduct() {
       formData.append("stock", stock);
       formData.append("category", category.toLowerCase());
       formData.append("isFeatured", String(isFeatured));
-      formData.append("sizes", sizes);
+      formData.append("sizes", requiresSizes ? sizes : "");
       existingImages.forEach((img) => formData.append("existingImages", img));
       for (const [i, uri] of newImages.entries()) {
         const filename = `new-image-${i}.jpg`;
@@ -142,7 +142,7 @@ export default function EditProduct() {
           const blob = await (await fetch(uri)).blob();
           formData.append(
             "images",
-            new File([blob], filename, { type: "image/jpeg" })
+            new File([blob], filename, { type: "image/jpeg" }),
           );
         } else {
           formData.append("images", {
@@ -201,7 +201,11 @@ export default function EditProduct() {
 
           {/* Label du prix affiché en devise courante ← MODIFIÉ */}
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            {t("price")} ({formatPrice(0).replace(/[\d.,]/g, "").trim()}) *
+            {t("price")} (
+            {formatPrice(0)
+              .replace(/[\d.,]/g, "")
+              .trim()}
+            ) *
           </Text>
           <TextInput
             className="bg-surface p-3 rounded-lg mb-4 text-primary"
@@ -222,15 +226,19 @@ export default function EditProduct() {
             onChangeText={setStock}
           />
 
-          <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            {t("sizesCommaSeparated")}
-          </Text>
-          <TextInput
-            className="bg-surface p-3 rounded-lg mb-4 text-primary"
-            placeholder={t("sizesPlaceholder")}
-            value={sizes}
-            onChangeText={setSizes}
-          />
+          {requiresSizes && ( 
+            <>
+              <Text className="text-secondary text-xs font-bold mb-1 uppercase">
+                {t("sizesCommaSeparated")} *
+              </Text>
+              <TextInput
+                className="bg-surface p-3 rounded-lg mb-4 text-primary"
+                placeholder={t("sizesPlaceholder")}
+                value={sizes}
+                onChangeText={setSizes}
+              />
+            </>
+          )}
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
             {t("category")}
@@ -270,7 +278,11 @@ export default function EditProduct() {
                             {t(item.nameKey)}
                           </Text>
                           {category === item.nameKey && (
-                            <Ionicons name="checkmark" size={20} color={COLORS.primary} />
+                            <Ionicons
+                              name="checkmark"
+                              size={20}
+                              color={COLORS.primary}
+                            />
                           )}
                         </View>
                       </TouchableOpacity>
@@ -317,7 +329,9 @@ export default function EditProduct() {
                   className="w-24 h-24 rounded-lg bg-gray-100 justify-center items-center border border-dashed border-gray-300"
                 >
                   <Ionicons name="add" size={24} color={COLORS.secondary} />
-                  <Text className="text-xs text-secondary mt-1">{t("add")}</Text>
+                  <Text className="text-xs text-secondary mt-1">
+                    {t("add")}
+                  </Text>
                 </TouchableOpacity>
               )}
             </ScrollView>
@@ -335,7 +349,9 @@ export default function EditProduct() {
           />
 
           <View className="flex-row justify-between items-center mb-6">
-            <Text className="text-primary font-bold">{t("featuredProduct")}</Text>
+            <Text className="text-primary font-bold">
+              {t("featuredProduct")}
+            </Text>
             <Switch
               value={isFeatured}
               onValueChange={setIsFeatured}

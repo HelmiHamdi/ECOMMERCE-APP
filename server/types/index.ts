@@ -78,7 +78,7 @@ export interface IProduct extends Document {
   images: string[];
   sizes: string[];
   video?: string;
-  category: "Men" | "Women" | "Kids" | "Shoes" | "Bags" | "Other";
+  category: "men" | "women" | "kids" | "shoes" | "bag" | "makeup" | "accessories" | "baby" | "other"; // 👈 AJOUT
   stock: number;
   ratings: {
     average: number;
@@ -145,4 +145,12 @@ export interface IBanner extends Document {
   link?: string;
   order: number;
   isActive: boolean;
+}
+export interface IGif extends Document {
+  title?: string;
+  image: string;
+  isActive: boolean;
+  order: number;
+  createdAt: Date;
+  updatedAt: Date;
 }

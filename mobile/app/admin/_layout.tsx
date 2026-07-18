@@ -9,6 +9,10 @@ export default function AdminRootLayout() {
         options={{ headerShown: true, title: "Utilisateurs" }}
       />
       <Stack.Screen
+        name="gifs"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="offers"
         options={{ headerShown: true, title: "Offres" }}
       />

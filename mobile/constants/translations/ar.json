@@ -332,7 +332,7 @@
   "rateUsSubtitle": "رأيك يساعدنا على التحسين. شاركنا تجربتك مع Ines Shop.",
   "yourRating": "تقييمك بالنجوم",
   "yourComment": "تعليقك",
-    "downloadInvoice": "تحميل الفاتورة",
+  "downloadInvoice": "تحميل الفاتورة",
   "reviewPlaceholder": "أخبرنا برأيك...",
   "selectRating": "يرجى اختيار تقييم بالنجوم",
   "reviewSubmitted": "شكرًا على تقييمك!",
@@ -355,7 +355,7 @@
   "termsSection5Body": "قد نقوم بتحديث شروط الخدمة هذه من وقت لآخر. يُعتبر استمرارك في استخدام التطبيق بعد إجراء التعديلات موافقة منك على الشروط المعدّلة.",
 
   "failedToLoadCheckoutInfo": "فشل في تحميل معلومات الدفع",
-"clearCacheConfirm": "سيؤدي هذا إلى مسح البيانات المؤقتة المخزنة على هذا الجهاز. لن يتأثر حسابك ولا معلوماتك المحفوظة.",
+  "clearCacheConfirm": "سيؤدي هذا إلى مسح البيانات المؤقتة المخزنة على هذا الجهاز. لن يتأثر حسابك ولا معلوماتك المحفوظة.",
   "paymentStatusPaid": "تم الدفع",
   "paymentMethodCard": "بطاقة ائتمان أو خصم",
   "unread": "غير مقروءة",
@@ -365,7 +365,7 @@
   "notificationsPermissionDeniedHint": "فعّل الإشعارات من إعدادات هاتفك",
   "notificationsEnabled": "تم تفعيل الإشعارات",
   "notificationsDisabled": "تم إيقاف الإشعارات",
-    "noBannersYet": "لا توجد بانرات بعد",
+  "noBannersYet": "لا توجد بانرات بعد",
   "noBannersSubtitle": "عد قريبًا لاكتشاف عروضنا",
   "banners": "البانرات",
   "addBanner": "إضافة بانر",
@@ -376,11 +376,11 @@
   "bannerTitlePlaceholder": "عنوان البانر",
   "subtitle": "العنوان الفرعي",
   "link": "الرابط (مثال: /shop)",
-  
+
   "active": "نشط",
   "inactive": "غير نشط",
   "save": "حفظ",
-  
+
   "titleRequired": "العنوان مطلوب",
   "imageRequired": "يرجى اختيار صورة",
   "saveFailed": "فشل الحفظ",
@@ -400,7 +400,7 @@
   "clearAll": "مسح الكل",
   "clearAllConfirm": "سيتم حذف جميع إشعاراتك نهائيًا. لا يمكن التراجع عن هذا الإجراء.",
   "allCaughtUp": "لا توجد إشعارات جديدة",
-   "admin": "المسؤول",
+  "admin": "المسؤول",
   "viewUsers": "عرض المستخدمين",
   "searchUsers": "البحث بالاسم أو البريد الإلكتروني...",
   "noUsersFound": "لم يتم العثور على مستخدمين",
@@ -418,12 +418,13 @@
   "alreadySubscribed": "مشترك بالفعل",
   "alreadySubscribedHint": "هذا البريد الإلكتروني مشترك بالفعل",
   "thankYou": "شكرًا لك!",
-  "emailPlaceholder": "بريدك@الإلكتروني.com", "seeProfile": "عرض الملف الشخصي",
+  "emailPlaceholder": "بريدك@الإلكتروني.com",
+  "seeProfile": "عرض الملف الشخصي",
   "longPressToSelect": "اضغط مطولاً على الرمز لتحديده",
   "offers": "العروض",
   "noOffersAvailable": "لا توجد عروض متاحة حالياً",
   "expiresOn": "تنتهي في",
-  
+
   "subjectAndMessageRequired": "الموضوع والرسالة مطلوبان",
   "ticketSent": "تم إرسال الرسالة، سنرد عليك قريباً",
 
@@ -452,9 +453,9 @@
   "inviteSubtitle": "شارك رمزك واحصلا معًا على مزايا حصرية.",
   "shareInviteLink": "شارك رابطي",
   "inviteMessage": "انضم إليّ على التطبيق واستمتع بمزايا حصرية!",
-   
+
   "editOffer": "تعديل العرض",
-  
+
   "promoCode": "رمز الخصم",
   "discountPercentage": "نسبة الخصم (%)",
   "startDate": "تاريخ البدء",
@@ -462,9 +463,9 @@
 
   "offerUpdated": "تم تحديث العرض",
   "newOffer": "عرض جديد",
-  
+
   "photoAccessRequired": "الوصول إلى الصور مطلوب",
-  
+
   "allFieldsRequired": "جميع الحقول مطلوبة",
   "offerCreated": "تم إنشاء العرض بنجاح",
   "addImage": "إضافة صورة",
@@ -472,9 +473,9 @@
   "manageOffers": "إدارة العروض",
   "confirmDelete": "تأكيد الحذف",
   "confirmDeleteOfferMsg": "هل تريد حذف العرض \"{title}\"؟",
-  
+
   "offerDeleted": "تم حذف العرض",
-  
+
   "ticketDetail": "تفاصيل الطلب",
   "yourReply": "ردك",
   "replyPlaceholder": "اكتب ردك...",
@@ -487,23 +488,20 @@
   "ticketClosed": "تم إغلاق الطلب",
   "markAsClosed": "وضع علامة كمحلول",
   "manageSupport": "إدارة الدعم",
-  
+
   "selectDate": "اختر تاريخًا",
   "invalidDates": "تواريخ غير صالحة",
   "endDateBeforeStart": "يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء",
   "outOfDateRange": "خارج الفترة",
   "lastDay": "آخر يوم",
   "left": "متبقية",
-  
+
   "today": "اليوم",
 
   "quickMenu": "القائمة السريعة",
-  
-  
-  
+
   "noOffersTitle": "لا توجد عروض بعد",
   "visibleToUsers": "مرئي (الفترة سارية)",
- 
 
   "invalidPrice": "سعر غير صالح",
   "enterValidPrice": "أدخل سعرًا أصليًا صالحًا",
@@ -514,59 +512,84 @@
 
   "validUntil": "العرض ساري حتى",
   "requestReason": "سبب الطلب",
-"categoryOrder": "الطلبية",
-"categoryReturn": "إرجاع / استرداد",
-"categoryDefective": "منتج معيب",
-"categoryDelivery": "التوصيل",
-"categoryPayment": "الدفع",
-"categoryOther": "أخرى",
-"orderNumber": "رقم الطلبية (اختياري)",
-"orderNumberPlaceholder": "مثال: CMD-20394",
-"supportIntro": "طلبية، إرجاع، منتج معيب... نرد عليك في أسرع وقت",
-"filterAll": "الكل",
-"filterOpen": "مفتوحة",
-"filterInProgress": "قيد المعالجة",
-"filterClosed": "محلولة",
-"filterAllCategories": "كل الأسباب",
-"categoryReturnShort": "إرجاع/استرداد",
-"categoryDefectiveShort": "معيب",
-"supportRequests": "خدمة ما بعد البيع",
-"noTicketsAvailable": "لا توجد طلبات حاليًا",
-"replied": "تم الرد",
-"awaitingReply": "بانتظار الرد",
-"statusOptionPending": "قيد الانتظار",
-"priorityLow": "منخفضة",
-"priorityNormal": "عادية",
-"priorityHigh": "عاجلة",
-"orderPrefix": "الطلبية",
+  "categoryOrder": "الطلبية",
+  "categoryReturn": "إرجاع / استرداد",
+  "categoryDefective": "منتج معيب",
+  "categoryDelivery": "التوصيل",
+  "categoryPayment": "الدفع",
+  "categoryOther": "أخرى",
+  "orderNumber": "رقم الطلبية (اختياري)",
+  "orderNumberPlaceholder": "مثال: CMD-20394",
+  "supportIntro": "طلبية، إرجاع، منتج معيب... نرد عليك في أسرع وقت",
+  "filterAll": "الكل",
+  "filterOpen": "مفتوحة",
+  "filterInProgress": "قيد المعالجة",
+  "filterClosed": "محلولة",
+  "filterAllCategories": "كل الأسباب",
+  "categoryReturnShort": "إرجاع/استرداد",
+  "categoryDefectiveShort": "معيب",
+  "supportRequests": "خدمة ما بعد البيع",
+  "noTicketsAvailable": "لا توجد طلبات حاليًا",
+  "replied": "تم الرد",
+  "awaitingReply": "بانتظار الرد",
+  "statusOptionPending": "قيد الانتظار",
+  "priorityLow": "منخفضة",
+  "priorityNormal": "عادية",
+  "priorityHigh": "عاجلة",
+  "orderPrefix": "الطلبية",
 
-"changeStatus": "تغيير الحالة",
-"changePriority": "تغيير الأولوية",
-"currentReply": "الرد الحالي",
-"editReply": "تعديل الرد",
+  "changeStatus": "تغيير الحالة",
+  "changePriority": "تغيير الأولوية",
+  "currentReply": "الرد الحالي",
+  "editReply": "تعديل الرد",
 
-"updateReply": "تحديث",
-"Edit": "تعديل",
-"ticketAlreadyClosed": "هذا الطلب تم حله بالفعل",
+  "updateReply": "تحديث",
+  "Edit": "تعديل",
+  "ticketAlreadyClosed": "هذا الطلب تم حله بالفعل",
 
-"statusUpdated": "تم تحديث الحالة",
-"priorityUpdated": "تم تحديث الأولوية",
- 
+  "statusUpdated": "تم تحديث الحالة",
+  "priorityUpdated": "تم تحديث الأولوية",
+  "loginRequired": "تسجيل الدخول مطلوب",
+  "loginRequiredWishlist": "يجب عليك تسجيل الدخول لإضافة المنتج إلى المفضلة",
   "linkedProduct": "منتج مرتبط (اختياري)",
   "selectProduct": "اختر منتجًا",
   "productImagesUsed": "سيتم استخدام صور المنتج المرتبط",
   "offerImages": "صور العرض",
   "upTo10Images": "حتى 10 صور",
   "imageLimitReached": "تم بلوغ الحد الأقصى 10 صور",
-  
+
   "originalPrice": "السعر الأصلي (د.ت)",
   "originalPricePlaceholder": "مثال: 120.00",
-  
-  "priceAfterDiscount": "السعر بعد الخصم",
-  
-  "productOrImageRequired": "اختر منتجًا أو أضف صورة واحدة على الأقل",
-  
-  "searchProduct": "البحث عن منتج..."
-  
 
+  "priceAfterDiscount": "السعر بعد الخصم",
+
+  "productOrImageRequired": "اختر منتجًا أو أضف صورة واحدة على الأقل",
+
+  "searchProduct": "البحث عن منتج...",
+  "gifs": "الصور المتحركة",
+  "addGif": "إضافة صورة متحركة",
+  "editGif": "تعديل الصورة المتحركة",
+  "noGifs": "لا توجد صور متحركة حاليًا",
+  "chooseGif": "اختر صورة متحركة (.gif)",
+  "gifTitlePlaceholder": "عنوان الصورة المتحركة (اختياري)",
+  "gifRequired": "الرجاء اختيار صورة متحركة",
+  "invalidFile": "ملف غير صالح",
+  "gifOnly": "الرجاء اختيار ملف بصيغة .gif",
+  "gifCreated": "تمت إضافة الصورة المتحركة بنجاح",
+  "gifUpdated": "تم تعديل الصورة المتحركة بنجاح",
+  "gifDeleted": "تم حذف الصورة المتحركة بنجاح",
+  "failedToCreateGif": "فشل في إضافة الصورة المتحركة",
+  "failedToUpdateGif": "فشل في تعديل الصورة المتحركة",
+  "failedToDeleteGif": "فشل في حذف الصورة المتحركة",
+  "failedToFetchGif": "فشل في تحميل الصورة المتحركة",
+  "deleteGifTitle": "حذف الصورة المتحركة",
+  "deleteGifMessage": "لا يمكن التراجع عن هذا الإجراء. هل تريد المتابعة؟",
+  "displayedOnHome": "معروضة في الصفحة الرئيسية",
+  "notDisplayed": "غير معروضة",
+  "gifCurrentlyActive": "هذه الصورة المتحركة معروضة حاليًا في الصفحة الرئيسية",
+  "gifActivateHint": "بعد الإضافة، قم بتفعيل الصورة المتحركة من القائمة حتى تظهر في الصفحة الرئيسية.",
+  "untitled": "بدون عنوان",
+  "makeup": "مكياج",
+  "accessories": "إكسسوارات",
+  "baby": "أطفال رضع"
 }

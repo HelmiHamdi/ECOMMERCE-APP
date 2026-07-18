@@ -25,6 +25,8 @@ import { scheduleDailyReminder } from "./scripts/dailyReminder.js";
 import NewsletterRouter from "./routers/newsletterRoutes.js";
 import OfferRouter from "./routers/offerRoutes.js";
 import SupportRouter from "./routers/supportRoutes.js";
+import GifRouter from "./routers/gifRoute.js";
+
 
 const app = express();
 console.time("connectDB");
@@ -67,6 +69,8 @@ app.use("/api/notifications", NotificationRouter);
 app.use("/api/newsletter", NewsletterRouter);
 app.use("/api/offers", OfferRouter);
 app.use("/api/support", SupportRouter);
+app.use("/api/gifs", GifRouter);
+
 await makeAdmin();
 
 await backfillOrderItemNames();

@@ -7,6 +7,7 @@ export const COLORS = {
   border: "#EEEEEE",
   error: "#FF4444",
 };
+
 /* categories */
 export const CATEGORIES = [
   { id: 1, nameKey: "men", icon: "man-outline" },
@@ -14,8 +15,14 @@ export const CATEGORIES = [
   { id: 3, nameKey: "kids", icon: "happy-outline" },
   { id: 4, nameKey: "shoes", icon: "footsteps-outline" },
   { id: 5, nameKey: "bag", icon: "briefcase-outline" },
-  { id: 6, nameKey: "other", icon: "grid-outline" },
+  { id: 6, nameKey: "makeup", icon: "color-palette-outline" },      // 👈 AJOUT
+  { id: 7, nameKey: "accessories", icon: "watch-outline" },          // 👈 AJOUT
+  { id: 8, nameKey: "baby", icon: "nutrition-outline" },             // 👈 AJOUT
+  { id: 9, nameKey: "other", icon: "grid-outline" },
 ];
+
+// 👇 AJOUT — catégories pour lesquelles "sizes" est obligatoire
+export const SIZE_REQUIRED_CATEGORIES = ["men", "women", "kids", "shoes"];
 
 export const PROFILE_MENU = [
   { id: 1, titleKey: "myOrders", icon: "receipt-outline", route: "/orders" },

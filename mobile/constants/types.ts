@@ -158,3 +158,12 @@ export type WishlistContextType = {
   isInWishlist: (productId: string) => boolean;
   fetchWishlist: () => Promise<void>; // ← ajouter
 };
+export interface Gif {
+  _id: string;
+  title?: string;
+  image: string;
+  isActive: boolean;
+  order: number;
+  createdAt?: string;
+  updatedAt?: string;
+}

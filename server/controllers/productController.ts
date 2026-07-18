@@ -5,12 +5,8 @@ import cloudinary from "../config/cloudinary.js";
 import { sendNewProductNotification } from "../utils/sendNotification.js";
 import { invalidateCache } from "../middleware/cache.js";
 
-// 👇 AJOUT — pour chaque produit, cherche s'il a une offre active en ce moment
-// (isActive=true ET date du jour comprise entre startDate et endDate) et,
-// si oui, ajoute finalPrice / discountPercentage calculés à la volée.
-// Rien n'est modifié en base : dès que endDate est dépassée, cette fonction
-// ne trouve plus l'offre et le produit "revient" automatiquement à son
-// prix normal, sans aucune tâche planifiée nécessaire.
+const SIZE_REQUIRED_CATEGORIES = ["men", "women", "kids", "shoes"];
+
 const attachActiveOffers = async (products: any[]) => {
   if (products.length === 0) return products;
 
@@ -125,16 +121,15 @@ export const getProduct = async (req: Request, res: Response) => {
 
 export const createProduct = async (req: Request, res: Response) => {
   try {
-     console.log("BODY:", req.body);
+    console.log("BODY:", req.body);
     console.log("FILES:", req.files);
+    console.log("🔍 ENUM CHECK:", (Product.schema.path("category") as any).enumValues);
     let images: string[] = [];
     if (req.files && (req.files as any).length > 0) {
       const uploadPromises = (req.files as any).map((file: any) => {
         return new Promise((resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
-            {
-              folder: "shop-mobile/products",
-            },
+            { folder: "shop-mobile/products" },
             (error, result) => {
               if (error) reject(error);
               else resolve(result!.secure_url);
@@ -143,9 +138,9 @@ export const createProduct = async (req: Request, res: Response) => {
           uploadStream.end(file.buffer);
         });
       });
-
       images = await Promise.all(uploadPromises);
     }
+
     let sizes = req.body.sizes || [];
     if (typeof sizes === "string") {
       try {
@@ -157,12 +152,24 @@ export const createProduct = async (req: Request, res: Response) => {
           .filter((s: string) => s !== "");
       }
     }
-
     if (!Array.isArray(sizes)) sizes = [sizes];
+
+    // 👇 AJOUT — validation métier avant d'aller en base
+    const category = String(req.body.category || "").toLowerCase();
+    if (SIZE_REQUIRED_CATEGORIES.includes(category) && sizes.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Sizes are required for this category (men, women, kids, shoes)",
+      });
+    }
+    // 👇 AJOUT — pour les catégories sans tailles, on force un tableau vide (propre)
+    if (!SIZE_REQUIRED_CATEGORIES.includes(category)) {
+      sizes = [];
+    }
 
     const productData = {
       ...req.body,
-      images: images,
+      images,
       sizes,
     };
     if (images.length === 0) {
@@ -175,7 +182,7 @@ export const createProduct = async (req: Request, res: Response) => {
     await sendNewProductNotification(product.name, product._id.toString());
     res.status(201).json({ success: true, data: product });
   } catch (error: any) {
-     console.error("CREATE PRODUCT ERROR:", error); 
+    console.error("CREATE PRODUCT ERROR:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -184,19 +191,15 @@ export const updateProduct = async (req: Request, res: Response) => {
   try {
     let images: string[] = [];
     if (req.body.existingImages) {
-      if (Array.isArray(req.body.existingImages)) {
-        images = [...req.body.existingImages];
-      } else {
-        images = [req.body.existingImages];
-      }
+      images = Array.isArray(req.body.existingImages)
+        ? [...req.body.existingImages]
+        : [req.body.existingImages];
     }
     if (req.files && (req.files as any).length > 0) {
       const uploadPromises = (req.files as any).map((file: any) => {
         return new Promise((resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
-            {
-              folder: "shop-mobile/products",
-            },
+            { folder: "shop-mobile/products" },
             (error, result) => {
               if (error) reject(error);
               else resolve(result!.secure_url);
@@ -205,12 +208,13 @@ export const updateProduct = async (req: Request, res: Response) => {
           uploadStream.end(file.buffer);
         });
       });
-
       const newImages = await Promise.all(uploadPromises);
       images = [...images, ...newImages];
     }
+
     const updates = { ...req.body };
-    if (req.body.sizes) {
+
+    if (req.body.sizes !== undefined) {
       let sizes = req.body.sizes;
       if (typeof sizes === "string") {
         try {
@@ -225,6 +229,24 @@ export const updateProduct = async (req: Request, res: Response) => {
       if (!Array.isArray(sizes)) sizes = [sizes];
       updates.sizes = sizes;
     }
+
+    // 👇 AJOUT — validation métier basée sur la catégorie finale (nouvelle ou existante)
+    const category = String(
+      updates.category || (await Product.findById(req.params.id).lean())?.category || "",
+    ).toLowerCase();
+
+    if (SIZE_REQUIRED_CATEGORIES.includes(category)) {
+      const finalSizes = updates.sizes;
+      if (finalSizes !== undefined && finalSizes.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Sizes are required for this category (men, women, kids, shoes)",
+        });
+      }
+    } else if (updates.sizes !== undefined) {
+      updates.sizes = []; // 👈 nettoie les tailles si catégorie sans tailles
+    }
+
     if (
       req.body.existingImages ||
       (req.files && (req.files as any).length > 0)
@@ -237,6 +259,7 @@ export const updateProduct = async (req: Request, res: Response) => {
     const product = await Product.findByIdAndUpdate(req.params.id, updates, {
       new: true,
       runValidators: true,
+      context: "query", // 👈 AJOUT — indispensable pour que le validateur mongoose voie "this.category" correctement
     });
     if (!product) {
       return res

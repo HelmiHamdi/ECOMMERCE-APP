@@ -540,12 +540,13 @@
   "changePriority": "Cambiar prioridad",
   "currentReply": "Respuesta actual",
   "editReply": "Editar respuesta",
-"Edit": "Editar",
+  "Edit": "Editar",
   "ticketAlreadyClosed": "Esta solicitud ya está resuelta",
 
   "statusUpdated": "Estado actualizado",
   "priorityUpdated": "Prioridad actualizada",
-
+  "loginRequired": "Inicio de sesión requerido",
+  "loginRequiredWishlist": "Debes iniciar sesión para añadir a favoritos",
   "linkedProduct": "Producto vinculado (opcional)",
   "selectProduct": "Seleccionar un producto",
   "productImagesUsed": "Se utilizarán las imágenes del producto vinculado",
@@ -560,5 +561,31 @@
 
   "productOrImageRequired": "Selecciona un producto o añade al menos una imagen",
 
-  "searchProduct": "Buscar un producto..."
+  "searchProduct": "Buscar un producto...",
+  "gifs": "Gifs",
+  "addGif": "Añadir un gif",
+  "editGif": "Editar gif",
+  "noGifs": "Aún no hay gifs",
+  "chooseGif": "Elegir un gif (.gif)",
+  "gifTitlePlaceholder": "Título del gif (opcional)",
+  "gifRequired": "Por favor selecciona un gif",
+  "invalidFile": "Archivo no válido",
+  "gifOnly": "Por favor elige un archivo .gif",
+  "gifCreated": "Gif añadido correctamente",
+  "gifUpdated": "Gif actualizado correctamente",
+  "gifDeleted": "Gif eliminado correctamente",
+  "failedToCreateGif": "Error al añadir el gif",
+  "failedToUpdateGif": "Error al actualizar el gif",
+  "failedToDeleteGif": "Error al eliminar el gif",
+  "failedToFetchGif": "Error al cargar el gif",
+  "deleteGifTitle": "Eliminar gif",
+  "deleteGifMessage": "Esta acción no se puede deshacer. ¿Deseas continuar?",
+  "displayedOnHome": "Mostrado en el inicio",
+  "notDisplayed": "No mostrado",
+  "gifCurrentlyActive": "Este gif se muestra actualmente en la pantalla de inicio",
+  "gifActivateHint": "Después de añadirlo, activa el gif desde la lista para que aparezca en la pantalla de inicio.",
+  "untitled": "Sin título",
+  "makeup": "Maquillaje",
+  "accessories": "Accesorios",
+  "baby": "Bebé"
 }

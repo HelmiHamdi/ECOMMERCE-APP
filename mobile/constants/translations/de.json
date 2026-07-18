@@ -557,7 +557,8 @@
   "offerImages": "Angebotsbilder",
   "upTo10Images": "Bis zu 10 Bilder",
   "imageLimitReached": "Limit von 10 Bildern erreicht",
- 
+ "loginRequired": "Anmeldung erforderlich",
+    "loginRequiredWishlist": "Sie müssen sich anmelden, um Artikel zu Ihren Favoriten hinzuzufügen",
   "originalPrice": "Ursprünglicher Preis (DT)",
   "originalPricePlaceholder": "z. B. 120.00",
 
@@ -565,7 +566,33 @@
 
   "productOrImageRequired": "Wählen Sie ein Produkt aus oder fügen Sie mindestens ein Bild hinzu",
 
-  "searchProduct": "Produkt suchen..."
+  "searchProduct": "Produkt suchen...",
+   "gifs": "Gifs",
+  "addGif": "Gif hinzufügen",
+  "editGif": "Gif bearbeiten",
+  "noGifs": "Noch keine Gifs vorhanden",
+  "chooseGif": "Gif auswählen (.gif)",
+  "gifTitlePlaceholder": "Gif-Titel (optional)",
+  "gifRequired": "Bitte wähle ein Gif aus",
+  "invalidFile": "Ungültige Datei",
+  "gifOnly": "Bitte wähle eine .gif-Datei",
+  "gifCreated": "Gif erfolgreich hinzugefügt",
+  "gifUpdated": "Gif erfolgreich aktualisiert",
+  "gifDeleted": "Gif erfolgreich gelöscht",
+  "failedToCreateGif": "Gif konnte nicht hinzugefügt werden",
+  "failedToUpdateGif": "Gif konnte nicht aktualisiert werden",
+  "failedToDeleteGif": "Gif konnte nicht gelöscht werden",
+  "failedToFetchGif": "Gif konnte nicht geladen werden",
+  "deleteGifTitle": "Gif löschen",
+  "deleteGifMessage": "Diese Aktion kann nicht rückgängig gemacht werden. Möchtest du fortfahren?",
+  "displayedOnHome": "Wird auf der Startseite angezeigt",
+  "notDisplayed": "Wird nicht angezeigt",
+  "gifCurrentlyActive": "Dieses Gif wird derzeit auf der Startseite angezeigt",
+  "gifActivateHint": "Aktiviere das Gif nach dem Hinzufügen in der Liste, damit es auf der Startseite erscheint.",
+  "untitled": "Ohne Titel",
+    "makeup": "Make-up",
+    "accessories": "Accessoires",
+    "baby": "Baby"
 
  
 }

@@ -15,7 +15,7 @@ const cache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
 
 const api = axios.create({
-  baseURL: "https://shop-mobile-server.vercel.app/api",
+  baseURL:LOCAL_API_URL,
   timeout: 10000,
 });
 
@@ -60,7 +60,7 @@ api.interceptors.response.use((response) => {
 
 api.interceptors.response.use((response) => {
   const method = response.config.method?.toLowerCase();
-  if (method === "post" || method === "put" || method === "delete") {
+  if ( method === "patch" || method === "post" || method === "put" || method === "delete") {
 
     const url = response.config.url || "";
     const resource = url.replace(/^\//, "").split("/")[0]; 

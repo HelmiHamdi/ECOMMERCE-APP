@@ -13,7 +13,7 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 import Toast from "react-native-toast-message";
-import { COLORS, CATEGORIES } from "@/constants";
+import { COLORS, CATEGORIES, SIZE_REQUIRED_CATEGORIES } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 
@@ -40,7 +40,7 @@ export default function AddProduct() {
   const [sizes, setSizes] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [isFeatured, setIsFeatured] = useState(false);
-
+  const requiresSizes = SIZE_REQUIRED_CATEGORIES.includes(category);
   const pickImages = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"] as any,
@@ -55,7 +55,12 @@ export default function AddProduct() {
   };
 
   const handleSubmit = async () => {
-    if (!name || !price || !category || sizes.length < 1) {
+    if (
+      !name ||
+      !price ||
+      !category ||
+      (requiresSizes && sizes.trim().length < 1)
+    ) {
       Toast.show({
         type: "error",
         text1: t("missingFields"),
@@ -75,7 +80,7 @@ export default function AddProduct() {
         stock: stock || "0",
         category: category.toLowerCase(), // ✅ FIX
         isFeatured: String(isFeatured),
-        sizes,
+        sizes: requiresSizes ? sizes : "",
       };
 
       Object.entries(fields).forEach(([key, value]) =>
@@ -145,14 +150,16 @@ export default function AddProduct() {
             onChangeText={setPrice}
           />
           {/* ✅ AJOUT : aperçu du prix converti dans la devise active, si différente de USD */}
-          {price.length > 0 && !isNaN(parseFloat(price)) && currency !== "USD" && (
-            <Text className="text-secondary text-xs mb-4 mt-1">
-              ≈ {formatPrice(parseFloat(price))} ({currency})
-            </Text>
-          )}
-          {(price.length === 0 || isNaN(parseFloat(price)) || currency === "USD") && (
-            <View className="mb-4" />
-          )}
+          {price.length > 0 &&
+            !isNaN(parseFloat(price)) &&
+            currency !== "USD" && (
+              <Text className="text-secondary text-xs mb-4 mt-1">
+                ≈ {formatPrice(parseFloat(price))} ({currency})
+              </Text>
+            )}
+          {(price.length === 0 ||
+            isNaN(parseFloat(price)) ||
+            currency === "USD") && <View className="mb-4" />}
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
             {t("category")}
@@ -217,15 +224,19 @@ export default function AddProduct() {
             onChangeText={setStock}
           />
 
-          <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            {t("sizesCommaSeparated")}
-          </Text>
-          <TextInput
-            className="bg-surface p-3 rounded-lg mb-4 text-primary"
-            placeholder={t("sizesPlaceholderAdd")}
-            value={sizes}
-            onChangeText={setSizes}
-          />
+          {requiresSizes && ( 
+            <>
+              <Text className="text-secondary text-xs font-bold mb-1 uppercase">
+                {t("sizesCommaSeparated")} *
+              </Text>
+              <TextInput
+                className="bg-surface p-3 rounded-lg mb-4 text-primary"
+                placeholder={t("sizesPlaceholderAdd")}
+                value={sizes}
+                onChangeText={setSizes}
+              />
+            </>
+          )}
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
             {t("productImagesMax10")}
@@ -267,7 +278,9 @@ export default function AddProduct() {
           />
 
           <View className="flex-row justify-between items-center mb-6">
-            <Text className="text-primary font-bold">{t("featuredProduct")}</Text>
+            <Text className="text-primary font-bold">
+              {t("featuredProduct")}
+            </Text>
             <Switch
               value={isFeatured}
               onValueChange={setIsFeatured}

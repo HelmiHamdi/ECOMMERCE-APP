@@ -41,6 +41,12 @@ export default function AdminTabsLayout() {
       labelKey: t("users") ?? "Utilisateurs",
       route: "/admin/users",
     },
+     {
+    id: "gifs",
+    icon: "film-outline",
+    labelKey: t("gifs") ?? "Gifs",
+    route: "/admin/gifs",
+  },
     {
       id: "offers",
       icon: "pricetag-outline",
