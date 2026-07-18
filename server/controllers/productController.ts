@@ -121,9 +121,10 @@ export const getProduct = async (req: Request, res: Response) => {
 
 export const createProduct = async (req: Request, res: Response) => {
   try {
+     console.log("🔍 ENUM CHECK:", (Product.schema.path("category") as any).enumValues);
     console.log("BODY:", req.body);
     console.log("FILES:", req.files);
-    console.log("🔍 ENUM CHECK:", (Product.schema.path("category") as any).enumValues);
+   
     let images: string[] = [];
     if (req.files && (req.files as any).length > 0) {
       const uploadPromises = (req.files as any).map((file: any) => {
