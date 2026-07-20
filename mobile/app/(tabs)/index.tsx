@@ -32,7 +32,7 @@ export default function Home() {
   const router = useRouter();
   const { t } = useLanguage();
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
-  const [menuVisible, setMenuVisible] = useState(false); // ← état du menu latéral
+  const [menuVisible, setMenuVisible] = useState(false);
 
   const categories = [
     { id: "all", nameKey: "all", name: t("all"), icon: "grid" },
@@ -44,7 +44,6 @@ export default function Home() {
   const [bannersLoading, setBannersLoading] = useState(true);
   const [bannersError, setBannersError] = useState(false);
 
-  // ------- Gif promo -------
   const [gif, setGif] = useState<Gif | null>(null);
   const [gifLoading, setGifLoading] = useState(true);
 
@@ -103,7 +102,7 @@ useEffect(() => {
       const { data } = await api.get("gifs", {
         params: { _t: Date.now() },
       });
-      setGif(data.data); // null si aucun gif actif
+      setGif(data.data); 
     } catch (error) {
       console.error("Error fetching gif:", error);
       setGif(null);
@@ -229,7 +228,7 @@ useEffect(() => {
       <SideMenu visible={menuVisible} onClose={() => setMenuVisible(false)} />
 
       <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
-        {/* ------- Gif promo (affiché uniquement si un gif est actif) ------- */}
+       
 {!gifLoading && gif && (
   <View className="mb-3 items-center" style={{ height: GIF_ITEM_HEIGHT, overflow: "hidden" }}>
     <Animated.View

@@ -21,19 +21,20 @@ import { Ionicons } from "@expo/vector-icons";
 import Toast from "react-native-toast-message";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
-import { useCurrency } from "@/context/CurrencyContext"; 
+import { useCurrency } from "@/context/CurrencyContext";
+import { getStatusConfig } from "@/constants";
+import StatusBadge from "@/components/StatusBadge";
 
 const { width, height } = Dimensions.get("window");
 
 export default function ProductDetail() {
-  // 👇 CORRECTION — offerId lu depuis l'URL (transmis par OffersScreen quand
-  // le produit a des tailles et qu'il faut passer par cette page avant
-  // d'ajouter au panier). Sans ça, l'offre était perdue et le prix normal
-  // était appliqué au lieu du prix promo.
-  const { id, offerId } = useLocalSearchParams<{ id: string; offerId?: string }>();
+  const { id, offerId } = useLocalSearchParams<{
+    id: string;
+    offerId?: string;
+  }>();
   const router = useRouter();
   const { t } = useLanguage();
-  const { formatPrice } = useCurrency(); 
+  const { formatPrice } = useCurrency();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const { addToCart, cartItems, itemCount } = useCart();
@@ -45,11 +46,6 @@ export default function ProductDetail() {
 
   const fetchProduct = useCallback(async () => {
     try {
-      // 👇 Pas besoin de casser le cache manuellement ici : le middleware
-      // `cacheMiddleware` invalide déjà la clé "/api/products/:id" dès
-      // qu'une offre est créée/modifiée/supprimée (invalidateCache("products")
-      // côté offerController). Le seul problème était que ce composant ne
-      // refetchait pas au retour sur l'écran — résolu par useFocusEffect.
       const { data } = await api.get(`/products/${id}`);
       setProduct(data.data);
     } catch (error: any) {
@@ -63,15 +59,11 @@ export default function ProductDetail() {
     }
   }, [id]);
 
-  // 👇 CORRECTION — useFocusEffect au lieu de useEffect : re-fetch le
-  // produit à CHAQUE fois que cet écran reprend le focus (retour depuis la
-  // page "Gérer les offres" après suppression d'une offre, par exemple),
-  // pas uniquement au premier montage du composant.
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
       fetchProduct();
-    }, [fetchProduct])
+    }, [fetchProduct]),
   );
 
   if (loading) {
@@ -91,12 +83,27 @@ export default function ProductDetail() {
   }
 
   const isLiked = isInWishlist(product._id);
-
-  // l'offre active vient du backend (attachActiveOffers dans productController)
   const hasActiveOffer = !!product.hasActiveOffer && product.finalPrice != null;
-
+  const sizes = product.sizes ?? [];
+  const requiresSize = sizes.length > 0;
+ const statusConfig = getStatusConfig(product.status);
+  const canAddToCart = statusConfig.canAddToCart;
   const handleAddToCart = () => {
-    if (!selectedSize) {
+    if (!canAddToCart) {
+      Toast.show({
+        type: "info",
+        text1: t(statusConfig.labelKey) ?? statusConfig.defaultLabel,
+        text2:
+          product.status === "out_of_stock"
+            ? (t("productOutOfStockMessage") ??
+              "Ce produit est actuellement épuisé")
+            : (t("productIncomingMessage") ??
+              "Ce produit arrive bientôt en stock"),
+      });
+      return;
+    }
+
+    if (requiresSize && !selectedSize) {
       Toast.show({
         type: "info",
         text1: t("noSizeSelected"),
@@ -104,10 +111,8 @@ export default function ProductDetail() {
       });
       return;
     }
-    // 👇 CORRECTION — on transmet l'offerId (venant de l'URL, donc de
-    // l'écran Offres) à addToCart, pour que le backend calcule et applique
-    // bien le prix promo sur l'item du panier au lieu du prix normal.
-    addToCart(product, selectedSize || "", offerId);
+
+    addToCart(product, requiresSize ? selectedSize || "" : "", offerId);
   };
 
   const openFullscreen = (index: number) => {
@@ -117,7 +122,6 @@ export default function ProductDetail() {
 
   return (
     <View className="flex-1 bg-white">
-    
       <Modal
         visible={fullscreenVisible}
         transparent={false}
@@ -127,7 +131,6 @@ export default function ProductDetail() {
       >
         <StatusBar hidden />
         <View style={{ flex: 1, backgroundColor: "#000" }}>
-      
           <ScrollView
             horizontal
             pagingEnabled
@@ -137,7 +140,7 @@ export default function ProductDetail() {
             onScroll={(e) => {
               const slide = Math.round(
                 e.nativeEvent.contentOffset.x /
-                  e.nativeEvent.layoutMeasurement.width
+                  e.nativeEvent.layoutMeasurement.width,
               );
               setFullscreenIndex(slide);
             }}
@@ -153,7 +156,6 @@ export default function ProductDetail() {
             ))}
           </ScrollView>
 
-      
           <TouchableOpacity
             onPress={() => setFullscreenVisible(false)}
             style={{
@@ -171,7 +173,6 @@ export default function ProductDetail() {
             <Ionicons name="close" size={24} color="#fff" />
           </TouchableOpacity>
 
-       
           <TouchableOpacity
             onPress={() => toggleWishlist(product)}
             style={{
@@ -193,7 +194,6 @@ export default function ProductDetail() {
             />
           </TouchableOpacity>
 
-        
           <View
             style={{
               position: "absolute",
@@ -213,13 +213,14 @@ export default function ProductDetail() {
                   borderRadius: 4,
                   width: index === fullscreenIndex ? 24 : 8,
                   backgroundColor:
-                    index === fullscreenIndex ? "#fff" : "rgba(255,255,255,0.4)",
+                    index === fullscreenIndex
+                      ? "#fff"
+                      : "rgba(255,255,255,0.4)",
                 }}
               />
             ))}
           </View>
 
-       
           <View
             style={{
               position: "absolute",
@@ -238,7 +239,6 @@ export default function ProductDetail() {
         </View>
       </Modal>
 
-    
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <View className="relative bg-gray-100 mt-14" style={{ height: 450 }}>
           <ScrollView
@@ -249,13 +249,12 @@ export default function ProductDetail() {
             onScroll={(e) => {
               const slide = Math.round(
                 e.nativeEvent.contentOffset.x /
-                  e.nativeEvent.layoutMeasurement.width
+                  e.nativeEvent.layoutMeasurement.width,
               );
               setActiveImageIndex(slide);
             }}
           >
             {product.images?.map((img, index) => (
-             
               <TouchableOpacity
                 key={index}
                 activeOpacity={0.95}
@@ -270,7 +269,6 @@ export default function ProductDetail() {
             ))}
           </ScrollView>
 
-        
           <View className="absolute top-8 left-4 right-4 flex-row justify-between items-center z-10">
             <TouchableOpacity
               onPress={() => router.back()}
@@ -290,7 +288,6 @@ export default function ProductDetail() {
             </TouchableOpacity>
           </View>
 
-          {/* badge -X% en overlay sur l'image si offre active */}
           {hasActiveOffer && (
             <View
               style={{
@@ -309,7 +306,6 @@ export default function ProductDetail() {
             </View>
           )}
 
-          
           <View className="absolute bottom-4 left-0 right-0 flex-row justify-center gap-2 items-center">
             {product.images?.map((_, index) => (
               <View
@@ -323,7 +319,6 @@ export default function ProductDetail() {
             ))}
           </View>
 
-         
           <TouchableOpacity
             onPress={() => openFullscreen(activeImageIndex)}
             style={{
@@ -353,10 +348,14 @@ export default function ProductDetail() {
               <Text className="text-xs text-secondary ml-1">(85)</Text>
             </View>
           </View>
-
-          {/* affiche le prix promo si l'offre est active */}
+          <View className="mb-3">
+            <StatusBadge status={product.status ?? "in_stock"} />
+          </View>
           {hasActiveOffer ? (
-            <View className="flex-row items-center flex-wrap" style={{ gap: 8 }}>
+            <View
+              className="flex-row items-center flex-wrap"
+              style={{ gap: 8 }}
+            >
               <Text
                 style={{
                   fontSize: 15,
@@ -377,7 +376,9 @@ export default function ProductDetail() {
                   borderRadius: 999,
                 }}
               >
-                <Text style={{ color: "#fff", fontWeight: "800", fontSize: 11 }}>
+                <Text
+                  style={{ color: "#fff", fontWeight: "800", fontSize: 11 }}
+                >
                   -{product.discountPercentage}%
                 </Text>
               </View>
@@ -388,9 +389,6 @@ export default function ProductDetail() {
             </Text>
           )}
 
-          {/* 👇 AJOUT — petit rappel visuel quand on arrive depuis une offre,
-              pour que l'utilisateur comprenne pourquoi il doit choisir une
-              taille avant que le prix promo soit appliqué au panier */}
           {offerId && (
             <View
               className="flex-row items-center self-start mt-2 px-2 py-1 rounded-lg"
@@ -406,13 +404,13 @@ export default function ProductDetail() {
             </View>
           )}
 
-          {product.sizes && product.sizes.length > 0 && (
+          {requiresSize && (
             <>
               <Text className="text-base font-bold text-primary mb-3 mt-4">
                 {t("sizeLabel")}
               </Text>
               <View className="flex-row gap-3 mb-6 flex-wrap">
-                {product.sizes.map((size) => (
+                {sizes.map((size) => (
                   <TouchableOpacity
                     key={size}
                     onPress={() => setSelectedSize(size)}
@@ -444,15 +442,34 @@ export default function ProductDetail() {
         </View>
       </ScrollView>
 
-      
       <View className="absolute bottom-10 left-0 flex-row right-0 p-4 bg-white border-t border-gray-100">
         <TouchableOpacity
           onPress={handleAddToCart}
-          className="w-4/5 bg-primary py-4 rounded-full items-center shadow-lg flex-row justify-center"
+          disabled={!canAddToCart}
+          className="w-4/5 py-4 rounded-full items-center shadow-lg flex-row justify-center"
+          style={{
+            backgroundColor: canAddToCart ? COLORS.primary : "#E5E7EB", // gris si désactivé
+            opacity: canAddToCart ? 1 : 0.9,
+          }}
         >
-          <Ionicons name="bag-outline" size={20} color="white" />
-          <Text className="text-white font-bold text-base ml-2">
-            {t("addToCart")}
+          <Ionicons
+            name={
+              product.status === "out_of_stock"
+                ? "close-circle-outline"
+                : product.status === "incoming"
+                  ? "notifications-outline"
+                  : product.status === "on_order_48h"
+                    ? "time-outline"
+                    : "bag-outline"
+            }
+            size={20}
+            color={canAddToCart ? "white" : "#9CA3AF"}
+          />
+          <Text
+            className="font-bold text-base ml-2"
+            style={{ color: canAddToCart ? "white" : "#9CA3AF" }}
+          >
+            {t(statusConfig.buttonLabelKey) ?? statusConfig.buttonDefaultLabel}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity

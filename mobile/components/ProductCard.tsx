@@ -7,6 +7,8 @@ import { COLORS } from "@/constants";
 import { useWishlist } from "@/context/WishlistContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCurrency } from "@/context/CurrencyContext"; 
+import StatusBadge from "@/components/StatusBadge";
+import { PRODUCT_STATUSES } from "@/constants";
 
 export default function ProductCard({ product }: ProductCardProps) {
   const {toggleWishlist,isInWishlist} = useWishlist();
@@ -58,12 +60,28 @@ export default function ProductCard({ product }: ProductCardProps) {
               </Text>
             </View>
           )}
+
+          {/* 👇 SUPPRIMÉ — le StatusBadge n'est plus affiché en overlay sur l'image */}
+
+          {/* 👇 AJOUT — overlay grisé si le produit est épuisé, pour bien le signaler visuellement */}
+          {product.status === "out_of_stock" && (
+            <View
+              className="absolute inset-0 items-center justify-center"
+              style={{ backgroundColor: "rgba(255,255,255,0.55)" }}
+              pointerEvents="none"
+            />
+          )}
         </View>
         <View className="p-3">
-          <View className="flex-row items-center mb-1">
-            <Ionicons name="star" size={14} color="#FFD700" />
-            <Text className="text-xs text-secondary ml-1">4.6</Text>
+          {/* 👇 MODIFIÉ — le StatusBadge est maintenant sur la même ligne que l'étoile, aligné à droite */}
+          <View className="flex-row items-center justify-between mb-1">
+            <View className="flex-row items-center">
+              <Ionicons name="star" size={14} color="#FFD700" />
+              <Text className="text-xs text-secondary ml-1">4.6</Text>
+            </View>
+            <StatusBadge status={product.status ?? "in_stock"} size="sm" />
           </View>
+
           <Text
             className="text-primary text-sm font-medium mb-1"
             numberOfLines={1}

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import Product from "../models/Products.js";
-import Offer from "../models/Offer.js"; // 👈 AJOUT
+import Offer from "../models/Offer.js";
 import cloudinary from "../config/cloudinary.js";
 import { sendNewProductNotification } from "../utils/sendNotification.js";
 import { invalidateCache } from "../middleware/cache.js";
@@ -55,23 +55,23 @@ export const getProducts = async (req: Request, res: Response) => {
 
     const query: any = { isActive: true };
 
-    // Filtre par catégorie
+   
     if (category && category !== "") {
       query.category = { $regex: new RegExp(`^${category}$`, "i") };
     }
 
-    // Recherche par nom (et description, pour de meilleurs résultats)
+   
     if (search && String(search).trim() !== "") {
       const regex = new RegExp(String(search).trim(), "i");
       query.$or = [{ name: regex }, { description: regex }];
     }
 
-    // Filtre par taille (le produit doit avoir cette taille dans son tableau "sizes")
+   
     if (size && size !== "") {
       query.sizes = { $regex: new RegExp(`^${size}$`, "i") };
     }
 
-    // Filtre par plage de prix
+   
     if (minPrice || maxPrice) {
       query.price = {};
       if (minPrice) query.price.$gte = Number(minPrice);
@@ -79,12 +79,13 @@ export const getProducts = async (req: Request, res: Response) => {
     }
 
     const total = await Product.countDocuments(query);
-    const products = await Product.find(query)
-      .skip((Number(page) - 1) * Number(limit))
-      .limit(Number(limit))
-      .lean(); // 👈 nécessaire pour pouvoir ajouter des champs dynamiques (finalPrice, etc.)
+  const products = await Product.find(query)
+  .sort({ createdAt: -1 })   
+  .skip((Number(page) - 1) * Number(limit))
+  .limit(Number(limit))
+  .lean();
 
-    const withOffers = await attachActiveOffers(products); // 👈 AJOUT
+    const withOffers = await attachActiveOffers(products); 
 
     res.json({
       success: true,
@@ -105,11 +106,11 @@ export const getProduct = async (req: Request, res: Response) => {
     const product = await Product.findById(req.params.id).lean();
     if (!product) {
       return res.status(404).json({
-        success: false, // 👈 CORRECTION — c'était `true` par erreur dans le code d'origine
+        success: false, 
         message: "Product not found",
       });
     }
-    const [withOffer] = await attachActiveOffers([product]); // 👈 AJOUT
+    const [withOffer] = await attachActiveOffers([product]); 
     res.json({
       success: true,
       data: withOffer,
@@ -167,11 +168,13 @@ export const createProduct = async (req: Request, res: Response) => {
     if (!SIZE_REQUIRED_CATEGORIES.includes(category)) {
       sizes = [];
     }
-
+   const VALID_STATUSES = ["in_stock", "incoming", "out_of_stock", "on_order_48h"];
+    const status = VALID_STATUSES.includes(req.body.status) ? req.body.status : "in_stock";
     const productData = {
       ...req.body,
       images,
       sizes,
+      status
     };
     if (images.length === 0) {
       return res
@@ -231,7 +234,8 @@ export const updateProduct = async (req: Request, res: Response) => {
       updates.sizes = sizes;
     }
 
-    // 👇 AJOUT — validation métier basée sur la catégorie finale (nouvelle ou existante)
+
+    
     const category = String(
       updates.category || (await Product.findById(req.params.id).lean())?.category || "",
     ).toLowerCase();
@@ -256,6 +260,12 @@ export const updateProduct = async (req: Request, res: Response) => {
     }
 
     delete updates.existingImages;
+
+
+    const VALID_STATUSES = ["in_stock", "incoming", "out_of_stock", "on_order_48h"];
+    if (updates.status !== undefined && !VALID_STATUSES.includes(updates.status)) {
+      return res.status(400).json({ success: false, message: "Invalid product status" });
+    }
 
     const product = await Product.findByIdAndUpdate(req.params.id, updates, {
       new: true,

@@ -587,5 +587,30 @@
   "untitled": "Sin título",
   "makeup": "Maquillaje",
   "accessories": "Accesorios",
-  "baby": "Bebé"
+  "baby": "Bebé",
+  "parfum": "Perfume",
+
+  "browseByCategory": "Explorar por categoría",
+
+  "noProductsInCategory": "No hay productos en esta categoría",
+  "productsInCategory": "productos en esta categoría",
+  "productInCategory": "producto en esta categoría",
+
+  "statusInStock": "En stock",
+  "statusIncoming": "Próximamente",
+  "statusOutOfStock": "Agotado",
+  "statusOnOrder48h": "Bajo pedido (48h)",
+  "notifyWhenAvailable": "Avísame",
+  "outOfStockButton": "Agotado",
+  "orderNow48h": "Pedir ahora (48h)",
+  "productStatus": "Estado del producto",
+  "selectStatus": "Seleccionar estado",
+  "productOutOfStockMessage": "Este producto está actualmente agotado",
+  "productIncomingMessage": "Este producto estará disponible pronto",
+  "others": "Otros",
+  "statusPlacedDesc": "El pedido se ha registrado correctamente",
+  "statusProcessingDesc": "El pedido se está preparando",
+  "statusShippedDesc": "El pedido ha sido enviado",
+  "statusDeliveredDesc": "El pedido se ha entregado correctamente",
+  "statusCancelledDesc": "El pedido ha sido cancelado"
 }

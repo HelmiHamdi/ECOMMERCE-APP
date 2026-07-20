@@ -1,13 +1,14 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  RefreshControl,
   Text,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import Header from "@/components/Header";
 import { COLORS } from "@/constants";
 import { useAuth } from "@clerk/clerk-expo";
@@ -18,19 +19,28 @@ const SURFACE = "#F5F5F8";
 const INK = "#13131A";
 const MUTED = "#8D8D96";
 
-type OrderStatus = "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+// 👇 CORRIGÉ — "pending" remplacé par "placed" pour correspondre exactement
+// aux statuts utilisés côté admin (AdminOrders.tsx -> STATUSES)
+type OrderStatus =
+  | "placed"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "cancelled";
 
 type Order = {
   _id: string;
-  status: OrderStatus;
+  // 👇 CORRIGÉ — le champ s'appelle "orderStatus" dans l'API (voir AdminOrders.tsx),
+  // pas "status". C'était la cause du non-changement de couleur des icônes.
+  orderStatus: OrderStatus;
   total: number;
   createdAt: string;
   items: { name: string; quantity: number }[];
 };
 
-// Clés de traduction pour chaque étape (adapte si tes statuts de commande sont différents)
+// Clés de traduction pour chaque étape (identiques aux statuts admin)
 const STEPS: { key: OrderStatus; labelKey: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: "pending", labelKey: "stepConfirmed", icon: "checkmark-circle-outline" },
+  { key: "placed", labelKey: "stepConfirmed", icon: "checkmark-circle-outline" },
   { key: "processing", labelKey: "stepProcessing", icon: "cube-outline" },
   { key: "shipped", labelKey: "stepShipped", icon: "airplane-outline" },
   { key: "delivered", labelKey: "stepDelivered", icon: "home-outline" },
@@ -100,9 +110,11 @@ export default function TrackOrderScreen() {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const loadOrders = useCallback(async () => {
+  const loadOrders = useCallback(async (isRefresh = false) => {
     try {
+      if (isRefresh) setRefreshing(true);
       const token = await getToken();
       const res = await api.get("/orders/my", {
         headers: { Authorization: `Bearer ${token}` },
@@ -112,12 +124,22 @@ export default function TrackOrderScreen() {
       console.error(err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
-  useEffect(() => {
-    loadOrders();
-  }, [loadOrders]);
+  // 👇 AJOUT — recharge automatiquement les commandes à chaque fois que l'écran
+  // reprend le focus (ex : l'utilisateur revient dessus après que l'admin ait
+  // changé le statut). Sans ça, les icônes ne se colorent qu'au premier chargement.
+  useFocusEffect(
+    useCallback(() => {
+      loadOrders();
+    }, [loadOrders])
+  );
+
+  const onRefresh = () => {
+    loadOrders(true);
+  };
 
   const renderItem = ({ item }: { item: Order }) => (
     <View
@@ -137,7 +159,8 @@ export default function TrackOrderScreen() {
         {item.items?.length ?? 0} {t("items") ?? "article(s)"} • {item.total} DT
       </Text>
 
-      <StatusTimeline status={item.status} t={t} />
+      {/* 👇 CORRIGÉ — on passe désormais item.orderStatus (et non item.status) */}
+      <StatusTimeline status={item.orderStatus} t={t} />
     </View>
   );
 
@@ -163,6 +186,9 @@ export default function TrackOrderScreen() {
           renderItem={renderItem}
           contentContainerStyle={{ paddingTop: 16, paddingBottom: 32 }}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         />
       )}
     </SafeAreaView>

@@ -7,8 +7,8 @@ const ProductRouter = express.Router()
 
 ProductRouter.get('/',getProducts)
 ProductRouter.get('/:id',getProduct)
-ProductRouter.post('/',upload.array("images",10),protect,authorize('admin'),createProduct)
-ProductRouter.put('/:id',upload.array("images",10),protect,authorize('admin'),updateProduct)
+ProductRouter.post('/', protect, authorize('admin'), upload.array("images",10), createProduct)
+ProductRouter.put('/:id', protect, authorize('admin'), upload.array("images",10), updateProduct)
 ProductRouter.delete('/:id',protect,authorize('admin'),deleteProduct)
 
 ProductRouter.post('/:id/video', upload.single("video"), protect, authorize('admin'), uploadProductVideo)

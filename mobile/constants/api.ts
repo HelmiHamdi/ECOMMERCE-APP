@@ -15,7 +15,7 @@ const cache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
 
 const api = axios.create({
-  baseURL:"https://shop-mobile-server.vercel.app/api",
+  baseURL:LOCAL_API_URL,
   timeout: 10000,
 });
 

@@ -29,6 +29,7 @@ export interface Product {
     images: string[];
     sizes?: string[];
     video?: string; 
+    status?: "in_stock" | "incoming" | "out_of_stock" | "on_order_48h";
     category:
         | {
               _id: string;
@@ -58,23 +59,20 @@ export interface Banner {
   isActive: boolean;
 }
 
-// 👇 CORRECTION — product devient optionnel : un item du panier peut être
-// une offre "libre" (sans produit sélectionné dans la liste), auquel cas
-// offerId + offerTitle + offerImage sont utilisés à la place.
+
 export interface CartItem {
     id: string;
-    productId: string | null; // 👈 AJOUT
-    product: Product | null; // 👈 CORRECTION — optionnel désormais
+    productId: string | null;
+    product: Product | null;
     quantity: number;
     size: string;
-    price: number; // 👈 AJOUT — prix appliqué dans le panier (remisé ou non)
+    price: number; 
     offerId?: string | null;
-    offerTitle?: string | null; // 👈 AJOUT — snapshot nom de l'offre (si pas de produit)
-    offerImage?: string | null; // 👈 AJOUT — snapshot image de l'offre (si pas de produit)
+    offerTitle?: string | null;
+    offerImage?: string | null;
 }
 
-// 👇 CORRECTION — product optionnel, ajout offerId/offerTitle/offerImage
-// pour pouvoir afficher un item "offre libre" dans CartItem.tsx
+
 export type CartItemProps = {
     item: {
         id: string;
@@ -156,7 +154,7 @@ export type WishlistContextType = {
   loading: boolean;
   toggleWishlist: (product: Product) => Promise<void>;
   isInWishlist: (productId: string) => boolean;
-  fetchWishlist: () => Promise<void>; // ← ajouter
+  fetchWishlist: () => Promise<void>; 
 };
 export interface Gif {
   _id: string;

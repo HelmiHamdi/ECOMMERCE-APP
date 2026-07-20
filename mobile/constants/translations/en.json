@@ -562,6 +562,7 @@
   "searchProduct": "Search for a product...",
   "makeup": "Makeup",
   "accessories": "Accessories",
+  "parfum": "Perfume",
   "baby": "Baby",
   "gifs": "Gifs",
   "addGif": "Add a gif",
@@ -585,5 +586,31 @@
   "notDisplayed": "Not displayed",
   "gifCurrentlyActive": "This gif is currently displayed on the home screen",
   "gifActivateHint": "After adding it, activate the gif from the list so it appears on the home screen.",
-  "untitled": "Untitled"
+  "untitled": "Untitled",
+
+  "browseByCategory": "Browse by category",
+
+  "noProductsInCategory": "No products in this category",
+  "productsInCategory": "products in this category",
+  "productInCategory": "product in this category",
+
+  "createOffer": "Offer",
+
+  "others": "Others",
+  "statusInStock": "In stock",
+  "statusIncoming": "Incoming",
+  "statusOutOfStock": "Out of stock",
+  "statusOnOrder48h": "On order (48h)",
+  "notifyWhenAvailable": "Notify me",
+  "outOfStockButton": "Out of stock",
+  "orderNow48h": "Order now (48h)",
+  "productStatus": "Product status",
+  "selectStatus": "Select a status",
+  "productOutOfStockMessage": "This product is currently out of stock",
+  "productIncomingMessage": "This product will be back in stock soon",
+  "statusPlacedDesc": "The order has been successfully placed",
+  "statusProcessingDesc": "The order is being prepared",
+  "statusShippedDesc": "The order has been shipped",
+  "statusDeliveredDesc": "The order has been successfully delivered",
+  "statusCancelledDesc": "The order has been cancelled"
 }

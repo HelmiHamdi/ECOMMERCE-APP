@@ -4,15 +4,9 @@ import Product from "../models/Products.js";
 import Offer from "../models/Offer.js";
 import { invalidateCache } from "../middleware/cache.js";
 
-// 👇 Revalide le prix de CHAQUE item du panier :
-// - item lié à un produit + une offre → si l'offre est encore valide (dates +
-//   isActive + correspond bien au produit), prix = prix produit remisé ;
-//   sinon retour au prix normal du produit ET détachement de l'offre.
-// - item "offre libre" (sans produit, offerId seul) → si l'offre est encore
-//   valide, on met à jour le prix + le snapshot (titre/image) ; si l'offre a
-//   expiré / a été désactivée / supprimée, IMPOSSIBLE de revenir à un "prix
-//   normal" (il n'y a pas de produit dessous) → l'item est retiré du panier.
-// ⚠️ Nécessite que cart.items.product soit déjà populate (name images price stock).
+
+const SIZE_REQUIRED_CATEGORIES = ["men", "women", "kids", "shoes"];
+
 const syncCartItemsPricing = async (cart: any): Promise<boolean> => {
   if (!cart.items || cart.items.length === 0) return false;
 
@@ -37,7 +31,7 @@ const syncCartItemsPricing = async (cart: any): Promise<boolean> => {
 
     const offer = offerMap.get(String(item.offerId));
 
-    // ---- Cas 1 : item lié à un produit ----
+  
     if (item.product) {
       const productId = item.product?._id
         ? String(item.product._id)
@@ -68,7 +62,7 @@ const syncCartItemsPricing = async (cart: any): Promise<boolean> => {
           changed = true;
         }
       } else {
-        // Offre expirée/désactivée/supprimée : retour au prix normal du produit
+       
         if (item.price !== productPrice) {
           item.price = productPrice;
           changed = true;
@@ -83,7 +77,7 @@ const syncCartItemsPricing = async (cart: any): Promise<boolean> => {
       return;
     }
 
-    // ---- Cas 2 : offre "libre" (sans produit lié) ----
+
     const isFreeOfferStillValid =
       offer &&
       offer.isActive !== false &&
@@ -115,8 +109,7 @@ const syncCartItemsPricing = async (cart: any): Promise<boolean> => {
 
       itemsToKeep.push(item);
     } else {
-      // Offre libre expirée/désactivée/supprimée → impossible de "revenir" à un
-      // prix normal (pas de produit dessous), on retire l'item du panier.
+     
       changed = true;
     }
   });
@@ -139,8 +132,6 @@ export const getCart = async (req: Request, res: Response) => {
 
     await cart.populate("items.product", "name images price stock");
 
-    // 👇 CORRECTION — un item "offre libre" (sans produit) est VALIDE,
-    // avant on le filtrait par erreur car item.product était null
     const validItems = cart.items.filter(
       (item: any) => item.product != null || item.offerId != null
     );
@@ -164,10 +155,10 @@ export const getCart = async (req: Request, res: Response) => {
 
 export const addToCart = async (req: Request, res: Response) => {
   try {
-    const { productId, quantity = 1, size, offerId } = req.body;
+    const { productId, quantity = 1, offerId } = req.body;
+    let { size } = req.body;
 
-    // 👇 AJOUT — Cas "offre libre" : aucun produit choisi, seulement une offre
-    // (offre créée sans produit lié, avec ses propres images).
+    // ---- Cas "offre libre" : aucun produit choisi, seulement une offre ----
     if (!productId && offerId) {
       const [offer, cart] = await Promise.all([
         Offer.findById(offerId).lean(),
@@ -178,7 +169,6 @@ export const addToCart = async (req: Request, res: Response) => {
         return res.status(404).json({ success: false, message: "Offer not found" });
       }
       if (offer.product) {
-        // Cette offre EST liée à un produit → il faut passer par la liste de produits
         return res.status(400).json({
           success: false,
           message: "Cette offre est liée à un produit, veuillez le sélectionner",
@@ -201,7 +191,6 @@ export const addToCart = async (req: Request, res: Response) => {
 
       const activeCart = cart || new Cart({ user: req.user._id, items: [] });
 
-      // Une offre libre = un seul type d'item par offre (pas de notion de taille)
       const existingItem = activeCart.items.find(
         (item) => item.offerId && String(item.offerId) === String(offerId) && !item.product
       );
@@ -227,17 +216,43 @@ export const addToCart = async (req: Request, res: Response) => {
       return res.json({ success: true, data: activeCart });
     }
 
-    // ---- Cas normal : produit sélectionné (avec ou sans offre liée) ----
-    const [product, cart] = await Promise.all([
-      Product.findById(productId).select("price stock").lean(),
+  
+ const [product, cart] = await Promise.all([
+      Product.findById(productId).select("price stock category status").lean(),
       Cart.findOne({ user: req.user._id }),
     ]);
 
     if (!product) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
-    if (product.stock < quantity) {
+
+
+    if (product.status === "out_of_stock") {
+      return res.status(400).json({ success: false, message: "Ce produit est épuisé" });
+    }
+    if (product.status === "incoming") {
+      return res.status(400).json({
+        success: false,
+        message: "Ce produit n'est pas encore disponible (en arrivage)",
+      });
+    }
+
+    const stockControlled = product.status !== "on_order_48h";
+    if (stockControlled && product.stock < quantity) {
       return res.status(400).json({ success: false, message: "Insufficient stock" });
+    }
+   
+    const category = String(product.category || "").toLowerCase();
+    const sizeRequired = SIZE_REQUIRED_CATEGORIES.includes(category);
+
+    if (sizeRequired && (!size || String(size).trim() === "")) {
+      return res.status(400).json({
+        success: false,
+        message: "Size is required for this product",
+      });
+    }
+    if (!sizeRequired) {
+      size = undefined;
     }
 
     let finalPrice = product.price;
@@ -373,7 +388,6 @@ export const removeCartItem = async (req: Request, res: Response) => {
   }
 };
 
-// 👇 AJOUT — mise à jour de quantité pour un item "offre libre" (sans produit)
 export const updateOfferCartItem = async (req: Request, res: Response) => {
   try {
     const { quantity } = req.body;
@@ -411,7 +425,6 @@ export const updateOfferCartItem = async (req: Request, res: Response) => {
   }
 };
 
-// 👇 AJOUT — suppression d'un item "offre libre" (sans produit)
 export const removeOfferCartItem = async (req: Request, res: Response) => {
   try {
     const { offerId } = req.params;

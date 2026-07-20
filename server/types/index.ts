@@ -13,13 +13,13 @@ export interface IAddress extends Document {
 }
 
 export interface ICartItem {
-  product?: mongoose.Types.ObjectId | null; // 👈 optionnel — null pour une offre libre
+  product?: mongoose.Types.ObjectId | null;
   quantity: number;
   price: number;
   size?: string;
   offerId?: mongoose.Types.ObjectId | null;
-  offerTitle?: string | null;   // 👈 snapshot pour offre libre
-  offerImage?: string | null;   // 👈 snapshot pour offre libre
+  offerTitle?: string | null;   
+  offerImage?: string | null;   
 }
 export interface ICart extends Document {
   user: Types.ObjectId;
@@ -31,14 +31,14 @@ export interface ICart extends Document {
 }
 
 export interface IOrderItem {
-  product?: Types.ObjectId | null; // 👈 CORRECTION — optionnel, null pour une offre libre
+  product?: Types.ObjectId | null; 
   name: string;
   image: string | null;
   quantity: number;
   price: number;
   size?: string;
-  offerId?: Types.ObjectId | null;   // 👈 AJOUT — traçabilité de l'offre appliquée
-  offerTitle?: string | null;        // 👈 AJOUT — utile si offre libre (pas de produit)
+  offerId?: Types.ObjectId | null;  
+  offerTitle?: string | null;      
 }
 
 export interface IOrder extends Document {
@@ -78,7 +78,9 @@ export interface IProduct extends Document {
   images: string[];
   sizes: string[];
   video?: string;
-  category: "men" | "women" | "kids" | "shoes" | "bag" | "makeup" | "accessories" | "baby" | "other"; // 👈 AJOUT
+  
+  category: "men" | "women" | "kids" | "shoes" | "bag" | "makeup" | "accessories" | "baby" | "parfum" | "other";
+  status: "in_stock" | "incoming" | "out_of_stock" | "on_order_48h"; 
   stock: number;
   ratings: {
     average: number;
@@ -89,7 +91,6 @@ export interface IProduct extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
-
 export interface IUser extends Document {
   name?: string;
   email?: string;
@@ -109,7 +110,7 @@ export interface IWishlist extends Document {
   createdAt: Date;
 }
 
-// 👇 AJOUT du type "support" pour les notifications liées aux tickets
+
 export interface INotification extends Document {
   user: Types.ObjectId;
   title: string;

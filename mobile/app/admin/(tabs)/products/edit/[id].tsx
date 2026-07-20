@@ -21,6 +21,8 @@ import * as ImagePicker from "expo-image-picker";
 import Header from "@/components/Header";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
+import { PRODUCT_STATUS_LIST, ProductStatusKey } from "@/constants";
+import StatusBadge from "@/components/StatusBadge";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
 
@@ -42,10 +44,12 @@ export default function EditProduct() {
   const [category, setCategory] = useState("");
   const [sizes, setSizes] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
-
+  const [status, setStatus] = useState<ProductStatusKey>("in_stock");
+  const [statusModalVisible, setStatusModalVisible] = useState(false);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [newImages, setNewImages] = useState<string[]>([]);
   const requiresSizes = SIZE_REQUIRED_CATEGORIES.includes(category);
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -63,6 +67,7 @@ export default function EditProduct() {
             ).toLowerCase(),
           );
           setIsFeatured(product.isFeatured);
+          setStatus(product.status || "in_stock");
           if (product.sizes)
             setSizes(
               Array.isArray(product.sizes)
@@ -134,6 +139,7 @@ export default function EditProduct() {
       formData.append("stock", stock);
       formData.append("category", category.toLowerCase());
       formData.append("isFeatured", String(isFeatured));
+      formData.append("status", status);
       formData.append("sizes", requiresSizes ? sizes : "");
       existingImages.forEach((img) => formData.append("existingImages", img));
       for (const [i, uri] of newImages.entries()) {
@@ -226,7 +232,7 @@ export default function EditProduct() {
             onChangeText={setStock}
           />
 
-          {requiresSizes && ( 
+          {requiresSizes && (
             <>
               <Text className="text-secondary text-xs font-bold mb-1 uppercase">
                 {t("sizesCommaSeparated")} *
@@ -288,6 +294,51 @@ export default function EditProduct() {
                       </TouchableOpacity>
                     )}
                   />
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
+
+          {/* ------- Sélecteur de statut du produit ------- */}
+          <Text className="text-secondary text-xs font-bold mb-1 uppercase">
+            {t("productStatus") ?? "Statut du produit"}
+          </Text>
+          <TouchableOpacity
+            onPress={() => setStatusModalVisible(true)}
+            className="bg-surface p-3 rounded-lg mb-4 flex-row justify-between items-center"
+          >
+            <StatusBadge status={status} />
+            <Ionicons name="chevron-down" size={20} color={COLORS.secondary} />
+          </TouchableOpacity>
+
+          <Modal visible={statusModalVisible} animationType="slide" transparent>
+            <TouchableWithoutFeedback onPress={() => setStatusModalVisible(false)}>
+              <View className="flex-1 justify-end bg-black/50">
+                <View className="bg-white rounded-t-2xl p-4">
+                  <Text className="text-lg font-bold text-center mb-4">
+                    {t("selectStatus") ?? "Choisir un statut"}
+                  </Text>
+                  {PRODUCT_STATUS_LIST.map((s) => (
+                    <TouchableOpacity
+                      key={s.key}
+                      className={`p-4 border-b flex-row justify-between items-center ${
+                        status === s.key ? "bg-primary/5" : ""
+                      }`}
+                      onPress={() => {
+                        setStatus(s.key as ProductStatusKey);
+                        setStatusModalVisible(false);
+                      }}
+                    >
+                      <StatusBadge status={s.key} />
+                      {status === s.key && (
+                        <Ionicons
+                          name="checkmark"
+                          size={20}
+                          color={COLORS.primary}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </View>
             </TouchableWithoutFeedback>

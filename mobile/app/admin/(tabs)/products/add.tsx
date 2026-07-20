@@ -16,19 +16,20 @@ import Toast from "react-native-toast-message";
 import { COLORS, CATEGORIES, SIZE_REQUIRED_CATEGORIES } from "@/constants";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-
+import { PRODUCT_STATUS_LIST, ProductStatusKey } from "@/constants";
 import { Stack, useRouter } from "expo-router";
 import Header from "@/components/Header";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
-import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
+import { useCurrency } from "@/context/CurrencyContext"; 
+import StatusBadge from "@/components/StatusBadge";
 
 export default function AddProduct() {
   const router = useRouter();
   const { getToken } = useAuth();
   const { t } = useLanguage();
-  const { currency, formatPrice } = useCurrency(); // ← AJOUT
+  const { currency, formatPrice } = useCurrency(); 
   const [submitting, setSubmitting] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -40,6 +41,8 @@ export default function AddProduct() {
   const [sizes, setSizes] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [isFeatured, setIsFeatured] = useState(false);
+  const [status, setStatus] = useState<ProductStatusKey>("in_stock");
+const [statusModalVisible, setStatusModalVisible] = useState(false);
   const requiresSizes = SIZE_REQUIRED_CATEGORIES.includes(category);
   const pickImages = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -76,9 +79,10 @@ export default function AddProduct() {
       const fields = {
         name,
         description,
-        price, // ✅ toujours envoyé en USD (devise de référence côté backend)
+        price,
         stock: stock || "0",
-        category: category.toLowerCase(), // ✅ FIX
+        category: category.toLowerCase(),
+        status, 
         isFeatured: String(isFeatured),
         sizes: requiresSizes ? sizes : "",
       };
@@ -110,13 +114,13 @@ export default function AddProduct() {
         text2: t("productCreated"),
       });
       router.replace("/admin/products");
-    } catch (error: any) {
-      console.error(error);
-      Toast.show({
-        type: "error",
-        text1: t("failedToCreateProduct"),
-        text2: error.response?.data?.message || t("somethingWrong"),
-      });
+    }  catch (error: any) {
+  console.error("FULL ERROR:", JSON.stringify(error.response?.data, null, 2));
+  Toast.show({
+    type: "error",
+    text1: t("failedToCreateProduct"),
+    text2: error.response?.data?.message || t("somethingWrong"),
+  });
     } finally {
       setSubmitting(false);
     }
@@ -149,7 +153,7 @@ export default function AddProduct() {
             value={price}
             onChangeText={setPrice}
           />
-          {/* ✅ AJOUT : aperçu du prix converti dans la devise active, si différente de USD */}
+         
           {price.length > 0 &&
             !isNaN(parseFloat(price)) &&
             currency !== "USD" && (
@@ -168,7 +172,7 @@ export default function AddProduct() {
             onPress={() => setModalVisible(true)}
             className="bg-surface p-3 rounded-lg mb-4 flex-row justify-between items-center"
           >
-            {/* ✅ FIX: afficher la traduction mais stocker la clé */}
+           
             <Text className="text-primary">{t(category)}</Text>
             <Ionicons name="chevron-down" size={20} color={COLORS.secondary} />
           </TouchableOpacity>
@@ -187,7 +191,7 @@ export default function AddProduct() {
                       <TouchableOpacity
                         className={`p-4 border-b ${category === item.nameKey ? "bg-primary/5" : ""}`}
                         onPress={() => {
-                          setCategory(item.nameKey); // ✅ stocke "men", "women"...
+                          setCategory(item.nameKey); 
                           setModalVisible(false);
                         }}
                       >
@@ -195,7 +199,7 @@ export default function AddProduct() {
                           <Text
                             className={`${category === item.nameKey ? "font-bold text-primary" : ""}`}
                           >
-                            {t(item.nameKey)} {/* ✅ affiche traduit */}
+                            {t(item.nameKey)}
                           </Text>
                           {category === item.nameKey && (
                             <Ionicons
@@ -212,7 +216,45 @@ export default function AddProduct() {
               </View>
             </TouchableWithoutFeedback>
           </Modal>
+<Text className="text-secondary text-xs font-bold mb-1 uppercase">
+            {t("productStatus") ?? "Statut du produit"}
+          </Text>
+          <TouchableOpacity
+            onPress={() => setStatusModalVisible(true)}
+            className="bg-surface p-3 rounded-lg mb-4 flex-row justify-between items-center"
+          >
+            <StatusBadge status={status} />
+            <Ionicons name="chevron-down" size={20} color={COLORS.secondary} />
+          </TouchableOpacity>
 
+          <Modal visible={statusModalVisible} animationType="slide" transparent>
+            <TouchableWithoutFeedback onPress={() => setStatusModalVisible(false)}>
+              <View className="flex-1 justify-end bg-black/50">
+                <View className="bg-white rounded-t-2xl p-4">
+                  <Text className="text-lg font-bold text-center mb-4">
+                    {t("selectStatus") ?? "Choisir un statut"}
+                  </Text>
+                  {PRODUCT_STATUS_LIST.map((s) => (
+                    <TouchableOpacity
+                      key={s.key}
+                      className={`p-4 border-b flex-row justify-between items-center ${
+                        status === s.key ? "bg-primary/5" : ""
+                      }`}
+                      onPress={() => {
+                        setStatus(s.key as ProductStatusKey);
+                        setStatusModalVisible(false);
+                      }}
+                    >
+                      <StatusBadge status={s.key as ProductStatusKey} />
+                      {status === s.key && (
+                        <Ionicons name="checkmark" size={20} color={COLORS.primary} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
             {t("stockLevel")}
           </Text>

@@ -557,11 +557,25 @@
 
   "originalPrice": "Prezzo originale (DT)",
   "originalPricePlaceholder": "es. 120.00",
-
+  "statusInStock": "Disponibile",
+  "statusIncoming": "In arrivo",
+  "statusOutOfStock": "Esaurito",
+  "statusOnOrder48h": "Su ordinazione (48h)",
+  "notifyWhenAvailable": "Avvisami",
+  "outOfStockButton": "Esaurito",
+  "orderNow48h": "Ordina ora (48h)",
+  "productStatus": "Stato del prodotto",
+  "selectStatus": "Seleziona uno stato",
+  "productOutOfStockMessage": "Questo prodotto è attualmente esaurito",
+  "productIncomingMessage": "Questo prodotto sarà presto di nuovo disponibile",
   "priceAfterDiscount": "Prezzo dopo lo sconto",
 
   "productOrImageRequired": "Seleziona un prodotto o aggiungi almeno un'immagine",
-
+  "statusPlacedDesc": "L'ordine è stato registrato con successo",
+  "statusProcessingDesc": "L'ordine è in fase di preparazione",
+  "statusShippedDesc": "L'ordine è stato spedito",
+  "statusDeliveredDesc": "L'ordine è stato consegnato con successo",
+  "statusCancelledDesc": "L'ordine è stato annullato",
   "invalidPrice": "Prezzo non valido",
 
   "searchProduct": "Cerca un prodotto...",
@@ -590,5 +604,16 @@
   "untitled": "Senza titolo",
   "makeup": "Trucco",
   "accessories": "Accessori",
-  "baby": "Bimbo"
+  "baby": "Bimbo",
+  "parfum": "Profumo",
+
+  "browseByCategory": "Sfoglia per categoria",
+
+  "noProductsInCategory": "Nessun prodotto in questa categoria",
+  "productsInCategory": "prodotti in questa categoria",
+  "productInCategory": "prodotto in questa categoria",
+
+  "createOffer": "Offerta",
+
+  "others": "Altri"
 }

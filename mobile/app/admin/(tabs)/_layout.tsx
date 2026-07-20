@@ -7,10 +7,11 @@ import {
   Text,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS } from "@/constants";
+import { COLORS, CATEGORIES } from "@/constants";
 import { useUser } from "@clerk/clerk-expo";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -33,7 +34,7 @@ export default function AdminTabsLayout() {
     }
   }, [isLoaded, user]);
 
-  // ------- Actions du menu rapide admin -------
+
   const QUICK_ACTIONS = [
     {
       id: "users",
@@ -41,12 +42,12 @@ export default function AdminTabsLayout() {
       labelKey: t("users") ?? "Utilisateurs",
       route: "/admin/users",
     },
-     {
-    id: "gifs",
-    icon: "film-outline",
-    labelKey: t("gifs") ?? "Gifs",
-    route: "/admin/gifs",
-  },
+    {
+      id: "gifs",
+      icon: "film-outline",
+      labelKey: t("gifs") ?? "Gifs",
+      route: "/admin/gifs",
+    },
     {
       id: "offers",
       icon: "pricetag-outline",
@@ -60,6 +61,14 @@ export default function AdminTabsLayout() {
       route: "/admin/support",
     },
   ];
+
+
+ const CATEGORY_ACTIONS = CATEGORIES.map((cat) => ({
+  id: `cat-${cat.nameKey}`,
+  icon: cat.icon,
+  labelKey: t(cat.nameKey) ?? cat.nameKey,
+  route: `/admin/products/category/${cat.nameKey}`,
+}));
 
   const handleActionPress = (route: string) => {
     setMenuVisible(false);
@@ -180,25 +189,53 @@ export default function AdminTabsLayout() {
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
             <View style={styles.handle} />
 
-            <Text style={styles.sheetTitle}>{t("quickMenu") ?? "Menu rapide"}</Text>
+            {/* Le contenu peut dépasser la hauteur visible (actions générales
+                + 10 catégories), donc tout est scrollable avec une hauteur
+                max, au lieu d'un simple View fixe. */}
+            <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
+              <Text style={styles.sheetTitle}>{t("quickMenu") ?? "Menu rapide"}</Text>
 
-            <View style={styles.grid}>
-              {QUICK_ACTIONS.map((action) => (
-                <TouchableOpacity
-                  key={action.id}
-                  activeOpacity={0.7}
-                  style={styles.gridItem}
-                  onPress={() => handleActionPress(action.route)}
-                >
-                  <View style={styles.gridIconWrap}>
-                    <Ionicons name={action.icon as any} size={22} color={BW.black} />
-                  </View>
-                  <Text style={styles.gridLabel} numberOfLines={2}>
-                    {action.labelKey}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+              <View style={styles.grid}>
+                {QUICK_ACTIONS.map((action) => (
+                  <TouchableOpacity
+                    key={action.id}
+                    activeOpacity={0.7}
+                    style={styles.gridItem}
+                    onPress={() => handleActionPress(action.route)}
+                  >
+                    <View style={styles.gridIconWrap}>
+                      <Ionicons name={action.icon as any} size={22} color={BW.black} />
+                    </View>
+                    <Text style={styles.gridLabel} numberOfLines={2}>
+                      {action.labelKey}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={styles.sectionDivider} />
+              <Text style={styles.sectionTitle}>
+                {t("browseByCategory") ?? "Parcourir par catégorie"}
+              </Text>
+
+              <View style={styles.grid}>
+                {CATEGORY_ACTIONS.map((action) => (
+                  <TouchableOpacity
+                    key={action.id}
+                    activeOpacity={0.7}
+                    style={styles.gridItem}
+                    onPress={() => handleActionPress(action.route)}
+                  >
+                    <View style={styles.gridIconWrap}>
+                      <Ionicons name={action.icon as any} size={22} color={BW.black} />
+                    </View>
+                    <Text style={styles.gridLabel} numberOfLines={2}>
+                      {action.labelKey}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
 
             <TouchableOpacity
               activeOpacity={0.7}
@@ -261,6 +298,18 @@ const styles = StyleSheet.create({
     color: BW.black,
     marginBottom: 16,
   },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: BW.gray100,
+    marginVertical: 12,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: BW.gray500,
+    marginBottom: 12,
+    textTransform: "uppercase",
+  },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -287,7 +336,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   cancelBtn: {
-    marginTop: 4,
+    marginTop: 12,
     paddingVertical: 14,
     borderRadius: 16,
     alignItems: "center",
