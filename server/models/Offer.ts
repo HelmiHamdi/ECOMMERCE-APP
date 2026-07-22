@@ -32,6 +32,11 @@ const offerSchema = new Schema(
       required: false,
       default: null,
     },
+    status: {
+      type: String,
+      enum: ["in_stock", "incoming", "out_of_stock", "on_order_48h"],
+      default: "in_stock",
+    },
     originalPrice: { type: Number, required: true, min: 0 },
     discountPercentage: { type: Number, required: true, min: 0, max: 100 },
     startDate: { type: Date, required: true },

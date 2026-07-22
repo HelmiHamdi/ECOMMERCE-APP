@@ -13,30 +13,32 @@ import { Product } from "@/constants/types";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "@/components/Header";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS } from "@/constants";
+import { COLORS, CATEGORIES, SIZE_REQUIRED_CATEGORIES } from "@/constants";
 import { TextInput } from "react-native-gesture-handler";
 import ProductCard from "@/components/ProductCard";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
 import MultiSlider from "@ptomasroos/react-native-multi-slider";
+import { Currency, RATES_FROM_TND, SYMBOLS as CURRENCY_SYMBOLS, FLAGS as CURRENCY_FLAGS } from "@/context/CurrencyContext";
 
-const CATEGORY_OPTIONS: { key: string; labelKey: string }[] = [
-  { key: "men", labelKey: "men" },
-  { key: "women", labelKey: "women" },
-  { key: "kids", labelKey: "kids" },
-  { key: "shoes", labelKey: "shoes" },
-  { key: "bag", labelKey: "bag" },
-  { key: "other", labelKey: "other" },
-];
 
-const SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL"];
+const CLOTHING_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
+const SHOE_SIZES = ["36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46"];
+
+function sizeOptionsFor(category: string | null): string[] {
+  if (!category) return [];
+  if (category === "shoes") return SHOE_SIZES;
+  if (SIZE_REQUIRED_CATEGORIES.includes(category)) return CLOTHING_SIZES;
+  return [];
+}
 
 
 const CURRENCIES = {
-  USD: { symbol: "$", min: 0, max: 500, step: 5 },
-  EUR: { symbol: "€", min: 0, max: 500, step: 5 },
-  TND: { symbol: "DT", min: 0, max: 1500, step: 10 },
-} as const;
+  USD: { min: 0, max: 500, step: 5 },
+  EUR: { min: 0, max: 500, step: 5 },
+  TND: { min: 0, max: 1500, step: 10 },
+  SAR: { min: 0, max: 1800, step: 15 },
+} as const satisfies Record<Currency, { min: number; max: number; step: number }>;
 
 type CurrencyKey = keyof typeof CURRENCIES;
 
@@ -48,7 +50,6 @@ export default function Shop() {
   const [page, setPage] = useState(1);
   const [hasMore, setHashMore] = useState(true);
 
- 
   const [searchText, setSearchText] = useState("");
 
   const [showFilters, setShowFilters] = useState(false);
@@ -58,7 +59,6 @@ export default function Shop() {
   const [minPrice, setMinPrice] = useState<number>(CURRENCIES.USD.min);
   const [maxPrice, setMaxPrice] = useState<number>(CURRENCIES.USD.max);
   const [priceFilterActive, setPriceFilterActive] = useState(false);
-
 
   const [draftCategory, setDraftCategory] = useState<string | null>(null);
   const [draftSize, setDraftSize] = useState<string | null>(null);
@@ -82,9 +82,10 @@ export default function Shop() {
       if (category) queryParams.category = category;
       if (size) queryParams.size = size;
       if (priceFilterActive) {
-        queryParams.currency = currency;
-        queryParams.minPrice = minPrice;
-        queryParams.maxPrice = maxPrice;
+
+        const rate = RATES_FROM_TND[currency];
+        queryParams.minPrice = minPrice / rate;
+        queryParams.maxPrice = maxPrice / rate;
       }
 
       const { data } = await api.get("/products", {
@@ -115,7 +116,6 @@ export default function Shop() {
     fetchProducts(1);
   }, []);
 
-
   useEffect(() => {
     const timeout = setTimeout(() => {
       fetchProducts(1);
@@ -123,7 +123,6 @@ export default function Shop() {
     return () => clearTimeout(timeout);
   }, [searchText]);
 
-  
   useEffect(() => {
     fetchProducts(1);
   }, [category, size, currency, minPrice, maxPrice, priceFilterActive]);
@@ -164,13 +163,20 @@ export default function Shop() {
     setDraftMaxPrice(CURRENCIES[curr].max);
   };
 
+
+  const draftSizeOptions = sizeOptionsFor(draftCategory);
+  useEffect(() => {
+    if (draftSize && !draftSizeOptions.includes(draftSize)) {
+      setDraftSize(null);
+    }
+  }, [draftCategory]);
+
   const bounds = CURRENCIES[draftCurrency];
 
   return (
     <SafeAreaView className="flex-1 bg-surface" edges={["top"]}>
       <Header title={t("shop")} showBack showCart />
 
-   
       <View className="flex-row gap-2 mb-3 mx-4 my-2">
         <View
           className="flex-1 flex-row items-center bg-white rounded-xl border border-gray-100"
@@ -203,7 +209,6 @@ export default function Shop() {
           )}
         </View>
 
-        {/* filter icon */}
         <TouchableOpacity
           onPress={openFilters}
           className="w-12 h-12 items-center justify-center rounded-xl"
@@ -235,7 +240,6 @@ export default function Shop() {
         </TouchableOpacity>
       </View>
 
-     
       {activeFilterCount > 0 && (
         <View className="flex-row flex-wrap px-4 mb-2" style={{ gap: 8 }}>
           {category && (
@@ -247,7 +251,7 @@ export default function Shop() {
           {size && <FilterChip label={size} onRemove={() => setSize(null)} />}
           {priceFilterActive && (
             <FilterChip
-              label={`${minPrice} - ${maxPrice} ${CURRENCIES[currency].symbol}`}
+              label={`${minPrice} - ${maxPrice} ${CURRENCY_SYMBOLS[currency]}`}
               onRemove={() => {
                 setPriceFilterActive(false);
                 setMinPrice(CURRENCIES[currency].min);
@@ -289,8 +293,7 @@ export default function Shop() {
         />
       )}
 
-     
-      <Modal visible={showFilters} animationType="slide" transparent onRequestClose={() => setShowFilters(false)} >
+      <Modal visible={showFilters} animationType="slide" transparent onRequestClose={() => setShowFilters(false)}>
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" }}>
           <View
             style={{
@@ -301,7 +304,6 @@ export default function Shop() {
               paddingBottom: 45,
             }}
           >
-           
             <View className="items-center pt-3 pb-1">
               <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: "#E5E5EA" }} />
             </View>
@@ -312,62 +314,80 @@ export default function Shop() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView contentContainerStyle={{ paddingHorizontal: 24 }} showsVerticalScrollIndicator={false} >
-             
+            <ScrollView contentContainerStyle={{ paddingHorizontal: 24 }} showsVerticalScrollIndicator={false}>
+           
               <Text className="text-primary font-bold text-base mb-3">{t("category")}</Text>
               <View className="flex-row flex-wrap mb-6" style={{ gap: 8 }}>
-                {CATEGORY_OPTIONS.map((c) => {
-                  const active = draftCategory === c.key;
+                {CATEGORIES.map((c) => {
+                  const active = draftCategory === c.nameKey;
                   return (
                     <TouchableOpacity
-                      key={c.key}
-                      onPress={() => setDraftCategory(active ? null : c.key)}
+                      key={c.id}
+                      onPress={() => setDraftCategory(active ? null : c.nameKey)}
                       style={{
+                        flexDirection: "row",
+                        alignItems: "center",
                         paddingVertical: 9,
-                        paddingHorizontal: 16,
+                        paddingHorizontal: 14,
                         borderRadius: 999,
                         backgroundColor: active ? COLORS.primary : "#F5F5F8",
                         borderWidth: 1.5,
                         borderColor: active ? COLORS.primary : "transparent",
                       }}
                     >
+                      <Ionicons
+                        name={c.icon as any}
+                        size={14}
+                        color={active ? "#fff" : "#6B7280"}
+                        style={{ marginRight: 6 }}
+                      />
                       <Text style={{ fontSize: 13, fontWeight: "700", color: active ? "#fff" : "#4A4A4F" }}>
-                        {t(c.labelKey as any) || c.key}
+                        {t(c.nameKey) || c.nameKey}
                       </Text>
                     </TouchableOpacity>
                   );
                 })}
               </View>
 
-              
-              <Text className="text-primary font-bold text-base mb-3">{t("size")}</Text>
-              <View className="flex-row flex-wrap mb-6" style={{ gap: 8 }}>
-                {SIZE_OPTIONS.map((s) => {
-                  const active = draftSize === s;
-                  return (
-                    <TouchableOpacity
-                      key={s}
-                      onPress={() => setDraftSize(active ? null : s)}
-                      style={{
-                        width: 48,
-                        height: 44,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        borderRadius: 12,
-                        backgroundColor: active ? COLORS.primary : "#F5F5F8",
-                        borderWidth: 1.5,
-                        borderColor: active ? COLORS.primary : "transparent",
-                      }}
-                    >
-                      <Text style={{ fontSize: 13, fontWeight: "700", color: active ? "#fff" : "#4A4A4F" }}>
-                        {s}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+             
+              {draftSizeOptions.length > 0 && (
+                <>
+                  <Text className="text-primary font-bold text-base mb-3">{t("size")}</Text>
+                  <View className="flex-row flex-wrap mb-6" style={{ gap: 8 }}>
+                    {draftSizeOptions.map((s) => {
+                      const active = draftSize === s;
+                      return (
+                        <TouchableOpacity
+                          key={s}
+                          onPress={() => setDraftSize(active ? null : s)}
+                          style={{
+                            minWidth: 48,
+                            height: 44,
+                            paddingHorizontal: 8,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 12,
+                            backgroundColor: active ? COLORS.primary : "#F5F5F8",
+                            borderWidth: 1.5,
+                            borderColor: active ? COLORS.primary : "transparent",
+                          }}
+                        >
+                          <Text style={{ fontSize: 13, fontWeight: "700", color: active ? "#fff" : "#4A4A4F" }}>
+                            {s}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </>
+              )}
+              {draftCategory && draftSizeOptions.length === 0 && (
+                <Text className="text-secondary text-xs mb-6" style={{ marginTop: -12 }}>
+                  {t("noSizeForCategory") ?? "Cette catégorie n'a pas de taille."}
+                </Text>
+              )}
 
-              
+             
               <Text className="text-primary font-bold text-base mb-3">
                 {t("currency") || "Devise"}
               </Text>
@@ -379,30 +399,32 @@ export default function Shop() {
                       key={curr}
                       onPress={() => changeDraftCurrency(curr)}
                       style={{
+                        flexDirection: "row",
+                        alignItems: "center",
                         paddingVertical: 9,
-                        paddingHorizontal: 16,
+                        paddingHorizontal: 14,
                         borderRadius: 999,
                         backgroundColor: active ? COLORS.primary : "#F5F5F8",
                         borderWidth: 1.5,
                         borderColor: active ? COLORS.primary : "transparent",
                       }}
                     >
+                      <Text style={{ fontSize: 14, marginRight: 6 }}>{CURRENCY_FLAGS[curr]}</Text>
                       <Text style={{ fontSize: 13, fontWeight: "700", color: active ? "#fff" : "#4A4A4F" }}>
-                        {curr} ({CURRENCIES[curr].symbol})
+                        {curr} ({CURRENCY_SYMBOLS[curr]})
                       </Text>
                     </TouchableOpacity>
                   );
                 })}
               </View>
 
-             
               <Text className="text-primary font-bold text-base mb-3">{t("price")}</Text>
               <View className="flex-row justify-between mb-2">
                 <Text style={{ color: "#4A4A4F", fontWeight: "700" }}>
-                  {draftMinPrice} {bounds.symbol}
+                  {draftMinPrice} {CURRENCY_SYMBOLS[draftCurrency]}
                 </Text>
                 <Text style={{ color: "#4A4A4F", fontWeight: "700" }}>
-                  {draftMaxPrice} {bounds.symbol}
+                  {draftMaxPrice} {CURRENCY_SYMBOLS[draftCurrency]}
                 </Text>
               </View>
               <View style={{ alignItems: "center", marginBottom: 24 }}>
@@ -434,7 +456,6 @@ export default function Shop() {
               </View>
             </ScrollView>
 
-         
             <View className="flex-row px-6 pt-2" style={{ gap: 12 }}>
               <TouchableOpacity
                 onPress={resetFilters}

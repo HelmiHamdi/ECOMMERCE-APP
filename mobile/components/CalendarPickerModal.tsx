@@ -23,9 +23,7 @@ const MONTHS_FR_FULL = [
 ];
 const WEEKDAYS_FR = ["DIM", "LUN", "MAR", "MER", "JEU", "VEN", "SAM"];
 
-// 👇 CORRECTION — react-native-calendars ne lit jamais MONTHS_FR / WEEKDAYS_FR
-// directement : l'en-tête des jours de la semaine (Sun/Mon/Tue...) vient de
-// LocaleConfig, qui est en anglais par défaut. On enregistre donc un locale "fr".
+
 LocaleConfig.locales["fr"] = {
   monthNames: MONTHS_FR_FULL,
   monthNamesShort: MONTHS_FR,
@@ -47,7 +45,6 @@ type Props = {
   onClose: () => void;
 };
 
-// Ligne perforée façon ticket : pointillés + encoches demi-cercle sur les bords
 function PerforatedDivider() {
   const dots = new Array(28).fill(0);
   return (
@@ -165,7 +162,7 @@ function TornDateBadge({ dateISO }: { dateISO: string }) {
   );
 }
 
-// Overlay de sélection rapide mois / année, dans le même style "papier"
+
 function MonthYearPicker({
   viewDate,
   minDate,
@@ -206,7 +203,7 @@ function MonthYearPicker({
         paddingTop: 8,
       }}
     >
-      {/* Sélecteur d'année */}
+   
       <View
         style={{
           flexDirection: "row",
@@ -256,7 +253,7 @@ function MonthYearPicker({
         </TouchableOpacity>
       </View>
 
-      {/* Grille des mois */}
+   
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
           {MONTHS_FR_FULL.map((label, index) => {
@@ -329,7 +326,7 @@ export default function CalendarPickerModal({
   );
   const [showMonthYearPicker, setShowMonthYearPicker] = useState(false);
 
-  // Resynchronise la vue quand le modal s'ouvre ou que la date change de l'extérieur
+ 
   useEffect(() => {
     if (visible) {
       setViewDate(selectedDate ? new Date(selectedDate) : new Date());
@@ -361,20 +358,11 @@ export default function CalendarPickerModal({
             shadowOpacity: 0.15,
             shadowRadius: 20,
             elevation: 12,
-            // 👇 CORRECTION — on limite la hauteur totale du modal en tenant
-            // compte de la zone sûre (bas d'écran / barre de gestes), pour que
-            // le footer (Aujourd'hui / Fermer) ne soit jamais rogné.
             maxHeight: `${90 - Math.round((insets.bottom / 8))}%`,
-            // 👇 CORRECTION — le modal est maintenant un conteneur flex en
-            // colonne : header et footer gardent leur taille naturelle (fixes),
-            // et seule la zone du calendrier est autorisée à rétrécir /
-            // scroller. Avant, tout était empilé sans contrainte de flex, donc
-            // dès que le contenu dépassait la hauteur de l'écran, c'est le
-            // footer (Today / Close) qui se retrouvait poussé hors champ.
             flexDirection: "column",
           }}
         >
-          {/* Drag handle */}
+        
           <View
             style={{
               width: 40,
@@ -389,7 +377,7 @@ export default function CalendarPickerModal({
             }}
           />
 
-          {/* Header — hauteur fixe, ne rétrécit jamais */}
+        
           <View
             style={{
               backgroundColor: INK,
@@ -479,16 +467,12 @@ export default function CalendarPickerModal({
             </TouchableOpacity>
           </View>
 
-          {/* Séparation perforée - signature "ticket" — fixe */}
+         
           <View style={{ flexShrink: 0 }}>
             <PerforatedDivider />
           </View>
 
-          {/* 👇 CORRECTION — Zone calendrier / sélecteur mois-année, mise dans
-              un ScrollView flexible (flex: 1). C'est cette zone-là, et
-              uniquement elle, qui rétrécit ou scrolle si l'écran est petit.
-              Le footer juste en dessous reste donc TOUJOURS entièrement
-              visible, quelle que soit la taille de l'écran. */}
+    
           <ScrollView
             style={{ flexGrow: 0, flexShrink: 1 }}
             contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 4, paddingBottom: 4 }}
@@ -517,7 +501,7 @@ export default function CalendarPickerModal({
               }
               hideExtraDays
               enableSwipeMonths
-              // En-tête tactile : ouvre le sélecteur rapide mois / année
+             
               renderHeader={() => (
                 <TouchableOpacity
                   onPress={() => setShowMonthYearPicker(true)}
@@ -602,11 +586,6 @@ export default function CalendarPickerModal({
               />
             )}
           </ScrollView>
-
-          {/* Footer actions — 👇 CORRECTION — flexShrink: 0 pour qu'il garde
-              toujours sa taille complète, + paddingBottom qui inclut la
-              safe-area du bas (barre de gestes / home indicator), pour qu'il
-              ne soit jamais collé ni caché par la barre système. */}
           <View
             style={{
               flexDirection: "row",

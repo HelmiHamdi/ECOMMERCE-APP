@@ -2,6 +2,9 @@ import { Request, Response } from "express";
 import Offer from "../models/Offer.js";
 import { invalidateCache } from "../middleware/cache.js";
 import cloudinary from "../config/cloudinary.js";
+
+const VALID_STATUSES = ["in_stock", "incoming", "out_of_stock", "on_order_48h"];
+
 const uploadBufferToCloudinary = (
   buffer: Buffer,
   folder: string
@@ -20,8 +23,6 @@ const uploadBufferToCloudinary = (
   });
 };
 
-// 👇 AJOUT — supprime une image Cloudinary à partir de son URL (best-effort :
-// ne bloque jamais la requête principale si la suppression échoue)
 const destroyCloudinaryImage = async (imageUrl: string) => {
   try {
     const match = imageUrl.match(/\/v\d+\/(.+)\.[a-z0-9]+$/i);
@@ -66,7 +67,7 @@ const cleanupExpiredFreeOffers = async () => {
 
 export const getOffers = async (req: Request, res: Response) => {
   try {
-    await cleanupExpiredFreeOffers(); // 👈 AJOUT
+    await cleanupExpiredFreeOffers();
 
     const now = new Date();
     const offers = await Offer.find({
@@ -74,7 +75,7 @@ export const getOffers = async (req: Request, res: Response) => {
       startDate: { $lte: now },
       endDate: { $gte: now },
     })
-      .populate("product", "name images price")
+      .populate("product", "name images price status")
       .sort("-createdAt")
       .lean();
 
@@ -87,10 +88,10 @@ export const getOffers = async (req: Request, res: Response) => {
 
 export const getAllOffers = async (req: Request, res: Response) => {
   try {
-    await cleanupExpiredFreeOffers(); // 👈 AJOUT
+    await cleanupExpiredFreeOffers();
 
     const offers = await Offer.find()
-      .populate("product", "name images price")
+      .populate("product", "name images price status")
       .sort("-createdAt")
       .lean();
 
@@ -128,6 +129,14 @@ export const createOffer = async (req: Request, res: Response) => {
   
     if (req.body.product) {
       payload.product = req.body.product;
+    }
+
+   
+    if (req.body.status !== undefined) {
+      if (!VALID_STATUSES.includes(req.body.status)) {
+        return res.status(400).json({ success: false, message: "Statut invalide" });
+      }
+      payload.status = req.body.status;
     }
 
     const files = (req.files as Express.Multer.File[]) || [];
@@ -183,6 +192,14 @@ export const updateOffer = async (req: Request, res: Response) => {
       payload.product = req.body.product;
     } else if (req.body.product === "") {
       payload.product = null;
+    }
+
+   
+    if (req.body.status !== undefined) {
+      if (!VALID_STATUSES.includes(req.body.status)) {
+        return res.status(400).json({ success: false, message: "Statut invalide" });
+      }
+      payload.status = req.body.status;
     }
 
     if (req.body.isActive !== undefined) {

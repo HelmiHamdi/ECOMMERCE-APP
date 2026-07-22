@@ -9,8 +9,8 @@ const SURFACE = "#F5F5F8";
 const TILE = 84;
 
 type Props = {
-  existingImages: string[]; // déjà uploadées (édition)
-  newImages: string[]; // URIs locales pas encore uploadées
+  existingImages: string[]; 
+  newImages: string[]; 
   onRemoveExisting: (url: string) => void;
   onRemoveNew: (uri: string) => void;
   onAdd: (uri: string) => void;

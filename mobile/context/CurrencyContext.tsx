@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export type Currency = "USD" | "EUR" | "TND" | "SAR";
 
+
 export const RATES_FROM_TND: Record<Currency, number> = {
   TND: 1,
   USD: 0.32,
@@ -49,7 +50,6 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     setCurrencyState(c);
     await AsyncStorage.setItem("currency", c);
   };
-
 
   const formatPrice = (priceInTND: number): string => {
     const converted = priceInTND * RATES_FROM_TND[currency];

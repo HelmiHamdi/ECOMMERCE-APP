@@ -13,7 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Toast from "react-native-toast-message";
@@ -43,7 +43,16 @@ type ProductOption = {
   name: string;
   price: number;
   images?: string[];
+  status?: string; 
 };
+
+
+const STATUS_OPTIONS = [
+  { value: "in_stock", label: "En stock", color: "#16A34A" },
+  { value: "incoming", label: "Bientôt dispo", color: "#2563EB" },
+  { value: "out_of_stock", label: "Rupture", color: "#EF4444" },
+  { value: "on_order_48h", label: "Sur commande 48h", color: "#EAB308" },
+] as const;
 
 export default function EditOfferScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -76,14 +85,16 @@ export default function EditOfferScreen() {
 
   const [isActive, setIsActive] = useState(true);
 
-  // 👇 CORRECTION — remplace imageUri/existingImage uniques par des tableaux
-  // (max 10 au total), uniquement utilisés quand aucun produit n'est lié.
+
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [newImages, setNewImages] = useState<string[]>([]);
 
   const [selectedProduct, setSelectedProduct] = useState<ProductOption | null>(null);
   const [showProductPicker, setShowProductPicker] = useState(false);
   const [productWasCleared, setProductWasCleared] = useState(false);
+
+  
+  const [status, setStatus] = useState<string>("in_stock");
 
   const finalPricePreview = useMemo(() => {
     const price = parseFloat(originalPrice);
@@ -106,7 +117,8 @@ export default function EditOfferScreen() {
         setStartDate(toDateString(o.startDate));
         setEndDate(toDateString(o.endDate));
         setIsActive(o.isActive);
-        setExistingImages(o.images || []); // 👈 CORRECTION
+        setExistingImages(o.images || []);
+        setStatus(o.status || "in_stock"); 
 
         if (o.product) {
           if (typeof o.product === "object") {
@@ -115,6 +127,7 @@ export default function EditOfferScreen() {
               name: o.product.name,
               price: o.product.price,
               images: o.product.images,
+              status: o.product.status, 
             });
           } else {
             try {
@@ -125,9 +138,10 @@ export default function EditOfferScreen() {
                 name: p.name,
                 price: p.price,
                 images: p.images,
+                status: p.status, 
               });
             } catch {
-              // Produit introuvable (peut-être supprimé) — on laisse null
+             
             }
           }
         }
@@ -155,7 +169,7 @@ export default function EditOfferScreen() {
   };
 
   const handleSubmit = async () => {
-    // 👇 CORRECTION — soit un produit, soit au moins une image (existante ou nouvelle)
+  
     if (!selectedProduct && existingImages.length === 0 && newImages.length === 0) {
       Toast.show({
         type: "error",
@@ -224,7 +238,10 @@ export default function EditOfferScreen() {
       formData.append("endDate", endDate);
       formData.append("isActive", String(isActive));
 
-      // 👇 CORRECTION — images envoyées UNIQUEMENT si aucun produit lié
+    
+      formData.append("status", selectedProduct ? selectedProduct.status ?? "in_stock" : status);
+
+    
       if (!selectedProduct) {
         formData.append("existingImages", JSON.stringify(existingImages));
         newImages.forEach((uri, i) => {
@@ -268,7 +285,6 @@ export default function EditOfferScreen() {
 
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-          {/* Sélecteur de produit lié (optionnel) */}
           <View className="mb-3">
             <Text className="text-[13px] font-semibold mb-2" style={{ color: "#4A4A4F" }}>
               {tf("linkedProduct", "Produit lié (optionnel)")}
@@ -310,7 +326,6 @@ export default function EditOfferScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* 👇 AJOUT — Images : produit (lecture seule) OU sélecteur multi-image (offre libre) */}
           {selectedProduct ? (
             <View className="mb-4">
               <Text className="text-[13px] font-semibold mb-2" style={{ color: "#4A4A4F" }}>
@@ -346,6 +361,50 @@ export default function EditOfferScreen() {
                 permissionDeniedTitle={tf("permissionDenied", "Permission refusée")}
                 permissionDeniedMessage={tf("photoAccessRequired", "Accès aux photos requis")}
               />
+            </View>
+          )}
+          {!selectedProduct && (
+            <View className="mb-4">
+              <Text className="text-[13px] font-semibold mb-2" style={{ color: "#4A4A4F" }}>
+                {tf("stockStatus", "État du stock")}
+              </Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                {STATUS_OPTIONS.map((opt) => {
+                  const active = status === opt.value;
+                  return (
+                    <TouchableOpacity
+                      key={opt.value}
+                      onPress={() => setStatus(opt.value)}
+                      activeOpacity={0.8}
+                      style={{
+                        paddingVertical: 8,
+                        paddingHorizontal: 12,
+                        borderRadius: 999,
+                        backgroundColor: active ? opt.color : SURFACE,
+                      }}
+                    >
+                      <Text style={{ color: active ? "#fff" : INK, fontSize: 12, fontWeight: "600" }}>
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
+          {selectedProduct && (
+            <View
+              className="flex-row items-center mb-4 px-3 py-2 rounded-xl"
+              style={{ backgroundColor: SURFACE }}
+            >
+              <Ionicons name="information-circle-outline" size={16} color={MUTED} />
+              <Text style={{ color: MUTED, fontSize: 12, marginLeft: 6, flex: 1 }}>
+                {tf(
+                  "statusFromProduct",
+                  "Le statut de stock du produit lié sera utilisé automatiquement"
+                )}
+              </Text>
             </View>
           )}
 
@@ -563,11 +622,11 @@ function ProductPickerModal({
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState<ProductOption[]>([]);
   const [loading, setLoading] = useState(false);
-
+  const insets = useSafeAreaInsets(); 
   const loadProducts = React.useCallback(async (search: string) => {
     setLoading(true);
     try {
-      const res = await api.get("/products", {
+      const res = await api.get("/products/for-offer", {
         params: { limit: 1000, ...(search ? { search } : {}) },
       });
       const list = res.data?.data ?? res.data?.products ?? [];
@@ -608,7 +667,7 @@ function ProductPickerModal({
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
             paddingTop: 12,
-            paddingBottom: 20,
+            paddingBottom: 12 + insets.bottom,
             paddingHorizontal: 12,
             height: "75%",
           }}

@@ -15,23 +15,23 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 import Toast from "react-native-toast-message";
-import { COLORS, CATEGORIES, SIZE_REQUIRED_CATEGORIES } from "@/constants";
+
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import Header from "@/components/Header";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
-import { PRODUCT_STATUS_LIST, ProductStatusKey } from "@/constants";
+import { PRODUCT_STATUS_LIST, ProductStatusKey,COLORS, CATEGORIES, SIZE_REQUIRED_CATEGORIES  } from "@/constants";
 import StatusBadge from "@/components/StatusBadge";
 import { useLanguage } from "@/context/LanguageContext";
-import { useCurrency } from "@/context/CurrencyContext"; // ← AJOUT
+import { useCurrency } from "@/context/CurrencyContext";
 
 export default function EditProduct() {
   const { getToken } = useAuth();
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { t } = useLanguage();
-  const { formatPrice } = useCurrency(); // ← AJOUT
+  const { currency, formatPrice } = useCurrency();
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -205,22 +205,26 @@ export default function EditProduct() {
             onChangeText={setName}
           />
 
-          {/* Label du prix affiché en devise courante ← MODIFIÉ */}
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            {t("price")} (
-            {formatPrice(0)
-              .replace(/[\d.,]/g, "")
-              .trim()}
-            ) *
+            {t("price")} (DT) *
           </Text>
           <TextInput
-            className="bg-surface p-3 rounded-lg mb-4 text-primary"
+            className="bg-surface p-3 rounded-lg mb-1 text-primary"
             keyboardType="decimal-pad"
             value={price}
             onChangeText={setPrice}
-            placeholder={price ? formatPrice(parseFloat(price) || 0) : "0.00"}
+            placeholder="0.00"
             placeholderTextColor={COLORS.secondary}
           />
+         
+          {price.length > 0 && !isNaN(parseFloat(price)) && currency !== "TND" && (
+            <Text className="text-secondary text-xs mb-4 mt-1">
+              ≈ {formatPrice(parseFloat(price))} ({currency})
+            </Text>
+          )}
+          {(price.length === 0 || isNaN(parseFloat(price)) || currency === "TND") && (
+            <View className="mb-4" />
+          )}
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
             {t("stockLevel")}

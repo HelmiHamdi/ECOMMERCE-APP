@@ -282,7 +282,7 @@ export default function AdminOrders() {
         )}
       </ScrollView>
 
-      {/* Modal de changement de statut */}
+     
       <Modal visible={statusModalVisible} animationType="fade" transparent>
         <TouchableWithoutFeedback onPress={() => setStatusModalVisible(false)}>
           <View className="flex-1 justify-end bg-black/50 mb-10">
@@ -371,7 +371,7 @@ export default function AdminOrders() {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* Overlay de succès animé */}
+    
       {successVisible && (
         <View
           pointerEvents="none"

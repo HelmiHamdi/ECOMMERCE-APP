@@ -49,16 +49,14 @@ export const getStatusColor = (status: string) => {
   }
 };
 
-// -----------------------------------------------------------------------
-// Statuts produit — logique métier centralisée pour tout le projet.
-// -----------------------------------------------------------------------
+
 export const PRODUCT_STATUSES = {
   in_stock: {
     key: "in_stock",
     labelKey: "statusInStock",
     defaultLabel: "En stock",
-    color: "#16A34A",        // vert (texte/icône)
-    bgColor: "#DCFCE7",      // vert clair (fond badge)
+    color: "#16A34A",       
+    bgColor: "#DCFCE7",      
     icon: "checkmark-circle" as const,
     canAddToCart: true,
     buttonLabelKey: "addToCart",
@@ -68,7 +66,7 @@ export const PRODUCT_STATUSES = {
     key: "incoming",
     labelKey: "statusIncoming",
     defaultLabel: "En arrivage",
-    color: "#2563EB",        // bleu
+    color: "#2563EB",       
     bgColor: "#DBEAFE",
     icon: "boat-outline" as const,
     canAddToCart: false,
@@ -79,8 +77,8 @@ export const PRODUCT_STATUSES = {
     key: "out_of_stock",
     labelKey: "statusOutOfStock",
     defaultLabel: "Épuisé",
-    color: "#DC2626",        // rouge (texte)
-    bgColor: "#F3F4F6",      // gris (fond bouton/badge désactivé)
+    color: "#DC2626",        
+    bgColor: "#F3F4F6",    
     icon: "close-circle" as const,
     canAddToCart: false,
     buttonLabelKey: "outOfStockButton",
@@ -90,7 +88,7 @@ export const PRODUCT_STATUSES = {
     key: "on_order_48h",
     labelKey: "statusOnOrder48h",
     defaultLabel: "Sur commande (48h)",
-    color: "#EA580C",        // orange
+    color: "#EA580C",        
     bgColor: "#FFEDD5",
     icon: "time-outline" as const,
     canAddToCart: true,
@@ -102,8 +100,7 @@ export const PRODUCT_STATUSES = {
 export type ProductStatusKey = keyof typeof PRODUCT_STATUSES;
 export const PRODUCT_STATUS_LIST = Object.values(PRODUCT_STATUSES);
 
-// 👇 AJOUT — lookup sécurisé : accepte n'importe quelle string (venant de l'API,
-// potentiellement mal typée) et retombe sur "in_stock" si la valeur est invalide.
+
 export function getStatusConfig(status?: string | null) {
   if (status && status in PRODUCT_STATUSES) {
     return PRODUCT_STATUSES[status as ProductStatusKey];

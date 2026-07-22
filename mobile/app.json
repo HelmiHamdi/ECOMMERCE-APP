@@ -8,11 +8,16 @@
     "scheme": "mobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.helmihamdi.mobile",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "Cette app a besoin d'accéder à vos photos pour ajouter des images de produits et d'offres.",
+        "NSCameraUsageDescription": "Cette app a besoin d'accéder à l'appareil photo pour prendre des photos de produits."
       }
     },
     "android": {

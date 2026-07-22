@@ -14,8 +14,7 @@ export default function CartItem({
   const { t } = useLanguage();
   const { formatPrice } = useCurrency();
 
-  // 👇 CORRECTION — un item "offre libre" n'a pas de produit (item.product === null).
-  // Dans ce cas on utilise le snapshot offerImage / offerTitle stocké sur l'item.
+
   const isFreeOffer = !item.product && !!item.offerId;
   const imageUrl = isFreeOffer ? item.offerImage : item.product?.images?.[0];
   const displayName = isFreeOffer ? item.offerTitle : item.product?.name;
@@ -36,13 +35,13 @@ export default function CartItem({
         )}
       </View>
       <View className="flex-1 justify-between">
-        {/* détails */}
+       
         <View className="flex-row justify-between items-start">
           <View className="flex-1 pr-2">
             <Text className="text-primary font-medium text-sm mb-1" numberOfLines={1}>
               {displayName}
             </Text>
-            {/* 👇 CORRECTION — pas de taille pour une offre libre */}
+           
             {!isFreeOffer && item.size ? (
               <Text className="text-secondary text-xs">
                 {t("sizeLabel")}: {item.size}
@@ -53,11 +52,9 @@ export default function CartItem({
             <Ionicons name="close-circle-outline" size={20} color="#FF4C3B" />
           </TouchableOpacity>
         </View>
-        {/* prix et quantité */}
+        
         <View className="flex-row justify-between items-center mt-2">
-          {/* 👇 CORRECTION — on affiche item.price (prix appliqué dans le panier,
-              déjà remisé si offre), jamais item.product.price qui ignorerait l'offre
-              et qui n'existe pas pour une offre libre */}
+       
           <Text className="text-primary font-bold text-base">
             {formatPrice(item.price)}
           </Text>

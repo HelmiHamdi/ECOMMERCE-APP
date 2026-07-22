@@ -15,9 +15,9 @@ export default function Cart() {
     cartItems,
     cartTotal,
     removeFromCart,
-    removeOfferFromCart, // 👈 AJOUT
+    removeOfferFromCart, 
     updateCartItemQuantity,
-    updateOfferCartItemQuantity, // 👈 AJOUT
+    updateOfferCartItemQuantity, 
   } = useCart();
   const router = useRouter();
   const { t } = useLanguage();
@@ -36,9 +36,7 @@ export default function Cart() {
             showsVerticalScrollIndicator={false}
           >
             {cartItems.map((item, index) => {
-              // 👇 CORRECTION — un item "offre libre" n'a pas de produit :
-              // il faut passer par les routes /cart/offer-item/:offerId,
-              // pas /cart/item/:productId (qui plante si productId est null)
+          
               const isFreeOffer = !item.product && !!item.offerId;
 
               return (

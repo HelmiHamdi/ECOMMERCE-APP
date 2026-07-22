@@ -10,7 +10,7 @@ import {
   Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS, CATEGORIES } from "@/constants";
+
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import Toast from "react-native-toast-message";
@@ -18,7 +18,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import StatusBadge from "@/components/StatusBadge";
-import { PRODUCT_STATUS_LIST, ProductStatusKey } from "@/constants";
+import { PRODUCT_STATUS_LIST, ProductStatusKey , COLORS, CATEGORIES } from "@/constants";
 const THUMBNAIL_MAX_RETRIES = 2;
 
 function ProductThumbnail({ uri }: { uri?: string }) {
@@ -47,10 +47,7 @@ function ProductThumbnail({ uri }: { uri?: string }) {
 
   const showFallback = !uri || failed;
 
-  // 👇 CORRIGÉ — "h-full" (height: '100%') dans une ScrollView provoquait un calcul
-  // de pourcentage sur une hauteur de parent indéfinie, ce qui faisait exploser la taille.
-  // On utilise "flex: 1" à la place : l'image s'étire exactement à la hauteur du bloc
-  // de texte voisin (grâce à "items-stretch" sur la ligne parente), sans dépasser.
+
   return (
     <View
       className="w-28 rounded-lg bg-gray-100 items-center justify-center overflow-hidden"
@@ -311,7 +308,7 @@ const statusCounts = useMemo(() => {
           ))}
         </ScrollView>
       </View>
-{/* ------- Filtres par statut ------- */}
+
       <View className="bg-white border-b border-gray-100">
         <ScrollView
           horizontal
@@ -363,8 +360,7 @@ const statusCounts = useMemo(() => {
               !!product.hasActiveOffer && product.finalPrice != null;
 
             return (
-              // 👇 MODIFIÉ — items-center remplacé par items-stretch pour que l'image
-              // s'étire sur toute la hauteur de la ligne (même hauteur que le texte)
+        
               <View
                 key={product._id}
                 className="bg-white p-3 rounded-lg border border-gray-100 mb-3 flex-row items-stretch"
@@ -444,7 +440,7 @@ const statusCounts = useMemo(() => {
                     </Text>
                   )}
 
-                  {/* ------- Date/heure d'ajout ------- */}
+                
                   <View className="flex-row items-center">
                     <Ionicons name="time-outline" size={11} color="#9CA3AF" />
                     <Text

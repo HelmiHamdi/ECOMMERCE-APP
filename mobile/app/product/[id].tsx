@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import React, { useCallback, useState } from "react";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { COLORS } from "@/constants";
+
 import { Product } from "@/constants/types";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
@@ -22,7 +22,7 @@ import Toast from "react-native-toast-message";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCurrency } from "@/context/CurrencyContext";
-import { getStatusConfig } from "@/constants";
+import { getStatusConfig,COLORS } from "@/constants";
 import StatusBadge from "@/components/StatusBadge";
 
 const { width, height } = Dimensions.get("window");
@@ -448,7 +448,7 @@ export default function ProductDetail() {
           disabled={!canAddToCart}
           className="w-4/5 py-4 rounded-full items-center shadow-lg flex-row justify-center"
           style={{
-            backgroundColor: canAddToCart ? COLORS.primary : "#E5E7EB", // gris si désactivé
+            backgroundColor: canAddToCart ? COLORS.primary : "#E5E7EB",
             opacity: canAddToCart ? 1 : 0.9,
           }}
         >

@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ScrollView,
   Text,
@@ -103,7 +103,7 @@ function ProductGallery({
         </View>
       )}
 
-      {/* Petit indice visuel discret pour signaler que l'image est tapable */}
+     
       <View className="absolute top-3 left-3 bg-black/45 rounded-full p-1.5">
         <Ionicons name="expand-outline" size={14} color="#fff" />
       </View>
@@ -111,7 +111,7 @@ function ProductGallery({
   );
 }
 
-// -------- Visionneuse plein écran (tap sur une image de la galerie) --------
+
 function FullScreenImageViewer({
   visible,
   images,
@@ -129,7 +129,7 @@ function FullScreenImageViewer({
   useEffect(() => {
     if (visible) {
       setIndex(startIndex);
-      // Se positionne directement sur l'image tapée, sans animation visible.
+     
       requestAnimationFrame(() => {
         scrollRef.current?.scrollTo({
           x: startIndex * SCREEN_WIDTH,
@@ -235,7 +235,7 @@ function formatAddedAt(iso?: string) {
   return `${date} · ${time}`;
 }
 
-// -------- Carte produit grand format --------
+
 function ProductCard({
   product,
   onEdit,
@@ -422,7 +422,7 @@ export default function CategoryProducts() {
     name: string;
   } | null>(null);
 
-  // 👇 AJOUT — état de la visionneuse plein écran (image tapée dans une fiche)
+
   const [viewerImages, setViewerImages] = useState<string[]>([]);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [viewerVisible, setViewerVisible] = useState(false);

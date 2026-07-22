@@ -8,7 +8,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCurrency } from "@/context/CurrencyContext"; 
 import StatusBadge from "@/components/StatusBadge";
-import { PRODUCT_STATUSES } from "@/constants";
+
 
 export default function ProductCard({ product }: ProductCardProps) {
   const {toggleWishlist,isInWishlist} = useWishlist();
@@ -16,7 +16,6 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { formatPrice } = useCurrency(); 
   const isLiked = isInWishlist(product._id); 
 
-  // 👇 AJOUT — l'offre active vient du backend (attachActiveOffers dans productController)
   const hasActiveOffer = !!product.hasActiveOffer && product.finalPrice != null;
 
   return (
@@ -49,7 +48,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               </Text>
             </View>
           )}
-          {/* 👇 AJOUT — badge -X% en overlay si offre active, décalé si "featured" est déjà présent */}
+         
           {hasActiveOffer && (
             <View
               className={`absolute left-2 px-2 py-1 rounded ${product.isFeatured ? "top-9" : "top-2"}`}
@@ -61,9 +60,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             </View>
           )}
 
-          {/* 👇 SUPPRIMÉ — le StatusBadge n'est plus affiché en overlay sur l'image */}
 
-          {/* 👇 AJOUT — overlay grisé si le produit est épuisé, pour bien le signaler visuellement */}
           {product.status === "out_of_stock" && (
             <View
               className="absolute inset-0 items-center justify-center"
@@ -73,7 +70,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
         </View>
         <View className="p-3">
-          {/* 👇 MODIFIÉ — le StatusBadge est maintenant sur la même ligne que l'étoile, aligné à droite */}
+         
           <View className="flex-row items-center justify-between mb-1">
             <View className="flex-row items-center">
               <Ionicons name="star" size={14} color="#FFD700" />
@@ -89,7 +86,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             {product.name}
           </Text>
 
-          {/* 👇 CORRECTION — affiche le prix promo si l'offre est active */}
+      
           {hasActiveOffer ? (
             <View className="flex-row items-center flex-wrap" style={{ gap: 6 }}>
               <Text

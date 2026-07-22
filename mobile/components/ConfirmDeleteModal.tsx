@@ -120,7 +120,7 @@ export default function ConfirmDeleteModal({
               <View className="mb-5" />
             )}
 
-            {/* Boutons */}
+          
             <View className="flex-row w-full" style={{ gap: 10 }}>
               <TouchableOpacity
                 onPress={onCancel}

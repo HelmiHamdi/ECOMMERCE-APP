@@ -5,7 +5,7 @@ const cartItemsSchema = new Schema<ICartItem>({
     product: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Product',
-        required: false, // 👈 CORRECTION — optionnel : une offre "libre" n'a pas de produit lié
+        required: false,
         default: null,
     },
     quantity: {type: Number, required:true, min: 1, default:1},
@@ -13,14 +13,12 @@ const cartItemsSchema = new Schema<ICartItem>({
     size: {type: String},
     offerId: {type: mongoose.Schema.Types.ObjectId, ref: 'Offer', default: null},
 
-    // 👇 AJOUT — snapshot du titre/image de l'offre, utilisé UNIQUEMENT quand
-    // l'item n'a pas de produit lié (offre "libre"), pour pouvoir afficher
-    // quelque chose dans le panier sans avoir à populate un produit inexistant.
+
     offerTitle: { type: String, default: null },
     offerImage: { type: String, default: null },
 })
 
-// 👇 AJOUT — un item du panier doit être lié à un produit OU à une offre (jamais aucun des deux)
+
 cartItemsSchema.pre("validate", function (this: any) {
   if (!this.product && !this.offerId) {
     throw new Error("Un item du panier doit être lié à un produit ou à une offre");

@@ -7,11 +7,11 @@ export default function StatusBadge({
   status,
   size = "md",
 }: {
-  status?: string | null; // 👈 CORRECTION — accepte string générique, pas seulement l'union stricte
+  status?: string | null;
   size?: "sm" | "md";
 }) {
   const { t } = useLanguage();
-  const config = getStatusConfig(status); // 👈 CORRECTION — lookup sécurisé
+  const config = getStatusConfig(status);
   const isSmall = size === "sm";
 
   return (

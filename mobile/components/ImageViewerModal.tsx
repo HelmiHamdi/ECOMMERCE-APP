@@ -35,7 +35,7 @@ export default function ImageViewerModal({
     >
       <StatusBar hidden />
       <View style={{ flex: 1, backgroundColor: "#000" }}>
-        {/* Zone cliquable pour fermer (en dehors de l'image) */}
+       
         <TouchableOpacity
           activeOpacity={1}
           onPress={onClose}

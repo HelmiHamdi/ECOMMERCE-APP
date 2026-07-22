@@ -41,6 +41,39 @@ const attachActiveOffers = async (products: any[]) => {
   });
 };
 
+export const getProductsForOffer = async (req: Request, res: Response) => {
+  try {
+    const { search, limit = 1000 } = req.query;
+ 
+    const query: any = {
+      isActive: true,
+      $or: [{ status: "in_stock" }, { status: { $exists: false } }],
+    };
+ 
+    if (search && String(search).trim() !== "") {
+      const regex = new RegExp(String(search).trim(), "i");
+      query.$and = [
+        { $or: [{ status: "in_stock" }, { status: { $exists: false } }] },
+        { $or: [{ name: regex }, { description: regex }] },
+      ];
+      delete query.$or;
+    }
+ 
+    const products = await Product.find(query)
+      .sort({ createdAt: -1 })
+      .limit(Number(limit))
+      .lean();
+ 
+    res.json({
+      success: true,
+      data: products,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+ 
+ 
 export const getProducts = async (req: Request, res: Response) => {
   try {
     const {
@@ -156,7 +189,7 @@ export const createProduct = async (req: Request, res: Response) => {
     }
     if (!Array.isArray(sizes)) sizes = [sizes];
 
-    // 👇 AJOUT — validation métier avant d'aller en base
+    
     const category = String(req.body.category || "").toLowerCase();
     if (SIZE_REQUIRED_CATEGORIES.includes(category) && sizes.length === 0) {
       return res.status(400).json({

@@ -129,7 +129,7 @@ export default function AdminTabsLayout() {
           }}
         />
 
-        {/* ------- Bouton central flottant "+" (menu rapide) ------- */}
+
         <Tabs.Screen
           name="more"
           listeners={{
@@ -178,7 +178,7 @@ export default function AdminTabsLayout() {
         />
       </Tabs>
 
-      {/* ------- MODAL : menu rapide admin ------- */}
+     
       <Modal
         visible={menuVisible}
         transparent
@@ -189,9 +189,7 @@ export default function AdminTabsLayout() {
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
             <View style={styles.handle} />
 
-            {/* Le contenu peut dépasser la hauteur visible (actions générales
-                + 10 catégories), donc tout est scrollable avec une hauteur
-                max, au lieu d'un simple View fixe. */}
+           
             <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
               <Text style={styles.sheetTitle}>{t("quickMenu") ?? "Menu rapide"}</Text>
 

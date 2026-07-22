@@ -19,8 +19,7 @@ const SURFACE = "#F5F5F8";
 const INK = "#13131A";
 const MUTED = "#8D8D96";
 
-// 👇 CORRIGÉ — "pending" remplacé par "placed" pour correspondre exactement
-// aux statuts utilisés côté admin (AdminOrders.tsx -> STATUSES)
+
 type OrderStatus =
   | "placed"
   | "processing"
@@ -30,15 +29,13 @@ type OrderStatus =
 
 type Order = {
   _id: string;
-  // 👇 CORRIGÉ — le champ s'appelle "orderStatus" dans l'API (voir AdminOrders.tsx),
-  // pas "status". C'était la cause du non-changement de couleur des icônes.
   orderStatus: OrderStatus;
   total: number;
   createdAt: string;
   items: { name: string; quantity: number }[];
 };
 
-// Clés de traduction pour chaque étape (identiques aux statuts admin)
+
 const STEPS: { key: OrderStatus; labelKey: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: "placed", labelKey: "stepConfirmed", icon: "checkmark-circle-outline" },
   { key: "processing", labelKey: "stepProcessing", icon: "cube-outline" },
@@ -128,9 +125,6 @@ export default function TrackOrderScreen() {
     }
   }, []);
 
-  // 👇 AJOUT — recharge automatiquement les commandes à chaque fois que l'écran
-  // reprend le focus (ex : l'utilisateur revient dessus après que l'admin ait
-  // changé le statut). Sans ça, les icônes ne se colorent qu'au premier chargement.
   useFocusEffect(
     useCallback(() => {
       loadOrders();
@@ -159,7 +153,6 @@ export default function TrackOrderScreen() {
         {item.items?.length ?? 0} {t("items") ?? "article(s)"} • {item.total} DT
       </Text>
 
-      {/* 👇 CORRIGÉ — on passe désormais item.orderStatus (et non item.status) */}
       <StatusTimeline status={item.orderStatus} t={t} />
     </View>
   );

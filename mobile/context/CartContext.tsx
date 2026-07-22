@@ -14,28 +14,28 @@ import { useLanguage } from "@/context/LanguageContext";
 
 export type CartItem = {
   id: string;
-  productId: string | null; // 👈 CORRECTION — peut être null pour une offre libre
-  product: Product | null; // 👈 CORRECTION
+  productId: string | null; 
+  product: Product | null; 
   quantity: number;
   size: string;
   price: number;
   offerId?: string | null;
-  offerTitle?: string | null; // 👈 AJOUT
-  offerImage?: string | null; // 👈 AJOUT
+  offerTitle?: string | null; 
+  offerImage?: string | null; 
 };
 
 type CartContextType = {
   cartItems: CartItem[];
   addToCart: (product: Product, size: string, offerId?: string) => Promise<void>;
-  addOfferToCart: (offerId: string) => Promise<void>; // 👈 AJOUT — offre libre
+  addOfferToCart: (offerId: string) => Promise<void>; 
   removeFromCart: (itemId: string, size: string) => Promise<void>;
-  removeOfferFromCart: (offerId: string) => Promise<void>; // 👈 AJOUT
+  removeOfferFromCart: (offerId: string) => Promise<void>; 
   updateCartItemQuantity: (
     itemId: string,
     quantity: number,
     size: string,
   ) => Promise<void>;
-  updateOfferCartItemQuantity: (offerId: string, quantity: number) => Promise<void>; // 👈 AJOUT
+  updateOfferCartItemQuantity: (offerId: string, quantity: number) => Promise<void>; 
   clearCart: () => Promise<void>;
   cartTotal: number;
   itemCount: number;
@@ -62,7 +62,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       });
       if (data.success && data.data) {
         const serverCart = data.data;
-        // 👇 CORRECTION — on garde aussi les items "offre libre" (sans produit)
+      
         const mappedItems: CartItem[] = serverCart.items
           .filter((item: any) => item.product != null || item.offerId != null)
           .map((item: any) => ({
@@ -124,7 +124,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // 👇 AJOUT — ajoute une offre "libre" (sans produit sélectionné) au panier
+
   const addOfferToCart = async (offerId: string) => {
     if (!isSignedIn) {
       return Toast.show({
@@ -184,7 +184,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // 👇 AJOUT — retire une offre "libre" du panier
   const removeOfferFromCart = async (offerId: string) => {
     if (!isSignedIn) return;
     try {
@@ -234,7 +233,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // 👇 AJOUT — met à jour la quantité d'une offre "libre" dans le panier
+ 
   const updateOfferCartItemQuantity = async (offerId: string, quantity: number) => {
     if (!isSignedIn) return;
     if (quantity < 1) return;

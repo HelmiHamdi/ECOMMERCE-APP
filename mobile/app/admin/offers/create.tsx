@@ -41,7 +41,16 @@ type ProductOption = {
   name: string;
   price: number;
   images?: string[];
+  status?: string; 
 };
+
+
+const STATUS_OPTIONS = [
+  { value: "in_stock", label: "En stock", color: "#16A34A" },
+  { value: "incoming", label: "Bientôt dispo", color: "#2563EB" },
+  { value: "out_of_stock", label: "Rupture", color: "#EF4444" },
+  { value: "on_order_48h", label: "Sur commande 48h", color: "#EAB308" },
+] as const;
 
 export default function CreateOfferScreen() {
   const router = useRouter();
@@ -49,7 +58,7 @@ export default function CreateOfferScreen() {
   const { t } = useLanguage();
   const { formatPrice } = useCurrency();
 
-  // 👇 permet d'ouvrir cet écran depuis une fiche produit avec ?productId=xxx
+ 
   const { productId } = useLocalSearchParams<{ productId?: string }>();
 
   const tf = (key: string, fallback: string) => {
@@ -71,13 +80,15 @@ export default function CreateOfferScreen() {
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
 
-  // 👇 CORRECTION — remplace imageUri unique par un tableau (max 10),
-  // uniquement utilisé quand aucun produit n'est lié.
+
   const [newImages, setNewImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   const [selectedProduct, setSelectedProduct] = useState<ProductOption | null>(null);
   const [showProductPicker, setShowProductPicker] = useState(false);
+
+
+  const [status, setStatus] = useState<string>("in_stock");
 
   const finalPricePreview = useMemo(() => {
     const price = parseFloat(originalPrice);
@@ -108,6 +119,7 @@ export default function CreateOfferScreen() {
           name: p.name,
           price: p.price,
           images: p.images,
+          status: p.status, 
         });
       } catch (err) {
         console.error("Failed to prefill product:", err);
@@ -117,7 +129,7 @@ export default function CreateOfferScreen() {
   }, [productId]);
 
   const handleSubmit = async () => {
-    // 👇 CORRECTION — soit un produit sélectionné, soit au moins une image
+  
     if (!selectedProduct && newImages.length === 0) {
       Toast.show({
         type: "error",
@@ -189,8 +201,10 @@ export default function CreateOfferScreen() {
       formData.append("startDate", startDate);
       formData.append("endDate", endDate);
 
-      // 👇 CORRECTION — images envoyées UNIQUEMENT si aucun produit n'est lié
-      // (sinon les images du produit servent à l'affichage)
+    
+      formData.append("status", selectedProduct ? selectedProduct.status ?? "in_stock" : status);
+
+     
       if (!selectedProduct) {
         newImages.forEach((uri, i) => {
           const filename = uri.split("/").pop() ?? `offer-${i}.jpg`;
@@ -225,7 +239,7 @@ export default function CreateOfferScreen() {
 
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-          {/* Sélecteur de produit lié (optionnel) */}
+         
           <View className="mb-3">
             <Text className="text-[13px] font-semibold mb-2" style={{ color: "#4A4A4F" }}>
               {tf("linkedProduct", "Produit lié (optionnel)")}
@@ -267,8 +281,7 @@ export default function CreateOfferScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* 👇 AJOUT — Images : soit celles du produit (lecture seule), soit
-              un sélecteur multi-image (max 10) si offre "libre" */}
+       
           {selectedProduct ? (
             <View className="mb-4">
               <Text className="text-[13px] font-semibold mb-2" style={{ color: "#4A4A4F" }}>
@@ -304,6 +317,51 @@ export default function CreateOfferScreen() {
                 permissionDeniedTitle={tf("permissionDenied", "Permission refusée")}
                 permissionDeniedMessage={tf("photoAccessRequired", "Accès aux photos requis")}
               />
+            </View>
+          )}
+
+          {!selectedProduct && (
+            <View className="mb-4">
+              <Text className="text-[13px] font-semibold mb-2" style={{ color: "#4A4A4F" }}>
+                {tf("stockStatus", "État du stock")}
+              </Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                {STATUS_OPTIONS.map((opt) => {
+                  const active = status === opt.value;
+                  return (
+                    <TouchableOpacity
+                      key={opt.value}
+                      onPress={() => setStatus(opt.value)}
+                      activeOpacity={0.8}
+                      style={{
+                        paddingVertical: 8,
+                        paddingHorizontal: 12,
+                        borderRadius: 999,
+                        backgroundColor: active ? opt.color : SURFACE,
+                      }}
+                    >
+                      <Text style={{ color: active ? "#fff" : INK, fontSize: 12, fontWeight: "600" }}>
+                        {opt.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
+          {selectedProduct && (
+            <View
+              className="flex-row items-center mb-4 px-3 py-2 rounded-xl"
+              style={{ backgroundColor: SURFACE }}
+            >
+              <Ionicons name="information-circle-outline" size={16} color={MUTED} />
+              <Text style={{ color: MUTED, fontSize: 12, marginLeft: 6, flex: 1 }}>
+                {tf(
+                  "statusFromProduct",
+                  "Le statut de stock du produit lié sera utilisé automatiquement"
+                )}
+              </Text>
             </View>
           )}
 
@@ -379,9 +437,7 @@ export default function CreateOfferScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* 👇 MODIFIÉ — utilise le composant calendrier dédié (design amélioré) */}
       <CalendarPickerModal
-      
         visible={showStartPicker}
         selectedDate={startDate}
         minDate={undefined}
@@ -509,11 +565,12 @@ function ProductPickerModal({
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState<ProductOption[]>([]);
   const [loading, setLoading] = useState(false);
+  const insets = useSafeAreaInsets(); 
 
   const loadProducts = React.useCallback(async (search: string) => {
     setLoading(true);
     try {
-      const res = await api.get("/products", {
+      const res = await api.get("/products/for-offer", {
         params: { limit: 1000, ...(search ? { search } : {}) },
       });
       const list = res.data?.data ?? res.data?.products ?? [];
@@ -554,7 +611,9 @@ function ProductPickerModal({
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
             paddingTop: 12,
-             paddingBottom: 24,
+            // 👇 CORRECTION — ajoute la hauteur de la barre de navigation système
+            // (insets.bottom) pour que "Clôturer" ne soit plus collé/caché en bas
+            paddingBottom: 12 + insets.bottom,
             paddingHorizontal: 12,
             height: "75%",
           }}

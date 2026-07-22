@@ -13,23 +13,23 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 import Toast from "react-native-toast-message";
-import { COLORS, CATEGORIES, SIZE_REQUIRED_CATEGORIES } from "@/constants";
+
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { PRODUCT_STATUS_LIST, ProductStatusKey } from "@/constants";
+import { PRODUCT_STATUS_LIST, ProductStatusKey,COLORS, CATEGORIES, SIZE_REQUIRED_CATEGORIES  } from "@/constants";
 import { Stack, useRouter } from "expo-router";
 import Header from "@/components/Header";
 import { useAuth } from "@clerk/clerk-expo";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
-import { useCurrency } from "@/context/CurrencyContext"; 
+import { useCurrency } from "@/context/CurrencyContext";
 import StatusBadge from "@/components/StatusBadge";
 
 export default function AddProduct() {
   const router = useRouter();
   const { getToken } = useAuth();
   const { t } = useLanguage();
-  const { currency, formatPrice } = useCurrency(); 
+  const { currency, formatPrice } = useCurrency();
   const [submitting, setSubmitting] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -42,7 +42,7 @@ export default function AddProduct() {
   const [images, setImages] = useState<string[]>([]);
   const [isFeatured, setIsFeatured] = useState(false);
   const [status, setStatus] = useState<ProductStatusKey>("in_stock");
-const [statusModalVisible, setStatusModalVisible] = useState(false);
+  const [statusModalVisible, setStatusModalVisible] = useState(false);
   const requiresSizes = SIZE_REQUIRED_CATEGORIES.includes(category);
   const pickImages = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -79,10 +79,10 @@ const [statusModalVisible, setStatusModalVisible] = useState(false);
       const fields = {
         name,
         description,
-        price,
+        price, // ✅ toujours envoyé en TND (devise de référence côté backend)
         stock: stock || "0",
         category: category.toLowerCase(),
-        status, 
+        status,
         isFeatured: String(isFeatured),
         sizes: requiresSizes ? sizes : "",
       };
@@ -114,13 +114,13 @@ const [statusModalVisible, setStatusModalVisible] = useState(false);
         text2: t("productCreated"),
       });
       router.replace("/admin/products");
-    }  catch (error: any) {
-  console.error("FULL ERROR:", JSON.stringify(error.response?.data, null, 2));
-  Toast.show({
-    type: "error",
-    text1: t("failedToCreateProduct"),
-    text2: error.response?.data?.message || t("somethingWrong"),
-  });
+    } catch (error: any) {
+      console.error("FULL ERROR:", JSON.stringify(error.response?.data, null, 2));
+      Toast.show({
+        type: "error",
+        text1: t("failedToCreateProduct"),
+        text2: error.response?.data?.message || t("somethingWrong"),
+      });
     } finally {
       setSubmitting(false);
     }
@@ -143,8 +143,11 @@ const [statusModalVisible, setStatusModalVisible] = useState(false);
             onChangeText={setName}
           />
 
+          {/* 👇 CORRECTION — le champ prix est TOUJOURS en DT (TND), quelle que
+              soit la devise personnelle de l'admin. Avant : label "($)" fixe,
+              trompeur puisque la valeur saisie est stockée telle quelle en TND. */}
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
-            {t("price")} ($) *
+            {t("price")} (DT) *
           </Text>
           <TextInput
             className="bg-surface p-3 rounded-lg text-primary"
@@ -153,17 +156,20 @@ const [statusModalVisible, setStatusModalVisible] = useState(false);
             value={price}
             onChangeText={setPrice}
           />
-         
+
+          {/* Aperçu converti dans la devise d'affichage choisie par l'admin,
+              seulement si elle diffère de la devise réellement stockée (TND).
+              Avant : comparait à "USD" au lieu de "TND". */}
           {price.length > 0 &&
             !isNaN(parseFloat(price)) &&
-            currency !== "USD" && (
+            currency !== "TND" && (
               <Text className="text-secondary text-xs mb-4 mt-1">
                 ≈ {formatPrice(parseFloat(price))} ({currency})
               </Text>
             )}
           {(price.length === 0 ||
             isNaN(parseFloat(price)) ||
-            currency === "USD") && <View className="mb-4" />}
+            currency === "TND") && <View className="mb-4" />}
 
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
             {t("category")}
@@ -172,7 +178,6 @@ const [statusModalVisible, setStatusModalVisible] = useState(false);
             onPress={() => setModalVisible(true)}
             className="bg-surface p-3 rounded-lg mb-4 flex-row justify-between items-center"
           >
-           
             <Text className="text-primary">{t(category)}</Text>
             <Ionicons name="chevron-down" size={20} color={COLORS.secondary} />
           </TouchableOpacity>
@@ -191,7 +196,7 @@ const [statusModalVisible, setStatusModalVisible] = useState(false);
                       <TouchableOpacity
                         className={`p-4 border-b ${category === item.nameKey ? "bg-primary/5" : ""}`}
                         onPress={() => {
-                          setCategory(item.nameKey); 
+                          setCategory(item.nameKey);
                           setModalVisible(false);
                         }}
                       >
@@ -216,7 +221,8 @@ const [statusModalVisible, setStatusModalVisible] = useState(false);
               </View>
             </TouchableWithoutFeedback>
           </Modal>
-<Text className="text-secondary text-xs font-bold mb-1 uppercase">
+
+          <Text className="text-secondary text-xs font-bold mb-1 uppercase">
             {t("productStatus") ?? "Statut du produit"}
           </Text>
           <TouchableOpacity
@@ -255,6 +261,7 @@ const [statusModalVisible, setStatusModalVisible] = useState(false);
               </View>
             </TouchableWithoutFeedback>
           </Modal>
+
           <Text className="text-secondary text-xs font-bold mb-1 uppercase">
             {t("stockLevel")}
           </Text>
@@ -266,7 +273,7 @@ const [statusModalVisible, setStatusModalVisible] = useState(false);
             onChangeText={setStock}
           />
 
-          {requiresSizes && ( 
+          {requiresSizes && (
             <>
               <Text className="text-secondary text-xs font-bold mb-1 uppercase">
                 {t("sizesCommaSeparated")} *
