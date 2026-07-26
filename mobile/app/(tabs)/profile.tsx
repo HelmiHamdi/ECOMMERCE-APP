@@ -7,9 +7,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { PROFILE_MENU } from "@/constants";
 import { useClerk, useAuth } from "@clerk/clerk-expo";
 import { useLanguage } from "@/context/LanguageContext";
-import api from "@/constants/api";
+import api , { clearCache } from "@/constants/api";
 
-// Palette stricte noir & blanc
+
 const BW = {
   black: "#0A0A0A",
   charcoal: "#1F1F1F",
@@ -20,8 +20,6 @@ const BW = {
   white: "#FFFFFF",
 };
 
-// Items ajoutés manuellement (Edit Profile & Change Password)
-// en plus de PROFILE_MENU
 const EXTRA_MENU = [
   {
     id: "edit-profile",
@@ -45,6 +43,8 @@ export default function Profile() {
 
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [profileName, setProfileName] = useState<string>("");
+  // Rôle chargé depuis MongoDB (source de vérité), pas depuis Clerk
+  const [profileRole, setProfileRole] = useState<"user" | "admin" | null>(null);
 
   const loadProfile = useCallback(async () => {
     if (!user) return;
@@ -56,10 +56,12 @@ export default function Profile() {
       const data = res.data.data;
       setProfileImage(data.image || user.imageUrl);
       setProfileName(data.name || `${user.firstName} ${user.lastName}`);
+      setProfileRole(data.role || "user");
     } catch (err: any) {
       console.error(err);
       setProfileImage(user.imageUrl);
       setProfileName(`${user.firstName} ${user.lastName}`);
+      setProfileRole(null);
     }
   }, [user]);
 
@@ -72,6 +74,8 @@ export default function Profile() {
   const handleLogout = async () => {
     try {
       await signOut();
+      clearCache();
+
       router.replace("/sign-in");
     } catch (err) {
       console.error("Logout error:", err);
@@ -83,9 +87,9 @@ export default function Profile() {
     user?.firstName?.charAt(0)?.toUpperCase() ||
     "?";
 
-  const isAdmin = user?.publicMetadata?.role === "admin";
+  
+  const isAdmin = profileRole === "admin";
 
-  // Menu final = items ajoutés + menu existant
   const fullMenu = [...EXTRA_MENU, ...PROFILE_MENU];
 
   return (
@@ -101,7 +105,6 @@ export default function Profile() {
         showsVerticalScrollIndicator={false}
       >
         {!user ? (
-          // ------- GUEST STATE -------
           <View className="items-center w-full px-8">
             <View
               className="w-24 h-24 rounded-full items-center justify-center mb-6"
@@ -133,19 +136,18 @@ export default function Profile() {
           </View>
         ) : (
           <>
-            {/* ------- HERO (réduit) ------- */}
+          
             <View
               style={{
                 backgroundColor: BW.black,
                 paddingTop: 20,
                 paddingBottom: isAdmin ? 26 : 22,
-                borderBottomLeftRadius:200,
+                borderBottomLeftRadius: 200,
                 borderBottomRightRadius: 200,
                 alignItems: "center",
                 overflow: "hidden",
               }}
             >
-              {/* Motif géométrique discret */}
               <View
                 style={{
                   position: "absolute",
@@ -171,7 +173,6 @@ export default function Profile() {
                 }}
               />
 
-              {/* Photo de profil - non cliquable, purement affichage */}
               <View
                 className="rounded-full mb-3"
                 style={{
@@ -211,7 +212,6 @@ export default function Profile() {
                 )}
               </View>
 
-              {/* Nom complet sur une seule ligne, taille réduite si trop long */}
               <View style={{ paddingHorizontal: 24, width: "100%" }}>
                 <Text
                   numberOfLines={1}
@@ -251,7 +251,7 @@ export default function Profile() {
               )}
             </View>
 
-            {/* ------- MENU CARD ------- */}
+          
             <Text
               className="text-xs font-bold mx-6 mt-8 mb-2"
               style={{ color: BW.gray500, letterSpacing: 1 }}
@@ -297,7 +297,7 @@ export default function Profile() {
               ))}
             </View>
 
-            {/* ------- LOGOUT ------- */}
+          
             <TouchableOpacity
               className="flex-row items-center justify-center py-4 mx-4 mt-10 rounded-2xl"
               activeOpacity={0.7}

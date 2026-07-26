@@ -9,9 +9,10 @@ export default function AdminRootLayout() {
         options={{ headerShown: true, title: "Utilisateurs" }}
       />
       <Stack.Screen
-        name="gifs"
-        options={{ headerShown: false }}
+        name="orders-list"
+        options={{ headerShown: true, title: "Commandes" }}
       />
+      <Stack.Screen name="gifs" options={{ headerShown: false }} />
       <Stack.Screen
         name="offers"
         options={{ headerShown: true, title: "Offres" }}
@@ -19,6 +20,10 @@ export default function AdminRootLayout() {
       <Stack.Screen
         name="support"
         options={{ headerShown: true, title: "Support" }}
+      />
+      <Stack.Screen
+        name="devis"
+        options={{ headerShown: true, title: "Demandes de devis" }}
       />
     </Stack>
   );

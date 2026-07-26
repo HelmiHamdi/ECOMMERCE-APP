@@ -17,6 +17,7 @@ import Header from "@/components/Header";
 import api from "@/constants/api";
 import { useAuth } from "@clerk/clerk-expo";
 import { useLanguage } from "@/context/LanguageContext";
+import AdminBottomMenu from "@/components/AdminBottomMenu";
 
 export default function AddGif() {
   const router = useRouter();
@@ -144,6 +145,7 @@ export default function AddGif() {
           )}
         </TouchableOpacity>
       </ScrollView>
+      <AdminBottomMenu />
     </SafeAreaView>
   );
 }

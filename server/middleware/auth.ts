@@ -2,12 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { clerkClient } from "@clerk/express";
 import User from "../models/User.js";
 
-/**
- * Récupère l'utilisateur en base. S'il n'existe pas encore (ex: le webhook
- * Clerk n'a pas eu le temps de tourner, ou a échoué), on le crée à la volée
- * à partir des infos Clerk. L'upsert + $setOnInsert évite les doublons en
- * cas de requêtes concurrentes juste après l'inscription.
- */
+
 async function findOrCreateUser(clerkId: string) {
   const existing = await User.findOne({ clerkId });
   if (existing) return existing;

@@ -2,17 +2,18 @@ import { Request, Response } from "express";
 import User from "../models/User.js";
 import Product from "../models/Products.js";
 import Order from "../models/Order.js";
+import { invalidateCache } from "../middleware/cache.js";
 
 
 export const getDashboardStats = async (req: Request, res: Response) => {
   try {
-    // Une seule requête MongoDB au lieu de 4
+  
     const [totalUsers, totalProducts, totalOrders, revenueResult, recentOrders] = 
       await Promise.all([
         User.countDocuments(),
         Product.countDocuments(),
         Order.countDocuments(),
-        // Calcul du revenu DANS MongoDB, pas en JS
+  
         Order.aggregate([
           { $match: { orderStatus: { $ne: "cancelled" } } },
           { $group: { _id: null, total: { $sum: "$totalAmount" } } },
@@ -40,7 +41,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 };
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
-    // req.user est peuplé par ton middleware "protect" (voir getMyProfile)
+   
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).json({ success: false, message: "Access denied" });
     }
@@ -65,6 +66,68 @@ export const getAllUsers = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error("GET ALL USERS ERROR:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const updateUserRole = async (req: Request, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    const { id } = req.params;
+    const { role } = req.body as { role?: "user" | "admin" };
+
+    if (!role || !["user", "admin"].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Role invalide. Utilisez 'user' ou 'admin'.",
+      });
+    }
+
+    const targetUser = await User.findById(id);
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: "Utilisateur introuvable" });
+    }
+
+   
+    if (
+      targetUser._id.toString() === (req.user as any)._id.toString() &&
+      role === "user"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Vous ne pouvez pas retirer vos propres droits admin",
+      });
+    }
+
+   
+    if (
+      targetUser.email?.toLowerCase() === process.env.ADMIN_EMAIL?.toLowerCase() &&
+      role === "user"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Impossible de retirer les droits de l'admin principal",
+      });
+    }
+
+    targetUser.role = role;
+    await targetUser.save();
+
+    invalidateCache("admin/users");
+
+    res.json({
+      success: true,
+      message:
+        role === "admin"
+          ? "Utilisateur promu administrateur"
+          : "Droits administrateur retirés",
+      data: targetUser,
+    });
+  } catch (error: any) {
+    console.error("UPDATE USER ROLE ERROR:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

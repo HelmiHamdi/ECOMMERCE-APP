@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import Order from "../models/Order.js";
 import Cart from "../models/Cart.js";
 import Product from "../models/Products.js";
 import { invalidateCache } from "../middleware/cache.js";
 import stripe from "../config/stripe.js";
 import { generateInvoicePDF } from "../utils/generateInvoicePDF.js";
+import { generateOrdersListPDF } from "../utils/generateOrdersListPDF.js";
 import jwt from "jsonwebtoken";
 
 const SUPPORTED_INVOICE_LANGS = ["en", "fr", "ar", "es", "it", "de"];
@@ -217,7 +219,7 @@ export const createOrder = async (req: Request, res: Response) => {
     }
 
     const subtotal     = cart.totalAmount;
-    const shippingCost = 2;
+    const shippingCost = 7;
     const totalAmount  = subtotal + shippingCost;
 
     const [order] = await Promise.all([
@@ -294,6 +296,206 @@ export const getAllOrders = async (req: Request, res: Response) => {
         pages: Math.ceil(total / Number(limit)),
       },
     });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getAdminOrdersDetails = async (req: Request, res: Response) => {
+  try {
+    const { page = 1, limit = 15, status, search, startDate, endDate } = req.query;
+    const pageNum = Number(page) || 1;
+    const limitNum = Number(limit) || 15;
+
+    const matchStage: any = {};
+    if (status && status !== "all") matchStage.orderStatus = status;
+    if (startDate || endDate) {
+      matchStage.createdAt = {};
+      if (startDate) matchStage.createdAt.$gte = new Date(startDate as string);
+      if (endDate) {
+        const end = new Date(endDate as string);
+        end.setHours(23, 59, 59, 999);
+        matchStage.createdAt.$lte = end;
+      }
+    }
+
+    const pipeline: any[] = [
+      { $match: matchStage },
+      { $lookup: { from: "users", localField: "user", foreignField: "_id", as: "user" } },
+      { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+    ];
+
+    if (search) {
+      const searchStr = (search as string).trim();
+      const searchRegex = new RegExp(searchStr, "i");
+      const orConditions: any[] = [
+        { orderNumber: searchRegex },
+        { "user.name": searchRegex },
+        { "user.phone": searchRegex },
+      ];
+      if (mongoose.Types.ObjectId.isValid(searchStr)) {
+        orConditions.push({ _id: new mongoose.Types.ObjectId(searchStr) });
+      }
+      pipeline.push({ $match: { $or: orConditions } });
+    }
+
+    pipeline.push({ $sort: { createdAt: -1 } });
+
+    const countPipeline = [...pipeline, { $count: "total" }];
+    const totalResult = await Order.aggregate(countPipeline);
+    const total = totalResult[0]?.total || 0;
+
+    pipeline.push({ $skip: (pageNum - 1) * limitNum });
+    pipeline.push({ $limit: limitNum });
+
+    // 👇 NOUVEAU — récupère category + status (type de stock) des produits liés aux articles
+    pipeline.push({
+      $lookup: {
+        from: "products",
+        localField: "items.product",
+        foreignField: "_id",
+        as: "productsData",
+      },
+    });
+
+    pipeline.push({
+      $project: {
+        orderNumber: 1,
+        createdAt: 1,
+        orderStatus: 1,
+        paymentStatus: 1,
+        paymentMethod: 1,
+        subtotal: 1,
+        shippingCost: 1,
+        totalAmount: 1,
+        shippingAddress: 1,
+        items: {
+          $map: {
+            input: "$items",
+            as: "it",
+            in: {
+              name: "$$it.name",
+              image: "$$it.image",
+              quantity: "$$it.quantity",
+              price: "$$it.price",
+              size: "$$it.size",
+              // 👇 NOUVEAU — catégorie du produit (si le produit existe encore)
+              category: {
+                $let: {
+                  vars: {
+                    matched: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$productsData",
+                            as: "p",
+                            cond: { $eq: ["$$p._id", "$$it.product"] },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                  },
+                  in: "$$matched.category",
+                },
+              },
+              // 👇 NOUVEAU — type de stock du produit
+              stockStatus: {
+                $let: {
+                  vars: {
+                    matched: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$productsData",
+                            as: "p",
+                            cond: { $eq: ["$$p._id", "$$it.product"] },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                  },
+                  in: "$$matched.status",
+                },
+              },
+            },
+          },
+        },
+        customer: {
+          _id: "$user._id",
+          name: "$user.name",
+          phone: "$user.phone",
+          email: "$user.email",
+          image: "$user.image",
+        },
+      },
+    });
+
+    const orders = await Order.aggregate(pipeline);
+
+    res.json({
+      success: true,
+      data: orders,
+      pagination: { total, page: pageNum, pages: Math.ceil(total / limitNum) },
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+
+
+export const exportAdminOrdersPDF = async (req: Request, res: Response) => {
+  try {
+    const { status, search, startDate, endDate } = req.query;
+
+    const matchStage: any = {};
+    if (status && status !== "all") matchStage.orderStatus = status;
+    if (startDate || endDate) {
+      matchStage.createdAt = {};
+      if (startDate) matchStage.createdAt.$gte = new Date(startDate as string);
+      if (endDate) {
+        const end = new Date(endDate as string);
+        end.setHours(23, 59, 59, 999);
+        matchStage.createdAt.$lte = end;
+      }
+    }
+
+    const pipeline: any[] = [
+      { $match: matchStage },
+      { $lookup: { from: "users", localField: "user", foreignField: "_id", as: "user" } },
+      { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+    ];
+
+    if (search) {
+      const searchStr = (search as string).trim();
+      const searchRegex = new RegExp(searchStr, "i");
+      const orConditions: any[] = [
+        { orderNumber: searchRegex },
+        { "user.name": searchRegex },
+        { "user.phone": searchRegex },
+      ];
+      if (mongoose.Types.ObjectId.isValid(searchStr)) {
+        orConditions.push({ _id: new mongoose.Types.ObjectId(searchStr) });
+      }
+      pipeline.push({ $match: { $or: orConditions } });
+    }
+
+    pipeline.push({ $sort: { createdAt: -1 } });
+    pipeline.push({
+      $project: {
+        orderNumber: 1,
+        createdAt: 1,
+        orderStatus: 1,
+        totalAmount: 1,
+        customer: { name: "$user.name", phone: "$user.phone" },
+      },
+    });
+
+    const orders = await Order.aggregate(pipeline);
+    await generateOrdersListPDF(orders, res);
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }

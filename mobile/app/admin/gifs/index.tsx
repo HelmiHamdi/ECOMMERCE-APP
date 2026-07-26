@@ -19,6 +19,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import { useLanguage } from "@/context/LanguageContext";
 import { COLORS } from "@/constants";
 import Toast from "react-native-toast-message";
+import AdminBottomMenu from "@/components/AdminBottomMenu";
 
 export default function AdminGifsIndex() {
   const router = useRouter();
@@ -191,6 +192,7 @@ export default function AdminGifsIndex() {
         onConfirm={handleConfirmDelete}
         loading={deleting}
       />
+      <AdminBottomMenu />
     </SafeAreaView>
   );
 }

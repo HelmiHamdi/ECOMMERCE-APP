@@ -5,11 +5,8 @@ const CACHE_TTL = 5 * 60 * 1000;
 
 const EXCLUDED_PREFIXES = [
   "/api/users",
-  "/api/cart", // 👈 CORRECTION — le panier est propre à chaque utilisateur ;
-  // il ne doit jamais être mis en cache par URL, car req.originalUrl
-  // (ex: "/api/cart") est identique pour tous les comptes, donc le
-  // cache renvoyait le panier du premier utilisateur connecté à
-  // TOUS les autres utilisateurs qui appelaient GET /cart ensuite.
+  "/api/cart",
+  "/api/addresses",
 ];
 
 const EXCLUDED_PATTERNS = [

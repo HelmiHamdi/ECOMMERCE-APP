@@ -26,7 +26,8 @@ import NewsletterRouter from "./routers/newsletterRoutes.js";
 import OfferRouter from "./routers/offerRoutes.js";
 import SupportRouter from "./routers/supportRoutes.js";
 import GifRouter from "./routers/gifRoute.js";
-
+import DevisRouter from "./routers/devisRouter.js";
+import SettingsRouter from "./routers/settingsRouter.js";
 
 const app = express();
 console.time("connectDB");
@@ -70,7 +71,8 @@ app.use("/api/newsletter", NewsletterRouter);
 app.use("/api/offers", OfferRouter);
 app.use("/api/support", SupportRouter);
 app.use("/api/gifs", GifRouter);
-
+app.use("/api/devis", DevisRouter);
+app.use("/api/settings", SettingsRouter);
 await makeAdmin();
 
 await backfillOrderItemNames();

@@ -23,7 +23,7 @@ export default function Cart() {
   const { t } = useLanguage();
   const { formatPrice } = useCurrency();
 
-  const shipping = 2.0;
+  const shipping = 7.0;
   const total = cartTotal + shipping;
 
   return (

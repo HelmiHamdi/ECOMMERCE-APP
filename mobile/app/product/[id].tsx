@@ -22,8 +22,9 @@ import Toast from "react-native-toast-message";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCurrency } from "@/context/CurrencyContext";
-import { getStatusConfig,COLORS } from "@/constants";
+import { getStatusConfig, COLORS } from "@/constants";
 import StatusBadge from "@/components/StatusBadge";
+import DevisButton from "@/components/DevisButton"; // 👈 AJOUT
 
 const { width, height } = Dimensions.get("window");
 
@@ -86,7 +87,7 @@ export default function ProductDetail() {
   const hasActiveOffer = !!product.hasActiveOffer && product.finalPrice != null;
   const sizes = product.sizes ?? [];
   const requiresSize = sizes.length > 0;
- const statusConfig = getStatusConfig(product.status);
+  const statusConfig = getStatusConfig(product.status);
   const canAddToCart = statusConfig.canAddToCart;
   const handleAddToCart = () => {
     if (!canAddToCart) {
@@ -439,6 +440,9 @@ export default function ProductDetail() {
           <Text className="text-secondary leading-6 mb-6">
             {product.description}
           </Text>
+
+          {/* 👇 AJOUT — bouton conditionnel "Demander un devis", contrôlé par l'admin */}
+          <DevisButton productId={product._id} />
         </View>
       </ScrollView>
 

@@ -18,7 +18,7 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: "Cart is empty" });
     }
 
-    const shippingCost = 2;
+    const shippingCost = 7;
     const totalAmount = Math.round((cart.totalAmount + shippingCost) * 100); // en centimes
 
     const paymentIntent = await stripe.paymentIntents.create({

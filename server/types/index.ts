@@ -115,7 +115,7 @@ export interface INotification extends Document {
   user: Types.ObjectId;
   title: string;
   body: string;
-  type: "new_product" | "daily_reminder" | "order" | "general" | "support";
+  type: "new_product" | "daily_reminder" | "order" | "general" | "support" | "offer"| "devis";
   data?: Record<string, any>;
   isRead: boolean;
   createdAt?: Date;

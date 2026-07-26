@@ -20,6 +20,7 @@ import { Gif } from "@/constants/types";
 import { useAuth } from "@clerk/clerk-expo";
 import { useLanguage } from "@/context/LanguageContext";
 import { COLORS } from "@/constants";
+import AdminBottomMenu from "@/components/AdminBottomMenu";
 
 export default function EditGif() {
   const router = useRouter();
@@ -224,6 +225,7 @@ export default function EditGif() {
         onConfirm={handleConfirmDelete}
         loading={deleting}
       />
+      <AdminBottomMenu />
     </SafeAreaView>
   );
 }

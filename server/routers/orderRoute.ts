@@ -9,6 +9,8 @@ import {
   updateOrderStatus,
   getInvoiceLink,
   downloadInvoicePublic,
+  getAdminOrdersDetails,
+  exportAdminOrdersPDF,
 } from "../controllers/orderController.js";
 
 const OrderRouter = express.Router();
@@ -18,6 +20,8 @@ OrderRouter.get("/:id/invoice/download", downloadInvoicePublic);
 
 OrderRouter.get("/my", protect, getOrders);
 OrderRouter.get("/admin/all", protect, authorize("admin"), getAllOrders);
+OrderRouter.get("/admin/details", protect, authorize("admin"), getAdminOrdersDetails);
+OrderRouter.get("/admin/export", protect, authorize("admin"), exportAdminOrdersPDF);
 OrderRouter.get("/", protect, getOrders);
 
 

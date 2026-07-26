@@ -6,7 +6,8 @@ export const getAddresses = async (req: Request, res: Response) => {
   try {
     const addresses = await Address.find({ user: req.user._id })
       .sort({ isDefault: -1, createdAt: -1 })
-      .lean(); // ← ajout
+      .lean();
+    res.set("Cache-Control", "no-store");
     res.json({ success: true, data: addresses });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
@@ -15,18 +16,25 @@ export const getAddresses = async (req: Request, res: Response) => {
 
 export const addAddresses = async (req: Request, res: Response) => {
   try {
-    const { type, street, city, state, zipCode, country, isDefault } = req.body;
+    const { type, street, city, state, zipCode, country, isDefault } =
+      req.body;
 
-    // Les deux en parallèle si isDefault
     const ops: Promise<any>[] = [
       Address.create({
         user: req.user._id,
-        type, street, city, state, zipCode, country,
+        type,
+        street,
+        city,
+        state,
+        zipCode,
+        country,
         isDefault: isDefault || false,
       }),
     ];
     if (isDefault) {
-      ops.push(Address.updateMany({ user: req.user._id }, { isDefault: false }));
+      ops.push(
+        Address.updateMany({ user: req.user._id }, { isDefault: false })
+      );
     }
     const [newAddress] = await Promise.all(ops);
     invalidateCache("addresses");
@@ -38,32 +46,29 @@ export const addAddresses = async (req: Request, res: Response) => {
 
 export const updateAddresses = async (req: Request, res: Response) => {
   try {
-    const { type, street, city, state, zipCode, country, isDefault } = req.body;
+    const { type, street, city, state, zipCode, country, isDefault } =
+      req.body;
 
-    
-    const existing = await Address.findOne({
-      _id: req.params.id,
-      user: req.user._id, 
-    });
 
-    if (!existing) {
-      return res.status(404).json({ success: false, message: "Address not found or not authorized" });
+    const updated = await Address.findOneAndUpdate(
+      { _id: req.params.id, user: req.user._id },
+      { type, street, city, state, zipCode, country, isDefault },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Address not found or not authorized" });
     }
 
-    const ops: Promise<any>[] = [
-      Address.findByIdAndUpdate(
-        req.params.id,
-        { type, street, city, state, zipCode, country, isDefault },
-        { new: true }
-      ),
-    ];
     if (isDefault) {
-      ops.push(Address.updateMany(
+      await Address.updateMany(
         { user: req.user._id, _id: { $ne: req.params.id } },
         { isDefault: false }
-      ));
+      );
     }
-    const [updated] = await Promise.all(ops);
+
     invalidateCache("addresses");
     res.json({ success: true, data: updated });
   } catch (error: any) {
@@ -73,14 +78,15 @@ export const updateAddresses = async (req: Request, res: Response) => {
 
 export const deleteAddresses = async (req: Request, res: Response) => {
   try {
-    // findOneAndDelete avec ownership en une seule requête
     const deleted = await Address.findOneAndDelete({
       _id: req.params.id,
       user: req.user._id,
     });
 
     if (!deleted) {
-      return res.status(404).json({ success: false, message: "Address not found or not authorized" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Address not found or not authorized" });
     }
     invalidateCache("addresses");
     res.json({ success: true, message: "Address removed" });

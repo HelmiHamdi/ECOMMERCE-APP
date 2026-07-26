@@ -6,11 +6,7 @@ const notificationSchema = new Schema<INotification>(
     user: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     title: { type: String, required: true },
     body: { type: String, required: true },
-    type: {
-      type: String,
-      enum: ["new_product", "daily_reminder", "order", "general", "support"],
-      default: "general",
-    },
+  type: { type: String, enum: ["new_product", "daily_reminder", "order", "general", "support", "devis"], default: "general" },
     data: { type: Schema.Types.Mixed, default: {} },
     isRead: { type: Boolean, default: false },
   },

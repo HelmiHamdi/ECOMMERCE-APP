@@ -1,10 +1,11 @@
 import { COLORS } from "@/constants";
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth,useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
+    Alert,
     Image,
     RefreshControl,
     ScrollView,
@@ -16,6 +17,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "@/constants/api";
 import { useLanguage } from "@/context/LanguageContext";
+import RoleConfirmModal from "@/components/RoleConfirmModal";
+import AdminBottomMenu from "@/components/AdminBottomMenu";
+
 
 const INK = "#13131A";
 const MUTED = "#8D8D96";
@@ -40,6 +44,7 @@ type RoleFilter = "all" | "user" | "admin";
 
 export default function AdminUsersScreen() {
     const { getToken } = useAuth();
+    const { user: currentClerkUser } = useUser();
     const router = useRouter();
     const { t } = useLanguage();
 
@@ -50,6 +55,13 @@ export default function AdminUsersScreen() {
     const [searchFocused, setSearchFocused] = useState(false);
     const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
 
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+    const [confirmLoading, setConfirmLoading] = useState(false);
+
+ 
+    const requestIdRef = useRef(0);
+
     const ROLE_FILTERS: { key: RoleFilter; label: string }[] = [
         { key: "all", label: t("roleAll") || "Tous" },
         { key: "user", label: t("roleUsers") || "Clients" },
@@ -57,6 +69,8 @@ export default function AdminUsersScreen() {
     ];
 
     const fetchUsers = useCallback(async () => {
+        const currentRequestId = ++requestIdRef.current;
+
         try {
             const token = await getToken();
             const { data } = await api.get("/admin/users", {
@@ -66,14 +80,21 @@ export default function AdminUsersScreen() {
                     role: roleFilter,
                 },
             });
+
+          
+            if (currentRequestId !== requestIdRef.current) return;
+
             if (data.success) {
                 setUsers(data.data);
             }
         } catch (error) {
+            if (currentRequestId !== requestIdRef.current) return;
             console.error("Failed to fetch users:", error);
         } finally {
-            setLoading(false);
-            setRefreshing(false);
+            if (currentRequestId === requestIdRef.current) {
+                setLoading(false);
+                setRefreshing(false);
+            }
         }
     }, [getToken, search, roleFilter]);
 
@@ -90,10 +111,67 @@ export default function AdminUsersScreen() {
         fetchUsers();
     };
 
+    const openRoleModal = useCallback((user: AdminUser) => {
+        setSelectedUser(user);
+        setModalVisible(true);
+    }, []);
+
+    const closeRoleModal = useCallback(() => {
+        if (confirmLoading) return;
+        setModalVisible(false);
+        setTimeout(() => setSelectedUser(null), 200);
+    }, [confirmLoading]);
+
+    const confirmRoleChange = useCallback(async () => {
+        if (!selectedUser) return;
+        const newRole: "user" | "admin" = selectedUser.role === "admin" ? "user" : "admin";
+
+        try {
+            setConfirmLoading(true);
+            const token = await getToken();
+            const { data } = await api.patch(
+                `/admin/users/${selectedUser._id}/role`,
+                { role: newRole },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (data.success) {
+               
+                setUsers((prev) => {
+                    const updated = prev.map((u) =>
+                        u._id === selectedUser._id ? { ...u, role: newRole } : u
+                    );
+                 
+                    if (roleFilter !== "all") {
+                        return updated.filter((u) => u.role === roleFilter);
+                    }
+                    return updated;
+                });
+                setModalVisible(false);
+                setTimeout(() => setSelectedUser(null), 200);
+
+               if (
+                    newRole === "user" &&
+                    selectedUser.clerkId === currentClerkUser?.id
+                ) {
+                    router.replace("/(tabs)");
+                    return;
+                }
+                fetchUsers();
+            }
+        } catch (error: any) {
+            Alert.alert(
+                t("error") || "Erreur",
+                error?.response?.data?.message ||
+                    t("somethingWentWrong") ||
+                    "Une erreur est survenue"
+            );
+        } finally {
+            setConfirmLoading(false);
+        }
+    }, [selectedUser, getToken, t, roleFilter, fetchUsers, currentClerkUser, router]);
+
     return (
         <SafeAreaView className="flex-1 bg-surface" edges={["top"]}>
-            {/* Désactive le header natif d'expo-router pour ne garder QUE
-               la flèche de retour personnalisée ci-dessous. */}
             <Stack.Screen options={{ headerShown: false }} />
 
             {/* Header */}
@@ -164,7 +242,7 @@ export default function AdminUsersScreen() {
                 )}
             </View>
 
-            {/* Barre de recherche */}
+          
             <View className="px-4 mb-4">
                 <View
                     style={{
@@ -298,15 +376,47 @@ export default function AdminUsersScreen() {
                             </Text>
                         </View>
                     ) : (
-                        users.map((user) => <UserCard key={user._id} user={user} t={t} />)
+                        users.map((user) => (
+                            <UserCard
+                                key={user._id}
+                                user={user}
+                                t={t}
+                                onToggleRole={openRoleModal}
+                            />
+                        ))
                     )}
                 </ScrollView>
             )}
+
+            <RoleConfirmModal
+                visible={modalVisible}
+                isPromoting={selectedUser?.role !== "admin"}
+                userName={selectedUser?.name || "—"}
+                userEmail={selectedUser?.email || ""}
+                userInitial={(selectedUser?.name || selectedUser?.email || "?")
+                    .charAt(0)
+                    .toUpperCase()}
+                onConfirm={confirmRoleChange}
+                onCancel={closeRoleModal}
+                loading={confirmLoading}
+                t={t}
+            />
+
+            {/* 👇 Menu bas de page (FAB + navigation) */}
+            <AdminBottomMenu />
         </SafeAreaView>
     );
 }
 
-const UserCard = ({ user, t }: { user: AdminUser; t: (key: string) => string }) => {
+const UserCard = ({
+    user,
+    t,
+    onToggleRole,
+}: {
+    user: AdminUser;
+    t: (key: string) => string;
+    onToggleRole: (user: AdminUser) => void;
+}) => {
     const initial = (user.name || user.email || "?").charAt(0).toUpperCase();
     const isAdmin = user.role === "admin";
     const wishlistCount = user.wishlist?.length ?? 0;
@@ -334,7 +444,6 @@ const UserCard = ({ user, t }: { user: AdminUser; t: (key: string) => string }) 
                 elevation: 2,
             }}
         >
-            {/* Bandeau de couleur discret selon le rôle */}
             <View
                 style={{
                     height: 4,
@@ -343,7 +452,6 @@ const UserCard = ({ user, t }: { user: AdminUser; t: (key: string) => string }) 
             />
 
             <View style={{ padding: 18 }}>
-                {/* En-tête : avatar + nom + badge rôle */}
                 <View className="flex-row items-center mb-4">
                     {user.image ? (
                         <Image
@@ -399,7 +507,6 @@ const UserCard = ({ user, t }: { user: AdminUser; t: (key: string) => string }) 
                     </View>
                 </View>
 
-                {/* Détails */}
                 <View
                     style={{
                         backgroundColor: SURFACE,
@@ -422,6 +529,40 @@ const UserCard = ({ user, t }: { user: AdminUser; t: (key: string) => string }) 
                         muted={!hasPushToken}
                     />
                 </View>
+
+                <TouchableOpacity
+                    onPress={() => onToggleRole(user)}
+                    activeOpacity={0.8}
+                    style={{
+                        marginTop: 12,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        paddingVertical: 11,
+                        borderRadius: 14,
+                        backgroundColor: isAdmin ? "#FEF2F2" : "#EEF2FF",
+                        borderWidth: 1,
+                        borderColor: isAdmin ? "#FCA5A5" : "#C7D2FE",
+                    }}
+                >
+                    <Ionicons
+                        name={isAdmin ? "shield-outline" : "shield-checkmark-outline"}
+                        size={15}
+                        color={isAdmin ? "#DC2626" : "#4338CA"}
+                        style={{ marginRight: 6 }}
+                    />
+                    <Text
+                        style={{
+                            fontSize: 12.5,
+                            fontWeight: "700",
+                            color: isAdmin ? "#DC2626" : "#4338CA",
+                        }}
+                    >
+                        {isAdmin
+                            ? t("removeAdminRights") || "Retirer les droits admin"
+                            : t("makeAdmin") || "Promouvoir en admin"}
+                    </Text>
+                </TouchableOpacity>
             </View>
         </View>
     );

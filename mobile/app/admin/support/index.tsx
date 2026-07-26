@@ -17,13 +17,9 @@ import { COLORS } from "@/constants";
 import { useAuth } from "@clerk/clerk-expo";
 import { useLanguage } from "@/context/LanguageContext";
 import api from "@/constants/api";
+import AdminBottomMenu from "@/components/AdminBottomMenu";
 
-// -----------------------------------------------------------------------
-// Page liste "Service Après-Vente" pour l'admin.
-// Route conseillée : app/admin/support/index.tsx
-// (AdminTicketDetailScreen doit être en app/admin/support/[id].tsx pour
-// matcher router.push(`/admin/support/${item._id}`) ci-dessous)
-// -----------------------------------------------------------------------
+
 
 const SURFACE = "#F6F6F9";
 const CARD_BORDER = "#ECECF1";
@@ -445,6 +441,7 @@ export default function AdminSupportScreen() {
           }
         />
       )}
+      <AdminBottomMenu />
     </SafeAreaView>
   );
 }

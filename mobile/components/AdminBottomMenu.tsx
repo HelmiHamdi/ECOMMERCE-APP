@@ -1,20 +1,18 @@
-import React, { useCallback, useState } from "react";
-import { Tabs, useRouter, useFocusEffect } from "expo-router";
+import React, { useState } from "react";
 import {
   View,
-  ActivityIndicator,
-  TouchableOpacity,
   Text,
+  TouchableOpacity,
   Modal,
   Pressable,
   ScrollView,
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter, usePathname } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context"; // 👈 AJOUT
 import { COLORS, CATEGORIES } from "@/constants";
-import { useAuth, useUser } from "@clerk/clerk-expo";
 import { useLanguage } from "@/context/LanguageContext";
-import api from "@/constants/api";
 
 const BW = {
   black: "#0A0A0A",
@@ -23,57 +21,20 @@ const BW = {
   white: "#FFFFFF",
 };
 
-export default function AdminTabsLayout() {
-  const { user, isLoaded } = useUser();
-  const { getToken } = useAuth();
-  const { t } = useLanguage();
+// Onglets qui matchent EXACTEMENT ceux de app/admin/(tabs)/_layout.tsx
+const TABS = [
+  { key: "index", route: "/admin", icon: "grid-outline", labelKey: "dashboard" },
+  { key: "products", route: "/admin/products", icon: "cube-outline", labelKey: "products" },
+  { key: "orders", route: "/admin/orders", icon: "receipt-outline", labelKey: "orders" },
+  { key: "banners", route: "/admin/banners", icon: "image-outline", labelKey: "banners" },
+] as const;
+
+export default function AdminBottomMenu() {
   const router = useRouter();
+  const pathname = usePathname();
+  const { t } = useLanguage();
+  const insets = useSafeAreaInsets(); // 👈 AJOUT
   const [menuVisible, setMenuVisible] = useState(false);
-
-  const [checkingRole, setCheckingRole] = useState(true);
-  const [isAdminUser, setIsAdminUser] = useState(false);
-
-  const checkAdminRole = useCallback(async () => {
-    if (!isLoaded) return;
-
-    if (!user) {
-      setCheckingRole(false);
-      setIsAdminUser(false);
-      router.replace("/(tabs)");
-      return;
-    }
-
-    try {
-      const token = await getToken();
-      const res = await api.get("/users/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const role = res.data?.data?.role;
-
-      if (role === "admin") {
-        setIsAdminUser(true);
-      } else {
-        setIsAdminUser(false);
-        router.replace("/(tabs)");
-      }
-    } catch (err) {
-      console.error("Failed to verify admin role:", err);
-      setIsAdminUser(false);
-      router.replace("/(tabs)");
-    } finally {
-      setCheckingRole(false);
-    }
-  }, [isLoaded, user, getToken, router]);
-
-  React.useEffect(() => {
-    checkAdminRole();
-  }, [isLoaded, user]);
-
-  useFocusEffect(
-    useCallback(() => {
-      checkAdminRole();
-    }, [checkAdminRole])
-  );
 
   const QUICK_ACTIONS = [
     {
@@ -82,12 +43,12 @@ export default function AdminTabsLayout() {
       labelKey: t("users") ?? "Utilisateurs",
       route: "/admin/users",
     },
-  {
-    id: "orders-list",
-    icon: "file-tray-full-outline",
-    labelKey: t("ordersList") ?? "Commandes détaillées",
-    route: "/admin/orders-list",
-  },
+    {
+      id: "orders-list",
+      icon: "file-tray-full-outline",
+      labelKey: t("ordersList") ?? "Commandes détaillées",
+      route: "/admin/orders-list",
+    },
     {
       id: "gifs",
       icon: "film-outline",
@@ -107,7 +68,7 @@ export default function AdminTabsLayout() {
       route: "/admin/support",
     },
     {
-      id: "devis", 
+      id: "devis",
       icon: "document-text-outline",
       labelKey: t("manageDevis") ?? "Demandes de devis",
       route: "/admin/devis",
@@ -126,107 +87,74 @@ export default function AdminTabsLayout() {
     router.push(route as any);
   };
 
-  if (!isLoaded || checkingRole) {
-    return (
-      <View className="flex-1 justify-center items-center bg-surface">
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
-  }
-
-  if (!isAdminUser) return null;
-
   return (
     <>
-      <Tabs
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: "#fff",
-          },
-          headerTintColor: COLORS.primary,
-          headerTitleStyle: {
-            fontWeight: "bold",
-          },
-          headerShadowVisible: false,
-          tabBarActiveTintColor: COLORS.primary,
-          tabBarInactiveTintColor: "gray",
-          headerRight: () => (
+      {/* 👇 CORRECTION — hauteur et paddingBottom dynamiques selon
+          l'appareil (encoche, indicateur home iOS, barre de navigation
+          Android), pour que le contenu de la barre ne soit jamais coupé */}
+      <View style={[styles.bar, { height: 60 + insets.bottom, paddingBottom: insets.bottom }]}>
+        {TABS.slice(0, 2).map((tab) => {
+          const active = pathname === tab.route;
+          return (
             <TouchableOpacity
-              onPress={() => router.replace("/(tabs)")}
-              className="mr-4 flex-row items-center"
+              key={tab.key}
+              style={styles.tabItem}
+              activeOpacity={0.7}
+              onPress={() => router.push(tab.route as any)}
             >
-              <Ionicons name="log-out-outline" size={24} color={COLORS.primary} />
-              <Text className="ml-1 text-primary font-medium">{t("exit")}</Text>
-            </TouchableOpacity>
-          ),
-        }}
-      >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: t("dashboard"),
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="grid-outline" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="products"
-          options={{
-            title: t("products"),
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="cube-outline" size={size} color={color} />
-            ),
-          }}
-        />
-
-        <Tabs.Screen
-          name="more"
-          listeners={{
-            tabPress: (e) => {
-              e.preventDefault();
-              setMenuVisible(true);
-            },
-          }}
-          options={{
-            title: "",
-            tabBarIcon: () => (
-              <View style={styles.fabWrapper}>
-                <View style={styles.fab}>
-                  <Ionicons name="add" size={26} color={BW.white} />
-                </View>
-              </View>
-            ),
-            tabBarButton: (props: any) => (
-              <TouchableOpacity
-                {...props}
-                delayLongPress={props.delayLongPress ?? undefined}
-                activeOpacity={0.85}
-                style={[props.style, { top: -14 }]}
+              <Ionicons
+                name={tab.icon as any}
+                size={22}
+                color={active ? COLORS.primary : BW.gray500}
               />
-            ),
-          }}
-        />
+              <Text
+                style={[
+                  styles.tabLabel,
+                  { color: active ? COLORS.primary : BW.gray500 },
+                ]}
+              >
+                {t(tab.labelKey) ?? tab.labelKey}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
 
-        <Tabs.Screen
-          name="orders"
-          options={{
-            title: t("orders"),
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="receipt-outline" size={size} color={color} />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="banners"
-          options={{
-            title: t("banners"),
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="image-outline" size={size} color={color} />
-            ),
-          }}
-        />
-      </Tabs>
+        <View style={styles.fabWrapper}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            style={styles.fab}
+            onPress={() => setMenuVisible(true)}
+          >
+            <Ionicons name="add" size={26} color={BW.white} />
+          </TouchableOpacity>
+        </View>
+
+        {TABS.slice(2).map((tab) => {
+          const active = pathname === tab.route;
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              style={styles.tabItem}
+              activeOpacity={0.7}
+              onPress={() => router.push(tab.route as any)}
+            >
+              <Ionicons
+                name={tab.icon as any}
+                size={22}
+                color={active ? COLORS.primary : BW.gray500}
+              />
+              <Text
+                style={[
+                  styles.tabLabel,
+                  { color: active ? COLORS.primary : BW.gray500 },
+                ]}
+              >
+                {t(tab.labelKey) ?? tab.labelKey}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
       <Modal
         visible={menuVisible}
@@ -234,8 +162,11 @@ export default function AdminTabsLayout() {
         animationType="fade"
         onRequestClose={() => setMenuVisible(false)}
       >
-        <Pressable style={styles.overlay} onPress={() => setMenuVisible(false)} className="mb-6">
-          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={styles.overlay} onPress={() => setMenuVisible(false)}>
+          <Pressable
+            style={[styles.sheet, { paddingBottom: 28 + insets.bottom }]}
+            onPress={(e) => e.stopPropagation()}
+          >
             <View style={styles.handle} />
 
             <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
@@ -298,9 +229,28 @@ export default function AdminTabsLayout() {
 }
 
 const styles = StyleSheet.create({
+  bar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    backgroundColor: "#fff",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#E5E5EA",
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tabLabel: {
+    fontSize: 10,
+    fontWeight: "600",
+    marginTop: 2,
+  },
   fabWrapper: {
     alignItems: "center",
     justifyContent: "center",
+    top: -20,
   },
   fab: {
     width: 52,
@@ -327,7 +277,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 12,
-    paddingBottom: 28,
     paddingHorizontal: 20,
   },
   handle: {

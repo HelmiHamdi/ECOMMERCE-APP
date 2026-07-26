@@ -19,6 +19,7 @@ import { COLORS } from "@/constants";
 import { useAuth } from "@clerk/clerk-expo";
 import { useLanguage } from "@/context/LanguageContext";
 import api from "@/constants/api";
+import AdminBottomMenu from "@/components/AdminBottomMenu";
 
 const SURFACE = "#F6F6F9";
 const CARD_BORDER = "#ECECF1";
@@ -540,6 +541,7 @@ export default function AdminTicketDetailScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+      <AdminBottomMenu />
     </SafeAreaView>
   );
 }

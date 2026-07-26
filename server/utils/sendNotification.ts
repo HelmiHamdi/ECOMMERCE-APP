@@ -9,7 +9,8 @@ type NotificationType =
   | "daily_reminder"
   | "order"
   | "general"
-  | "support";
+  | "support"
+  | "devis"; // 👈 AJOUT
 
 interface PushMessage {
   to: string;
@@ -72,7 +73,6 @@ export const broadcastNotification = async (
     const users = await User.find({}, "_id expoPushToken");
     if (users.length === 0) return;
 
-    // 1. Historique en DB pour tous les users (lu dans l'écran "notifications")
     const notifDocs = users.map((u) => ({
       user: u._id,
       title,
@@ -82,7 +82,6 @@ export const broadcastNotification = async (
     }));
     await Notification.insertMany(notifDocs);
 
-    // 2. Push réel uniquement pour ceux qui ont un token, par lots de 100
     const tokens = users
       .map((u) => u.expoPushToken)
       .filter((t): t is string => !!t);
@@ -139,7 +138,7 @@ export const sendUserNotification = async (
 
 /**
  * Envoie une notification à TOUS les admins (ex: nouveau ticket support
- * créé par un utilisateur).
+ * créé par un utilisateur, ou nouvelle demande de devis).
  */
 export const sendAdminNotification = async (
   title: string,
@@ -194,6 +193,23 @@ export const sendNewProductNotification = async (
     `${productName} vient d'être ajouté. Découvre-le maintenant !`,
     "new_product",
     { productId }
+  );
+};
+
+/**
+ * Notification spécifique : nouvelle demande de devis créée par un utilisateur.
+ * Appelée depuis devisController.createDevis. Réutilise sendAdminNotification
+ * (historique DB + push pour tous les admins).
+ */
+export const sendNewDevisNotification = async (
+  devisId: string,
+  clientName: string
+) => {
+  await sendAdminNotification(
+    "Nouvelle demande de devis 📋",
+    `${clientName} vient de faire une demande de devis.`,
+    "devis",
+    { devisId }
   );
 };
 

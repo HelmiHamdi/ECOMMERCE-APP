@@ -19,6 +19,7 @@ import { useAuth } from "@clerk/clerk-expo";
 import { useLanguage } from "@/context/LanguageContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import api from "@/constants/api";
+import AdminBottomMenu from "@/components/AdminBottomMenu";
 
 type OfferProduct = {
   _id: string;
@@ -402,6 +403,7 @@ export default function AdminOffersScreen() {
         onConfirm={confirmDelete}
         loading={deleting}
       />
+    <AdminBottomMenu />
     </SafeAreaView>
   );
 }

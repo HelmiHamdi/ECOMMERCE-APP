@@ -16,7 +16,7 @@ import { useClerk, useUser, useAuth } from "@clerk/clerk-expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS, CATEGORIES } from "@/constants";
 import { useLanguage } from "@/context/LanguageContext";
-import api from "@/constants/api";
+import api,{ clearCache } from "@/constants/api";
 
 const { width } = Dimensions.get("window");
 const MENU_WIDTH = Math.min(width * 0.82, 330);
@@ -210,6 +210,7 @@ export default function SideMenu({
     onClose();
     try {
       await signOut();
+      clearCache();
       setTimeout(() => router.replace("/sign-in"), 260);
     } catch (err) {
       console.error("Logout error:", err);

@@ -26,7 +26,7 @@ export default function Addresses() {
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
 
- 
+
   const [type, setType] = useState("Home");
   const [street, setStreet] = useState("");
   const [city, setCity] = useState("");
@@ -36,7 +36,7 @@ export default function Addresses() {
   const [isDefault, setIsDefault] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
- 
+
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -99,9 +99,19 @@ export default function Addresses() {
         await api.put(`/addresses/${editingId}`, data, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        Toast.show({
+          type: "success",
+          text1: t("addressUpdated"),
+          text2: t("addressUpdatedSuccess"),
+        });
       } else {
         await api.post("/addresses", data, {
           headers: { Authorization: `Bearer ${token}` },
+        });
+        Toast.show({
+          type: "success",
+          text1: t("addressAdded"),
+          text2: t("addressAddedSuccess"),
         });
       }
       setModalVisible(false);
@@ -126,7 +136,7 @@ export default function Addresses() {
     });
   };
 
-  
+
   const performDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -134,6 +144,11 @@ export default function Addresses() {
       const token = await getToken();
       await api.delete(`/addresses/${deleteTarget.id}`, {
         headers: { Authorization: `Bearer ${token}` },
+      });
+      Toast.show({
+        type: "success",
+        text1: t("addressDeleted"),
+        text2: t("addressDeletedSuccess"),
       });
       fetchAddresses();
     } catch (error: any) {
@@ -246,7 +261,7 @@ export default function Addresses() {
         </ScrollView>
       )}
 
-     
+
       <Modal
         animationType="slide"
         transparent={true}

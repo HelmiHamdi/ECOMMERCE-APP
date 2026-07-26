@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import Offer from "../models/Offer.js";
+import Notification from "../models/Notification.js";
+import User from "../models/User.js";
 import { invalidateCache } from "../middleware/cache.js";
 import cloudinary from "../config/cloudinary.js";
 
@@ -62,6 +64,64 @@ const cleanupExpiredFreeOffers = async () => {
 
   await Offer.deleteMany({ _id: { $in: expired.map((o: any) => o._id) } });
   invalidateCache("offers");
+};
+
+
+const notifyUsersAboutNewOffer = async (offer: any) => {
+  try {
+    const users = await User.find({}, { _id: 1, expoPushToken: 1 }).lean();
+    if (users.length === 0) return;
+
+    const title = "🔥 Nouvelle offre disponible !";
+    const body = `${offer.title} — ${offer.discountPercentage}% avec le code ${offer.code}`;
+    const data = { offerId: String(offer._id), offerCode: offer.code };
+
+  
+    const notificationDocs = users.map((u) => ({
+      user: u._id,
+      title,
+      body,
+      type: "offer",
+      data,
+      isRead: false,
+    }));
+    await Notification.insertMany(notificationDocs);
+
+ 
+    const tokens = users
+      .map((u: any) => u.expoPushToken)
+      .filter(
+        (token: any): token is string =>
+          !!token && typeof token === "string" && token.startsWith("ExponentPushToken")
+      );
+
+    if (tokens.length === 0) return;
+
+    const messages = tokens.map((to) => ({
+      to,
+      sound: "default",
+      title,
+      body,
+      data,
+    }));
+
+    
+    const CHUNK_SIZE = 100;
+    for (let i = 0; i < messages.length; i += CHUNK_SIZE) {
+      const chunk = messages.slice(i, i + CHUNK_SIZE);
+      await fetch("https://exp.host/--/api/v2/push/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "Accept-Encoding": "gzip, deflate",
+        },
+        body: JSON.stringify(chunk),
+      });
+    }
+  } catch (err) {
+    console.error("notifyUsersAboutNewOffer failed:", err);
+  }
 };
 
 
@@ -164,6 +224,9 @@ export const createOffer = async (req: Request, res: Response) => {
     const offer = await Offer.create(payload);
     invalidateCache("offers");
     invalidateCache("products");
+
+    void notifyUsersAboutNewOffer(offer.toObject());
+
     res.status(201).json({ success: true, data: withFinalPrice(offer.toObject()) });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });

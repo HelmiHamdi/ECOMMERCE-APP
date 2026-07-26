@@ -165,3 +165,35 @@ export interface Gif {
   createdAt?: string;
   updatedAt?: string;
 }
+export type DevisStatus = "pending" | "in_progress" | "answered" | "rejected" | "closed";
+
+export interface Devis {
+  _id: string;
+  user: User | string;
+  product?: Product | string;
+  name: string;
+  phone: string;
+  email?: string;
+  quantity: number;
+  size?: string;
+  message: string;
+  status: DevisStatus;
+  adminResponse?: string;
+  isReadByAdmin: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DevisPayload {
+  product?: string;
+  name: string;
+  phone: string;
+  email?: string;
+  quantity?: number;
+  size?: string;
+  message: string;
+}
+
+export interface AppSettings {
+  devisEnabled: boolean;
+}
