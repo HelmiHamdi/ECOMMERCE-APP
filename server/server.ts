@@ -28,6 +28,10 @@ import SupportRouter from "./routers/supportRoutes.js";
 import GifRouter from "./routers/gifRoute.js";
 import DevisRouter from "./routers/devisRouter.js";
 import SettingsRouter from "./routers/settingsRouter.js";
+import http from "http";
+import { initChatSocket } from "./sockets/chatSocket.js";
+import ChatAdminRouter from "./routers/chatAdminRoute.js";
+
 
 const app = express();
 console.time("connectDB");
@@ -73,6 +77,7 @@ app.use("/api/support", SupportRouter);
 app.use("/api/gifs", GifRouter);
 app.use("/api/devis", DevisRouter);
 app.use("/api/settings", SettingsRouter);
+app.use("/api/chatAdmin", ChatAdminRouter);
 await makeAdmin();
 
 await backfillOrderItemNames();
@@ -81,6 +86,8 @@ await backfillOrderItemNames();
 
 scheduleDailyReminder(); 
 
-app.listen(port, () => {
+const server = http.createServer(app);
+initChatSocket(server);
+server.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 });

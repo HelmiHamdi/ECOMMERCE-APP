@@ -179,7 +179,15 @@ export default function AdminTabsLayout() {
             ),
           }}
         />
-
+       <Tabs.Screen
+  name="chat"
+  options={{
+    title: t("chat") ?? "Messages",
+    tabBarIcon: ({ color, size }) => (
+      <Ionicons name="chatbubbles-outline" size={size} color={color} />
+    ),
+  }}
+/>
         <Tabs.Screen
           name="more"
           listeners={{

@@ -25,6 +25,11 @@ export default function AdminRootLayout() {
         name="devis"
         options={{ headerShown: true, title: "Demandes de devis" }}
       />
+      <Stack.Screen
+        name="chat/[id]"
+        options={{ headerShown: true, title: "Conversation" }}
+      />
+      <Stack.Screen name="chat/call/[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }

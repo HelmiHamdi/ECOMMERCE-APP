@@ -3,27 +3,31 @@ import User from "../models/User.js";
 import Product from "../models/Products.js";
 import Order from "../models/Order.js";
 import { invalidateCache } from "../middleware/cache.js";
-
+import { purgeConversationsForDemotedUser } from "./chatAdminController.js";
 
 export const getDashboardStats = async (req: Request, res: Response) => {
   try {
-  
-    const [totalUsers, totalProducts, totalOrders, revenueResult, recentOrders] = 
-      await Promise.all([
-        User.countDocuments(),
-        Product.countDocuments(),
-        Order.countDocuments(),
-  
-        Order.aggregate([
-          { $match: { orderStatus: { $ne: "cancelled" } } },
-          { $group: { _id: null, total: { $sum: "$totalAmount" } } },
-        ]),
-        Order.find()
-          .sort("-createdAt")
-          .limit(5)
-          .populate("user", "name email")
-          .lean(),
-      ]);
+    const [
+      totalUsers,
+      totalProducts,
+      totalOrders,
+      revenueResult,
+      recentOrders,
+    ] = await Promise.all([
+      User.countDocuments(),
+      Product.countDocuments(),
+      Order.countDocuments(),
+
+      Order.aggregate([
+        { $match: { orderStatus: { $ne: "cancelled" } } },
+        { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+      ]),
+      Order.find()
+        .sort("-createdAt")
+        .limit(5)
+        .populate("user", "name email")
+        .lean(),
+    ]);
 
     res.json({
       success: true,
@@ -41,13 +45,12 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 };
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
-   
     if (!req.user || req.user.role !== "admin") {
       return res.status(403).json({ success: false, message: "Access denied" });
     }
- 
+
     const { search, role } = req.query as { search?: string; role?: string };
- 
+
     const filter: any = {};
     if (role && role !== "all") {
       filter.role = role;
@@ -56,9 +59,9 @@ export const getAllUsers = async (req: Request, res: Response) => {
       const regex = new RegExp(search.trim(), "i");
       filter.$or = [{ name: regex }, { email: regex }, { phone: regex }];
     }
- 
+
     const users = await User.find(filter).sort({ createdAt: -1 });
- 
+
     res.json({
       success: true,
       count: users.length,
@@ -88,10 +91,11 @@ export const updateUserRole = async (req: Request, res: Response) => {
 
     const targetUser = await User.findById(id);
     if (!targetUser) {
-      return res.status(404).json({ success: false, message: "Utilisateur introuvable" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Utilisateur introuvable" });
     }
 
-   
     if (
       targetUser._id.toString() === (req.user as any)._id.toString() &&
       role === "user"
@@ -102,9 +106,9 @@ export const updateUserRole = async (req: Request, res: Response) => {
       });
     }
 
-   
     if (
-      targetUser.email?.toLowerCase() === process.env.ADMIN_EMAIL?.toLowerCase() &&
+      targetUser.email?.toLowerCase() ===
+        process.env.ADMIN_EMAIL?.toLowerCase() &&
       role === "user"
     ) {
       return res.status(400).json({
@@ -116,6 +120,9 @@ export const updateUserRole = async (req: Request, res: Response) => {
     targetUser.role = role;
     await targetUser.save();
 
+    if (role === "user") {
+      await purgeConversationsForDemotedUser(targetUser._id.toString());
+    }
     invalidateCache("admin/users");
 
     res.json({

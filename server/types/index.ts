@@ -155,3 +155,45 @@ export interface IGif extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
+export interface IConversation extends Document {
+  participants: Types.ObjectId[]; 
+  isGroup: boolean;
+  name?: string; 
+  lastMessage?: string;
+  lastMessageType?: "text" | "image" | "video" | "file" | "audio" | "call";
+  lastMessageAt?: Date;
+  lastMessageSender?: Types.ObjectId;
+
+  unreadCount: Map<string, number>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+export type MessageType = "text" | "image" | "video" | "file" | "audio" | "call";
+export type CallStatus = "missed" | "answered" | "declined" | "ended";
+export type CallKind = "audio" | "video";
+
+export interface IMessage extends Document {
+  conversation: Types.ObjectId;
+  sender: Types.ObjectId;
+  type: MessageType;
+
+
+  content?: string;
+
+
+  fileUrl?: string;
+  fileName?: string;
+  fileMimeType?: string;
+  fileSize?: number;
+  thumbnailUrl?: string;
+
+ 
+  callKind?: CallKind;
+  callStatus?: CallStatus;
+  callDurationSec?: number;
+
+  readBy: Types.ObjectId[];
+  deletedFor: Types.ObjectId[]; 
+  createdAt: Date;
+  updatedAt: Date;
+}
