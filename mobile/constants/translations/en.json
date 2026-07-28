@@ -611,11 +611,11 @@
   "makeAdmin": "Promote to admin",
   "removeAdminRights": "Remove admin rights",
   "confirm": "Confirm",
- "promoteWarning": "This user will gain access to the admin dashboard.",
+  "promoteWarning": "This user will gain access to the admin dashboard.",
   "demoteWarning": "This user will lose all admin access.",
   "loading": "Loading...",
   "areYouSureTo": "Are you sure you want to",
-"pleaseAddShippingAddress": "Please add a shipping address",
+  "pleaseAddShippingAddress": "Please add a shipping address",
   "productOutOfStockMessage": "This product is currently out of stock",
   "productIncomingMessage": "This product will be back in stock soon",
   "statusPlacedDesc": "The order has been successfully placed",
@@ -623,13 +623,13 @@
   "statusShippedDesc": "The order has been shipped",
   "statusDeliveredDesc": "The order has been successfully delivered",
   "statusCancelledDesc": "The order has been cancelled",
-      "addressUpdated": "Address updated",
-    "addressUpdatedSuccess": "Your address has been updated successfully",
-    "addressAdded": "Address added",
-    "addressAddedSuccess": "Your address has been added successfully",
-    "addressDeleted": "Address deleted",
-    "addressDeletedSuccess": "The address has been deleted successfully",
-     "manageDevis": "Quote requests",
+  "addressUpdated": "Address updated",
+  "addressUpdatedSuccess": "Your address has been updated successfully",
+  "addressAdded": "Address added",
+  "addressAddedSuccess": "Your address has been added successfully",
+  "addressDeleted": "Address deleted",
+  "addressDeletedSuccess": "The address has been deleted successfully",
+  "manageDevis": "Quote requests",
   "devisRequest": "Quote request",
   "requestQuote": "Request a quote",
   "myQuoteRequests": "My quote requests",
@@ -658,31 +658,31 @@
   "devisSaveResponse": "Save response",
   "devisDelete": "Delete request",
   "devisDeleteConfirm": "Confirm deletion of this request?",
- 
+
   "devisRequestSubtitle": "Fill out the form and we'll get back to you shortly",
- "street": "Street",
- 
+  "street": "Street",
+
   "devisSubmitError": "Unable to send the request",
   "myDevisTitle": "My Requests",
   "devisCount": "quote request(s)",
-  
+
   "devisGeneralRequest": "General Request",
 
   "devisUpdateStatusError": "Unable to update the status",
- 
+
   "devisResponseSaved": "Response saved",
   "devisSaveResponseError": "Unable to save the response",
- 
+
   "devisDeleteError": "Unable to delete the request",
 
   "product": "Product",
   "status": "Status",
   "devisResponsePlaceholder": "Your response / proposed quote...",
-   "ordersList": "Detailed orders",
+  "ordersList": "Detailed orders",
   "searchOrderPlaceholder": "Search by invoice number, name, phone...",
   "noPhone": "Not provided",
   "devisTotal": "total request(s)",
- "image": "Image",
+  "image": "Image",
   "stockType": "Stock type",
   "quantity": "Quantity",
   "category_men": "Men",
@@ -698,6 +698,54 @@
   "stockStatus_in_stock": "In stock",
   "stockStatus_incoming": "Incoming",
   "stockStatus_out_of_stock": "Out of stock",
-  "stockStatus_on_order_48h": "Order (48h)"
- 
+  "stockStatus_on_order_48h": "Order (48h)",
+  "menuTitle": "Quick Menu",
+  "quit": "Quit",
+
+  "noConversationsYet": "No conversations yet",
+  "tapPlusToStart": "Tap + to start one",
+
+  "chooseAnAdmin": "Choose an admin",
+
+  "noOtherAdmins": "No other admins",
+  "detailedOrders": "Detailed Orders",
+  "chat": "Chat",
+
+  "devisRequests": "Quote Requests",
+
+  "messages": "Messages",
+  "noConversations": "No conversations yet",
+  "tapToStart": "Tap + to start one",
+  "newConversation": "New Conversation",
+  "chooseAdmin": "Choose an administrator",
+  "online": "Online",
+  "offline": "Offline",
+  "noOtherAdmin": "No other administrator",
+
+  "startConversation": "Start the conversation",
+  "voiceMessage": "Voice message",
+  "loadMessagesError": "Unable to load messages",
+  "editError": "Edit failed",
+  "sendError": "Send failed",
+  "tapToRetry": "Tap the message to retry",
+  "voiceSendError": "Failed to send voice message",
+  "conversation": "Conversation",
+  "noMessagesYet": "No messages yet",
+  "sendFirstMessage": "Send the first message ↓",
+  "typing": "typing...",
+  "writeMessage": "Write a message...",
+  "editingMessage": "Editing message",
+  "deletedMessage": "Message deleted",
+  "call": "Call",
+  "deleteMessageTitle": "Delete message",
+  "deleteMessageBody": "This action cannot be undone.",
+
+  "micNotAuthorized": "Microphone not authorized",
+  "recordingStartError": "Unable to start recording",
+  "deleteError": "Delete failed",
+  "edited": "Edited",
+  "callInProgress": "Calling...",
+  "connecting": "Connecting...",
+  "connected": "Connected",
+  "administrator": "Administrator"
 }

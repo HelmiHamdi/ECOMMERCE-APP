@@ -702,5 +702,54 @@
   "stockStatus_in_stock": "Auf Lager",
   "stockStatus_incoming": "Demnächst verfügbar",
   "stockStatus_out_of_stock": "Ausverkauft",
-  "stockStatus_on_order_48h": "Auf Bestellung (48h)"
+  "stockStatus_on_order_48h": "Auf Bestellung (48h)",
+   "menuTitle": "Schnellmenü",
+    "quit": "Beenden",
+    
+  "noConversationsYet": "Noch keine Unterhaltungen",
+  "tapPlusToStart": "Tippe auf +, um eine zu starten",
+
+  "chooseAnAdmin": "Wähle einen Administrator",
+  
+  "noOtherAdmins": "Keine weiteren Administratoren",
+    "detailedOrders": "Detaillierte Bestellungen",
+    "chat": "Chat",
+   
+    "devisRequests": "Angebotsanfragen",
+   
+    "messages": "Nachrichten",
+    "noConversations": "Noch keine Unterhaltungen",
+    "tapToStart": "Tippe auf +, um eine zu starten",
+    "newConversation": "Neue Unterhaltung",
+    "chooseAdmin": "Administrator auswählen",
+    "online": "Online",
+    "offline": "Offline",
+    "noOtherAdmin": "Kein weiterer Administrator",
+
+    "startConversation": "Unterhaltung starten",
+    "voiceMessage": "Sprachnachricht",
+    "loadMessagesError": "Nachrichten konnten nicht geladen werden",
+    "editError": "Bearbeitung fehlgeschlagen",
+    "sendError": "Senden fehlgeschlagen",
+    "tapToRetry": "Tippe auf die Nachricht, um es erneut zu versuchen",
+    "voiceSendError": "Sprachnachricht konnte nicht gesendet werden",
+    "conversation": "Unterhaltung",
+    "noMessagesYet": "Noch keine Nachrichten",
+    "sendFirstMessage": "Sende die erste Nachricht ↓",
+    "typing": "schreibt gerade...",
+    "writeMessage": "Nachricht schreiben...",
+    "editingMessage": "Nachricht wird bearbeitet",
+    "deletedMessage": "Nachricht gelöscht",
+    "call": "Anruf",
+    "deleteMessageTitle": "Nachricht löschen",
+    "deleteMessageBody": "Diese Aktion kann nicht rückgängig gemacht werden.",
+  
+    "micNotAuthorized": "Mikrofon nicht autorisiert",
+    "recordingStartError": "Aufnahme konnte nicht gestartet werden",
+    "deleteError": "Löschen fehlgeschlagen",
+    "edited": "Bearbeitet",
+    "callInProgress": "Anruf läuft...",
+    "connecting": "Verbindung wird hergestellt...",
+    "connected": "Verbunden",
+    "administrator": "Administrator"
 }

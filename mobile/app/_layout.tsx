@@ -13,6 +13,8 @@ import { NotificationProvider } from "@/context/NotificationContext";
 import { StripeProvider } from "@stripe/stripe-react-native";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import { SocketProvider } from "@/context/SocketContext";
+import AuthTokenBridge from "@/components/AuthTokenBridge";
+import { IncomingCallProvider } from "@/context/IncomingCallContext";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 const stripePublishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!;
@@ -27,21 +29,26 @@ export default function RootLayout() {
             tokenCache={tokenCache}
           >
             <ClerkLoaded>
+              <AuthTokenBridge />
               <SocketProvider>
-                <StripeProvider
-                  publishableKey={stripePublishableKey}
-                  merchantIdentifier="merchant.com.helmihamdi.mobile"
-                >
-                  <NotificationProvider>
-                    <CartProvider>
-                      <WishlistProvider>
-                        <Stack screenOptions={{ headerShown: false }} />
-                        <Toast />
-                        <ChatBot />
-                      </WishlistProvider>
-                    </CartProvider>
-                  </NotificationProvider>
-                </StripeProvider>
+                {/* ✅ NOUVEAU : gère la sonnerie + l'écran "appel entrant"
+                    partout dans l'app, même si on n'est pas déjà sur /call */}
+                <IncomingCallProvider>
+                  <StripeProvider
+                    publishableKey={stripePublishableKey}
+                    merchantIdentifier="merchant.com.helmihamdi.mobile"
+                  >
+                    <NotificationProvider>
+                      <CartProvider>
+                        <WishlistProvider>
+                          <Stack screenOptions={{ headerShown: false }} />
+                          <Toast />
+                          <ChatBot />
+                        </WishlistProvider>
+                      </CartProvider>
+                    </NotificationProvider>
+                  </StripeProvider>
+                </IncomingCallProvider>
               </SocketProvider>
             </ClerkLoaded>
           </ClerkProvider>

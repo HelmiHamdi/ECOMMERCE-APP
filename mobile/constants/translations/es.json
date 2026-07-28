@@ -699,7 +699,56 @@
   "stockStatus_in_stock": "En stock",
   "stockStatus_incoming": "Próximamente",
   "stockStatus_out_of_stock": "Agotado",
-  "stockStatus_on_order_48h": "Bajo pedido (48h)"
+  "stockStatus_on_order_48h": "Bajo pedido (48h)",
+   "menuTitle": "Menú rápido",
+    "quit": "Salir",
+
+  "noConversationsYet": "Aún no hay conversaciones",
+  "tapPlusToStart": "Toca + para iniciar una",
+
+  "chooseAnAdmin": "Elige un administrador",
+ 
+  "noOtherAdmins": "No hay otros administradores",
+    "detailedOrders": "Pedidos detallados",
+    "chat": "Chat",
+   
+    "devisRequests": "Solicitudes de presupuesto",
+   
+    "messages": "Mensajes",
+    "noConversations": "Aún no hay conversaciones",
+    "tapToStart": "Toca + para iniciar una",
+    "newConversation": "Nueva conversación",
+    "chooseAdmin": "Elige un administrador",
+    "online": "En línea",
+    "offline": "Desconectado",
+    "noOtherAdmin": "No hay otro administrador",
+   
+    "startConversation": "Iniciar la conversación",
+    "voiceMessage": "Mensaje de voz",
+    "loadMessagesError": "No se pudieron cargar los mensajes",
+    "editError": "Error al editar",
+    "sendError": "Error al enviar",
+    "tapToRetry": "Toca el mensaje para reintentar",
+    "voiceSendError": "Error al enviar el mensaje de voz",
+    "conversation": "Conversación",
+    "noMessagesYet": "Aún no hay mensajes",
+    "sendFirstMessage": "Envía el primer mensaje ↓",
+    "typing": "escribiendo...",
+    "writeMessage": "Escribe un mensaje...",
+    "editingMessage": "Editando mensaje",
+    "deletedMessage": "Mensaje eliminado",
+    "call": "Llamada",
+    "deleteMessageTitle": "Eliminar mensaje",
+    "deleteMessageBody": "Esta acción no se puede deshacer.",
+    
+    "micNotAuthorized": "Micrófono no autorizado",
+    "recordingStartError": "No se pudo iniciar la grabación",
+    "deleteError": "Error al eliminar",
+    "edited": "Editado",
+    "callInProgress": "Llamando...",
+    "connecting": "Conectando...",
+    "connected": "Conectado",
+    "administrator": "Administrador"
 
 
 }

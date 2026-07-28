@@ -12,8 +12,14 @@ const NO_CACHE_RESOURCES = ["users", "support", "cart", "devis", "settings", "ch
 const cache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
 
+type TokenGetter = (opts?: { skipCache?: boolean }) => Promise<string | null>;
+let tokenGetter: TokenGetter | null = null;
+export const registerTokenGetter = (fn: TokenGetter) => {
+  tokenGetter = fn;
+};
+
 const api = axios.create({
-  baseURL: LOCAL_API_URL,
+  baseURL: "https://shop-mobile-server.vercel.app/api",
   timeout: 20000,
 });
 
@@ -76,6 +82,35 @@ api.interceptors.response.use((response) => {
   }
   return response;
 });
+
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      tokenGetter
+    ) {
+      originalRequest._retry = true;
+      try {
+        const freshToken = await tokenGetter({ skipCache: true });
+        if (freshToken) {
+          originalRequest.headers = {
+            ...originalRequest.headers,
+            Authorization: `Bearer ${freshToken}`,
+          };
+          return api(originalRequest);
+        }
+      } catch (refreshErr) {
+        console.error("Erreur lors du rafraîchissement du token:", refreshErr);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const clearCache = (resource?: string) => {
   if (resource) {

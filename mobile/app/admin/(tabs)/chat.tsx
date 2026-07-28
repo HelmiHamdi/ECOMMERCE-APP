@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import api from "@/constants/api";
 import { useSocket } from "@/context/SocketContext";
 import { useMyMongoUser } from "@/app/hooks/useMyMongoUser";
+import { useLanguage } from "@/context/LanguageContext";
 import { COLORS } from "@/constants";
 
 export default function AdminChatListScreen() {
@@ -25,6 +26,7 @@ export default function AdminChatListScreen() {
   const router = useRouter();
   const { socket, onlineUserIds } = useSocket();
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
 
   const [conversations, setConversations] = useState<any[]>([]);
   const [admins, setAdmins] = useState<any[]>([]);
@@ -148,7 +150,7 @@ export default function AdminChatListScreen() {
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
       <View style={styles.pageHeader}>
-        <Text style={styles.pageTitle}>Messages</Text>
+        <Text style={styles.pageTitle}>{t("messages") || "Messages"}</Text>
       </View>
 
       <FlatList
@@ -170,10 +172,10 @@ export default function AdminChatListScreen() {
             <View style={styles.emptyState}>
               <Ionicons name="chatbubbles-outline" size={48} color="#ccc" />
               <Text style={styles.emptyStateText}>
-                Aucune conversation pour le moment
+                {t("noConversationsYet") || "Aucune conversation pour le moment"}
               </Text>
               <Text style={styles.emptyStateSubtext}>
-                Appuyez sur + pour en démarrer une
+                {t("tapPlusToStart") || "Appuyez sur + pour en démarrer une"}
               </Text>
             </View>
           ) : null
@@ -198,7 +200,7 @@ export default function AdminChatListScreen() {
               <View style={styles.rowBody}>
                 <View style={styles.rowTopLine}>
                   <Text style={styles.rowName} numberOfLines={1}>
-                    {other?.name || other?.email || "Admin"}
+                    {other?.name || other?.email || t("admin") || "Admin"}
                   </Text>
                   <Text style={styles.rowTime}>
                     {formatPreviewTime(item.lastMessageAt)}
@@ -209,7 +211,7 @@ export default function AdminChatListScreen() {
                     numberOfLines={1}
                     style={[styles.rowPreview, hasUnread && styles.rowPreviewUnread]}
                   >
-                    {item.lastMessage || "Démarrer la conversation"}
+                    {item.lastMessage || t("startConversation") || "Démarrer la conversation"}
                   </Text>
                   {hasUnread && (
                     <View style={styles.unreadBadge}>
@@ -242,12 +244,16 @@ export default function AdminChatListScreen() {
           >
             <View style={styles.modalHandle} />
             <View style={styles.modalHeaderRow}>
-              <Text style={styles.modalTitle}>Nouvelle conversation</Text>
+              <Text style={styles.modalTitle}>
+                {t("newConversation") || "Nouvelle conversation"}
+              </Text>
               <TouchableOpacity onPress={() => setNewChatVisible(false)}>
                 <Ionicons name="close" size={24} color="#888" />
               </TouchableOpacity>
             </View>
-            <Text style={styles.modalSubtitle}>Choisissez un administrateur</Text>
+            <Text style={styles.modalSubtitle}>
+              {t("chooseAnAdmin") || "Choisissez un administrateur"}
+            </Text>
 
             <FlatList
               data={admins}
@@ -271,7 +277,9 @@ export default function AdminChatListScreen() {
                     <View style={{ marginLeft: 12, flex: 1 }}>
                       <Text style={styles.adminName}>{item.name || item.email}</Text>
                       <Text style={styles.adminStatus}>
-                        {isOnline ? "En ligne" : "Hors ligne"}
+                        {isOnline
+                          ? t("online") || "En ligne"
+                          : t("offline") || "Hors ligne"}
                       </Text>
                     </View>
                     <Ionicons name="chevron-forward" size={18} color="#c4c4c8" />
@@ -280,7 +288,9 @@ export default function AdminChatListScreen() {
               }}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
-                  <Text style={styles.emptyStateText}>Aucun autre administrateur</Text>
+                  <Text style={styles.emptyStateText}>
+                    {t("noOtherAdmins") || "Aucun autre administrateur"}
+                  </Text>
                 </View>
               }
             />

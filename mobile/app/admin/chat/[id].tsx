@@ -27,6 +27,7 @@ import { useSocket } from "@/context/SocketContext";
 
 import { COLORS } from "@/constants";
 import { useMyMongoUser } from "@/app/hooks/useMyMongoUser";
+import { useLanguage } from "@/context/LanguageContext";
 
 const genTempId = () => `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
@@ -34,6 +35,7 @@ const genTempId = () => `temp-${Date.now()}-${Math.random().toString(36).slice(2
 function AudioBubble({ uri, mine }: { uri: string; mine: boolean }) {
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [playing, setPlaying] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     return () => {
@@ -76,7 +78,7 @@ function AudioBubble({ uri, mine }: { uri: string; mine: boolean }) {
         color={mine ? "#fff" : COLORS.primary}
       />
       <Text style={[mine ? styles.bubbleTextMine : styles.bubbleTextTheirs, { marginLeft: 8 }]}>
-        Message vocal
+        {t("voiceMessage")}
       </Text>
     </TouchableOpacity>
   );
@@ -92,6 +94,7 @@ export default function ChatScreen() {
   const router = useRouter();
   const { socket, onlineUserIds } = useSocket();
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
 
   const [messages, setMessages] = useState<any[]>([]);
   const [text, setText] = useState("");
@@ -152,9 +155,9 @@ export default function ChatScreen() {
       setMessages(data);
     } catch (err) {
       console.error("Erreur chargement messages:", err);
-      Toast.show({ type: "error", text1: "Impossible de charger les messages" });
+      Toast.show({ type: "error", text1: t("failedToLoadMessages") });
     }
-  }, [getToken, conversationId]);
+  }, [getToken, conversationId, t]);
 
   useEffect(() => {
     loadMessages();
@@ -260,7 +263,7 @@ export default function ChatScreen() {
       setText("");
     } catch (err) {
       console.error("Erreur modification message:", err);
-      Toast.show({ type: "error", text1: "Échec de la modification" });
+      Toast.show({ type: "error", text1: t("failedToEditMessage") });
     } finally {
       setSending(false);
     }
@@ -312,8 +315,8 @@ export default function ChatScreen() {
       );
       Toast.show({
         type: "error",
-        text1: "Échec de l'envoi",
-        text2: "Appuyez sur le message pour réessayer",
+        text1: t("failedToSendMessage"),
+        text2: t("tapMessageToRetry"),
       });
     } finally {
       setSending(false);
@@ -379,8 +382,8 @@ export default function ChatScreen() {
       );
       Toast.show({
         type: "error",
-        text1: "Échec de l'envoi",
-        text2: "Appuyez sur le message pour réessayer",
+        text1: t("failedToSendMessage"),
+        text2: t("tapMessageToRetry"),
       });
     }
   };
@@ -408,7 +411,7 @@ export default function ChatScreen() {
         setMessages((prev) =>
           prev.map((m) => (m.tempId === msg.tempId ? { ...m, pending: false, failed: true } : m))
         );
-        Toast.show({ type: "error", text1: "Échec de l'envoi" });
+        Toast.show({ type: "error", text1: t("failedToSendMessage") });
       }
       return;
     }
@@ -441,7 +444,7 @@ export default function ChatScreen() {
       setMessages((prev) =>
         prev.map((m) => (m.tempId === msg.tempId ? { ...m, pending: false, failed: true } : m))
       );
-      Toast.show({ type: "error", text1: "Échec de l'envoi" });
+      Toast.show({ type: "error", text1: t("failedToSendMessage") });
     }
   };
 
@@ -451,9 +454,9 @@ export default function ChatScreen() {
 
   const confirmDelete = (msg: any) => {
     setActionMsg(null);
-    Alert.alert("Supprimer le message", "Cette action est irréversible.", [
-      { text: "Annuler", style: "cancel" },
-      { text: "Supprimer", style: "destructive", onPress: () => deleteMessageRemote(msg) },
+    Alert.alert(t("deleteMessageTitle"), t("deleteMessageConfirmText"), [
+      { text: t("cancel"), style: "cancel" },
+      { text: t("delete"), style: "destructive", onPress: () => deleteMessageRemote(msg) },
     ]);
   };
 
@@ -471,7 +474,7 @@ export default function ChatScreen() {
       );
     } catch (err) {
       console.error("Erreur suppression message:", err);
-      Toast.show({ type: "error", text1: "Échec de la suppression" });
+      Toast.show({ type: "error", text1: t("failedToDeleteMessage") });
     }
   };
 
@@ -518,7 +521,7 @@ export default function ChatScreen() {
     try {
       const perm = await Audio.requestPermissionsAsync();
       if (!perm.granted) {
-        Toast.show({ type: "error", text1: "Micro non autorisé" });
+        Toast.show({ type: "error", text1: t("microphoneNotAuthorized") });
         return;
       }
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
@@ -531,7 +534,7 @@ export default function ChatScreen() {
       recordTimerRef.current = setInterval(() => setRecordSeconds((s) => s + 1), 1000);
     } catch (err) {
       console.error("Erreur démarrage enregistrement:", err);
-      Toast.show({ type: "error", text1: "Impossible de démarrer l'enregistrement" });
+      Toast.show({ type: "error", text1: t("failedToStartRecording") });
       // ✅ On s'assure qu'aucune référence orpheline ne reste, sinon le
       // prochain essai échoue aussi avec "Only one Recording...".
       recordingRef.current = null;
@@ -580,7 +583,7 @@ export default function ChatScreen() {
       });
     } catch (err) {
       console.error("Erreur envoi message vocal:", err);
-      Toast.show({ type: "error", text1: "Échec de l'envoi du message vocal" });
+      Toast.show({ type: "error", text1: t("failedToSendVoiceMessage") });
     }
   };
 
@@ -629,10 +632,10 @@ export default function ChatScreen() {
             </View>
             <View style={{ marginLeft: 10 }}>
               <Text style={styles.headerName} numberOfLines={1}>
-                {otherInfo?.name || "Conversation"}
+                {otherInfo?.name || t("conversationDefaultName")}
               </Text>
               <Text style={styles.headerStatus}>
-                {otherTyping ? "en train d'écrire..." : isOtherOnline ? "En ligne" : " "}
+                {otherTyping ? t("typingIndicator") : isOtherOnline ? t("online") : " "}
               </Text>
             </View>
           </View>
@@ -657,8 +660,8 @@ export default function ChatScreen() {
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <Ionicons name="chatbubble-ellipses-outline" size={44} color="#d8d8dc" />
-              <Text style={styles.emptyStateText}>Aucun message pour l&apos;instant</Text>
-              <Text style={styles.emptyStateSubtext}>Envoyez le premier message ↓</Text>
+              <Text style={styles.emptyStateText}>{t("noMessagesYet")}</Text>
+              <Text style={styles.emptyStateSubtext}>{t("sendFirstMessage")}</Text>
             </View>
           }
           renderItem={({ item, index }) => {
@@ -704,7 +707,7 @@ export default function ChatScreen() {
                         { fontStyle: "italic", opacity: 0.7 },
                       ]}
                     >
-                      Message supprimé
+                      {t("messageDeleted")}
                     </Text>
                   ) : (
                     <>
@@ -761,7 +764,7 @@ export default function ChatScreen() {
                               { marginLeft: 6 },
                             ]}
                           >
-                            Appel {item.callStatus} ({item.callDurationSec || 0}s)
+                            {t("call")} {item.callStatus} ({item.callDurationSec || 0}s)
                           </Text>
                         </View>
                       )}
@@ -783,11 +786,11 @@ export default function ChatScreen() {
                       <Text
                         style={[styles.timestamp, { color: mine ? "rgba(255,255,255,0.7)" : "#999", marginRight: 4 }]}
                       >
-                        Modifié ·
+                        {t("editingMessageBanner")} ·
                       </Text>
                     )}
                     <Text style={[styles.timestamp, { color: mine ? "rgba(255,255,255,0.7)" : "#999" }]}>
-                      {item.failed ? "Échec — appuyez pour réessayer" : formatTime(item.createdAt)}
+                      {item.failed ? `${t("failedToSendMessage")} — ${t("tapMessageToRetry")}` : formatTime(item.createdAt)}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -809,7 +812,7 @@ export default function ChatScreen() {
           <View style={styles.editBanner}>
             <Ionicons name="create-outline" size={16} color={COLORS.primary} />
             <Text style={styles.editBannerText} numberOfLines={1}>
-              Modification du message
+              {t("editingMessageBanner")}
             </Text>
             <TouchableOpacity onPress={cancelEdit}>
               <Ionicons name="close" size={18} color="#888" />
@@ -846,7 +849,7 @@ export default function ChatScreen() {
               <TextInput
                 value={text}
                 onChangeText={handleTyping}
-                placeholder="Écrire un message..."
+                placeholder={t("writeMessagePlaceholder")}
                 placeholderTextColor="#9a9a9e"
                 style={styles.textInput}
                 multiline
@@ -899,12 +902,12 @@ export default function ChatScreen() {
                 }}
               >
                 <Ionicons name="create-outline" size={20} color="#111" />
-                <Text style={styles.actionBtnText}>Modifier</Text>
+                <Text style={styles.actionBtnText}>{t("editAction")}</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity style={styles.actionBtn} onPress={() => confirmDelete(actionMsg)}>
               <Ionicons name="trash-outline" size={20} color="#ef4444" />
-              <Text style={[styles.actionBtnText, { color: "#ef4444" }]}>Supprimer</Text>
+              <Text style={[styles.actionBtnText, { color: "#ef4444" }]}>{t("delete")}</Text>
             </TouchableOpacity>
           </Pressable>
         </Pressable>

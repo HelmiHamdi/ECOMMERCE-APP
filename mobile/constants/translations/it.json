@@ -659,30 +659,30 @@
   "devisSaveResponse": "Salva risposta",
   "devisDelete": "Elimina richiesta",
   "devisDeleteConfirm": "Confermare l'eliminazione di questa richiesta?",
-   "street": "Via",
+  "street": "Via",
   "devisRequestSubtitle": "Compila il modulo, ti risponderemo a breve",
- 
+
   "devisSubmitError": "Impossibile inviare la richiesta",
   "myDevisTitle": "Le mie richieste",
   "devisCount": "richiesta/e di preventivo",
 
   "devisGeneralRequest": "Richiesta generale",
- 
+
   "devisUpdateStatusError": "Impossibile aggiornare lo stato",
 
   "devisResponseSaved": "Risposta salvata",
   "devisSaveResponseError": "Impossibile salvare la risposta",
- 
+
   "devisDeleteError": "Impossibile eliminare la richiesta",
- 
+
   "product": "Prodotto",
   "status": "Stato",
   "devisResponsePlaceholder": "La tua risposta / preventivo proposto...",
- "ordersList": "Ordini dettagliati",
+  "ordersList": "Ordini dettagliati",
   "searchOrderPlaceholder": "Cerca per N° fattura, nome, telefono...",
   "noPhone": "Non disponibile",
   "devisTotal": "richiesta/e totali",
- "image": "Immagine",
+  "image": "Immagine",
   "stockType": "Tipo di stock",
   "quantity": "Quantità",
   "category_men": "Uomo",
@@ -698,6 +698,54 @@
   "stockStatus_in_stock": "Disponibile",
   "stockStatus_incoming": "In arrivo",
   "stockStatus_out_of_stock": "Esaurito",
-  "stockStatus_on_order_48h": "Su ordinazione (48h)"
+  "stockStatus_on_order_48h": "Su ordinazione (48h)",
+  "menuTitle": "Menu rapido",
+  "quit": "Esci",
 
+  "noConversationsYet": "Nessuna conversazione al momento",
+  "tapPlusToStart": "Tocca + per iniziarne una",
+
+  "chooseAnAdmin": "Scegli un amministratore",
+
+  "noOtherAdmins": "Nessun altro amministratore",
+  "detailedOrders": "Ordini dettagliati",
+  "chat": "Chat",
+
+  "devisRequests": "Richieste di preventivo",
+
+  "messages": "Messaggi",
+  "noConversations": "Nessuna conversazione al momento",
+  "tapToStart": "Tocca + per iniziarne una",
+  "newConversation": "Nuova conversazione",
+  "chooseAdmin": "Scegli un amministratore",
+  "online": "Online",
+  "offline": "Offline",
+  "noOtherAdmin": "Nessun altro amministratore",
+
+  "startConversation": "Inizia la conversazione",
+  "voiceMessage": "Messaggio vocale",
+  "loadMessagesError": "Impossibile caricare i messaggi",
+  "editError": "Modifica non riuscita",
+  "sendError": "Invio non riuscito",
+  "tapToRetry": "Tocca il messaggio per riprovare",
+  "voiceSendError": "Invio del messaggio vocale non riuscito",
+  "conversation": "Conversazione",
+  "noMessagesYet": "Nessun messaggio per ora",
+  "sendFirstMessage": "Invia il primo messaggio ↓",
+  "typing": "sta scrivendo...",
+  "writeMessage": "Scrivi un messaggio...",
+  "editingMessage": "Modifica del messaggio",
+  "deletedMessage": "Messaggio eliminato",
+  "call": "Chiamata",
+  "deleteMessageTitle": "Elimina messaggio",
+  "deleteMessageBody": "Questa azione non può essere annullata.",
+
+  "micNotAuthorized": "Microfono non autorizzato",
+  "recordingStartError": "Impossibile avviare la registrazione",
+  "deleteError": "Eliminazione non riuscita",
+  "edited": "Modificato",
+  "callInProgress": "Chiamata in corso...",
+  "connecting": "Connessione in corso...",
+  "connected": "Connesso",
+  "administrator": "Amministratore"
 }

@@ -13,7 +13,7 @@
   "contactUs": "اتصل بنا",
   "rateApp": "تقييم التطبيق",
   "about": "حول",
-   "promoteToAdmin": "الترقية إلى مسؤول",
+  "promoteToAdmin": "الترقية إلى مسؤول",
   "demoteToUser": "إزالة صلاحيات المسؤول",
   "makeAdmin": "ترقية إلى مسؤول",
   "removeAdminRights": "إزالة صلاحيات المسؤول",
@@ -123,11 +123,11 @@
   "failedToSaveAddress": "فشل حفظ العنوان",
   "failedToDeleteAddress": "فشل حذف العنوان",
   "addressUpdated": "تم تحديث العنوان",
-    "addressUpdatedSuccess": "تم تعديل عنوانك بنجاح",
-    "addressAdded": "تمت إضافة العنوان",
-    "addressAddedSuccess": "تمت إضافة عنوانك بنجاح",
-    "addressDeleted": "تم حذف العنوان",
-    "addressDeletedSuccess": "تم حذف العنوان بنجاح",
+  "addressUpdatedSuccess": "تم تعديل عنوانك بنجاح",
+  "addressAdded": "تمت إضافة العنوان",
+  "addressAddedSuccess": "تمت إضافة عنوانك بنجاح",
+  "addressDeleted": "تم حذف العنوان",
+  "addressDeletedSuccess": "تم حذف العنوان بنجاح",
   "manageProducts": "إدارة المنتجات",
   "addProduct": "إضافة منتج",
   "editProduct": "تعديل المنتج",
@@ -255,7 +255,7 @@
   "paymentSummary": "ملخص الدفع",
   "paymentMethod": "طريقة الدفع",
   "paymentStatus": "حالة الدفع",
-    "manageDevis": "طلبات عروض الأسعار",
+  "manageDevis": "طلبات عروض الأسعار",
   "devisRequest": "طلب عرض سعر",
   "requestQuote": "طلب عرض سعر",
   "myQuoteRequests": "طلباتي لعروض الأسعار",
@@ -661,21 +661,21 @@
   "statusDeliveredDesc": "تم تسليم الطلب بنجاح",
   "statusCancelledDesc": "تم إلغاء الطلب",
   "others": "أخرى",
-  
+
   "devisRequestSubtitle": "املأ النموذج وسنرد عليك قريبًا",
-  
+
   "devisSubmitError": "تعذر إرسال الطلب",
   "myDevisTitle": "طلباتي",
   "devisCount": "طلب (طلبات) عرض سعر",
-  
+
   "devisGeneralRequest": "طلب عام",
-  
+
   "devisUpdateStatusError": "تعذر تحديث الحالة",
   "devisResponseSaved": "تم حفظ الرد",
   "devisSaveResponseError": "تعذر حفظ الرد",
-  
+
   "devisDeleteError": "تعذر حذف الطلب",
-  
+
   "product": "المنتج",
   "status": "الحالة",
   "devisResponsePlaceholder": "ردك / عرض السعر المقترح...",
@@ -699,6 +699,55 @@
   "stockStatus_in_stock": "متوفر",
   "stockStatus_incoming": "قريباً",
   "stockStatus_out_of_stock": "غير متوفر",
-  "stockStatus_on_order_48h": "عند الطلب (48 ساعة)"
-  
+  "stockStatus_on_order_48h": "عند الطلب (48 ساعة)",
+  "menuTitle": "القائمة السريعة",
+  "quit": "خروج",
+
+  "noConversationsYet": "لا توجد محادثات حتى الآن",
+  "tapPlusToStart": "اضغط على + لبدء محادثة",
+
+  "chooseAnAdmin": "اختر مسؤولاً",
+
+  "noOtherAdmins": "لا يوجد مسؤولون آخرون",
+  "detailedOrders": "الطلبات التفصيلية",
+  "chat": "الدردشة",
+
+  "devisRequests": "طلبات عروض الأسعار",
+  "browseByCategory": "تصفح حسب الفئة",
+
+  "messages": "الرسائل",
+  "noConversations": "لا توجد محادثات حاليًا",
+  "tapToStart": "اضغط على + لبدء محادثة",
+  "newConversation": "محادثة جديدة",
+  "chooseAdmin": "اختر مسؤولًا",
+  "online": "متصل",
+  "offline": "غير متصل",
+  "noOtherAdmin": "لا يوجد مسؤول آخر",
+
+  "startConversation": "ابدأ المحادثة",
+  "voiceMessage": "رسالة صوتية",
+  "loadMessagesError": "تعذر تحميل الرسائل",
+  "editError": "فشل التعديل",
+  "sendError": "فشل الإرسال",
+  "tapToRetry": "اضغط على الرسالة لإعادة المحاولة",
+  "voiceSendError": "فشل إرسال الرسالة الصوتية",
+  "conversation": "محادثة",
+  "noMessagesYet": "لا توجد رسائل بعد",
+  "sendFirstMessage": "أرسل أول رسالة ↓",
+  "typing": "يكتب الآن...",
+  "writeMessage": "اكتب رسالة...",
+  "editingMessage": "جارٍ تعديل الرسالة",
+  "deletedMessage": "تم حذف الرسالة",
+  "call": "مكالمة",
+  "deleteMessageTitle": "حذف الرسالة",
+  "deleteMessageBody": "لا يمكن التراجع عن هذا الإجراء.",
+
+  "micNotAuthorized": "الميكروفون غير مصرح به",
+  "recordingStartError": "تعذر بدء التسجيل",
+  "deleteError": "فشل الحذف",
+  "edited": "تم التعديل",
+  "callInProgress": "جارٍ الاتصال...",
+  "connecting": "جارٍ الاتصال...",
+  "connected": "متصل",
+  "administrator": "المسؤول"
 }

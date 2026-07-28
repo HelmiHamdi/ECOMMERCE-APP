@@ -175,13 +175,6 @@ export const sendMessage = async (req: Request, res: Response) => {
   try {
     const me = req.user as any;
     const { id } = req.params;
-    // ✅ NOUVEAU : clientTempId est un identifiant généré côté client (tempId)
-    // qu'on renvoie tel quel dans la réponse ET dans l'événement socket. Ça
-    // permet au front de réconcilier de façon fiable le message optimiste
-    // avec le message réel, peu importe si la réponse HTTP ou l'événement
-    // socket "message:new" arrive en premier (avant, ça pouvait produire un
-    // doublon ou un message optimiste qui restait bloqué "en attente").
-    // Ce champ n'est PAS persisté en base, juste transmis dans cette requête.
     const { type = "text", content, clientTempId } = req.body as {
       type?: string;
       content?: string;
@@ -208,10 +201,6 @@ export const sendMessage = async (req: Request, res: Response) => {
         return res.status(400).json({ success: false, message: "Fichier requis" });
       }
 
-      // ✅ FIX: Cloudinary n'a PAS de resource_type "audio" dédié — l'audio doit
-      // passer par le moteur "video" (c'est ce qui provoquait le 500 sur les
-      // messages vocaux : ils partaient en "raw", que Cloudinary rejette souvent
-      // pour des extensions type .m4a/.mp3).
       const resourceType =
         type === "image" ? "image" : type === "video" || type === "audio" ? "video" : "raw";
 
@@ -220,8 +209,6 @@ export const sendMessage = async (req: Request, res: Response) => {
           { folder: "shop-mobile/chat", resource_type: resourceType },
           (error, result) => {
             if (error) {
-              // ✅ Log complet de l'erreur Cloudinary pour diagnostiquer plus vite
-              // la prochaine fois (au lieu de juste error.message générique).
               console.error("CLOUDINARY UPLOAD ERROR:", error);
               return reject(error);
             }
@@ -243,40 +230,48 @@ export const sendMessage = async (req: Request, res: Response) => {
     const message = await Message.create(messageData);
     await message.populate("sender", "name image");
 
-    // ✅ Attache clientTempId en mémoire (pas sauvegardé en base) au document
-    // avant de l'envoyer, pour que le front puisse réconcilier son message
-    // optimiste que ce soit via la réponse HTTP ou via le socket.
     const messageWithTempId = message.toObject();
     if (clientTempId) (messageWithTempId as any).clientTempId = clientTempId;
 
-    const preview =
-      type === "text" ? content!.trim().slice(0, 120) : `[${type}]`;
-    conversation.lastMessage = preview;
-    conversation.lastMessageType = type as any;
-    conversation.lastMessageAt = new Date();
-    conversation.lastMessageSender = me._id;
-
-    const others = conversation.participants.filter(
-      (p) => p.toString() !== me._id.toString()
-    );
-    others.forEach((p) => {
-      const key = p.toString();
-      conversation.unreadCount.set(key, (conversation.unreadCount.get(key) || 0) + 1);
-    });
-    await conversation.save();
-
+    // ✅ FIX PRINCIPAL (retard des messages) : on émet le socket et on répond
+    // au client TOUT DE SUITE après la création du message, sans attendre la
+    // mise à jour des métadonnées de la conversation (lastMessage, unreadCount).
+    // Avant, ce conversation.save() bloquait la réponse HTTP ET l'émission
+    // socket pour CHAQUE message, ce qui causait un délai perceptible.
     const io = getIO();
-    conversation.participants.forEach((p) => {
-      io.to(`user:${p.toString()}`).emit("message:new", {
+    const participantIds = conversation.participants.map((p) => p.toString());
+    participantIds.forEach((p) => {
+      io.to(`user:${p}`).emit("message:new", {
         conversationId: id,
         message: messageWithTempId,
       });
     });
 
     res.status(201).json({ success: true, data: messageWithTempId });
+
+    // ✅ Mise à jour de la conversation (aperçu, compteur non-lu) en arrière-plan,
+    // sans impacter le temps de réponse ni le délai d'affichage du message.
+    (async () => {
+      try {
+        const preview = type === "text" ? content!.trim().slice(0, 120) : `[${type}]`;
+        conversation.lastMessage = preview;
+        conversation.lastMessageType = type as any;
+        conversation.lastMessageAt = new Date();
+        conversation.lastMessageSender = me._id;
+
+        const others = conversation.participants.filter(
+          (p) => p.toString() !== me._id.toString()
+        );
+        others.forEach((p) => {
+          const key = p.toString();
+          conversation.unreadCount.set(key, (conversation.unreadCount.get(key) || 0) + 1);
+        });
+        await conversation.save();
+      } catch (e) {
+        console.error("CONVERSATION UPDATE ERROR (background):", e);
+      }
+    })();
   } catch (error: any) {
-    // ✅ Log complet (avec stack) pour toute erreur d'envoi de message, pas
-    // seulement les erreurs d'upload — utile si un autre 500 réapparaît.
     console.error("SEND MESSAGE ERROR:", error);
     res.status(500).json({ success: false, message: error.message });
   }

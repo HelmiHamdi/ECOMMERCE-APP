@@ -4,7 +4,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useUser } from "@clerk/clerk-expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Audio } from "expo-av";
 import { useSocket } from "@/context/SocketContext";
+import { useMyMongoUser } from "@/app/hooks/useMyMongoUser";
+import { useLanguage } from "@/context/LanguageContext";
 import {
   RTCPeerConnection,
   RTCIceCandidate,
@@ -12,8 +15,6 @@ import {
   mediaDevices,
   RTCView,
 } from "react-native-webrtc";
-
-
 
 const ICE_SERVERS = [
   { urls: "stun:stun.l.google.com:19302" },
@@ -32,6 +33,15 @@ export default function CallScreen() {
   const { user } = useUser();
   const { socket } = useSocket();
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
+
+  // ✅ NOUVEAU : on récupère aussi le nom/photo Mongo de l'utilisateur connecté
+  // pour les transmettre dans "call:invite" (affichés côté destinataire sur
+  // l'écran "appel entrant"). Le hook peut ne pas exposer name/image selon ta
+  // version -> fallback sur les infos Clerk pour ne jamais planter.
+  const myMongo = useMyMongoUser() as any;
+  const myName = myMongo?.name || myMongo?.myName || user?.fullName || user?.firstName || t("adminDefaultName");
+  const myImage = myMongo?.image || myMongo?.myImage || user?.imageUrl;
 
   const [localStream, setLocalStream] = useState<any>(null);
   const [remoteStream, setRemoteStream] = useState<any>(null);
@@ -42,95 +52,160 @@ export default function CallScreen() {
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const timerRef = useRef<any>(null);
+  // ✅ NOUVEAU : référence vers le son "ça sonne" (ringback), joué UNIQUEMENT
+  // côté appelant (mode "outgoing") tant que l'appelé n'a pas décroché.
+  const ringbackRef = useRef<Audio.Sound | null>(null);
+  // ✅ Verrou pour éviter de lancer/arrêter cleanup() deux fois (double appel
+  // possible entre l'événement socket call:end et l'appui manuel sur raccrocher).
+  const cleanedUpRef = useRef(false);
 
   useEffect(() => {
     setupCall();
-    return () => cleanup();
+    return () => {
+      cleanup();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (status === "connected" && !timerRef.current) {
-      timerRef.current = setInterval(() => setDurationSec((s) => s + 1), 1000);
+    if (status === "connected") {
+      stopRingback();
+      if (!timerRef.current) {
+        timerRef.current = setInterval(() => setDurationSec((s) => s + 1), 1000);
+      }
     }
     if (status === "ended" && timerRef.current) {
       clearInterval(timerRef.current);
+      timerRef.current = null;
     }
   }, [status]);
 
+  // ✅ NOUVEAU : tonalité "ça sonne" jouée côté appelant, en boucle, jusqu'à
+  // ce que l'appel soit accepté (status devient "connected") ou raccroché.
+  const playRingback = async () => {
+    if (mode !== "outgoing") return;
+    try {
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+      });
+      const { sound } = await Audio.Sound.createAsync(
+        require("@/assets/sounds/ringback.mp3"),
+        { isLooping: true, shouldPlay: true, volume: 0.8 }
+      );
+      ringbackRef.current = sound;
+    } catch (err) {
+      console.error("Erreur lecture tonalité d'appel:", err);
+    }
+  };
+
+  const stopRingback = async () => {
+    if (ringbackRef.current) {
+      try {
+        await ringbackRef.current.stopAsync();
+        await ringbackRef.current.unloadAsync();
+      } catch {}
+      ringbackRef.current = null;
+    }
+  };
+
   const setupCall = async () => {
-    const stream = await mediaDevices.getUserMedia({
-      audio: true,
-      video: kind === "video" ? { facingMode: "user" } : false,
-    });
-    setLocalStream(stream);
+    try {
+      const stream = await mediaDevices.getUserMedia({
+        audio: true,
+        video: kind === "video" ? { facingMode: "user" } : false,
+      });
+      setLocalStream(stream);
 
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-    pcRef.current = pc;
+      const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+      pcRef.current = pc;
 
-    stream.getTracks().forEach((track: any) => pc.addTrack(track, stream));
+      stream.getTracks().forEach((track: any) => pc.addTrack(track, stream));
 
-    // @ts-ignore - événement ontrack disponible via react-native-webrtc
-    pc.ontrack = (event: any) => {
-      setRemoteStream(event.streams[0]);
-      setStatus("connected");
-    };
+      // @ts-ignore - événement ontrack disponible via react-native-webrtc
+      pc.ontrack = (event: any) => {
+        setRemoteStream(event.streams[0]);
+        setStatus("connected");
+      };
 
-    // @ts-ignore
-    pc.onicecandidate = (event: any) => {
-      if (event.candidate) {
-        socket?.emit("call:ice-candidate", {
+      // @ts-ignore
+      pc.onicecandidate = (event: any) => {
+        if (event.candidate) {
+          socket?.emit("call:ice-candidate", {
+            toUserId,
+            callId: conversationId,
+            candidate: event.candidate,
+          });
+        }
+      };
+
+      if (mode === "outgoing") {
+        // ✅ On transmet notre nom/photo pour l'écran "appel entrant" côté
+        // destinataire (voir IncomingCallContext), + on lance la tonalité.
+        socket?.emit("call:invite", {
           toUserId,
           callId: conversationId,
-          candidate: event.candidate,
+          kind,
+          fromName: myName,
+          fromImage: myImage,
         });
-      }
-    };
+        playRingback();
 
-    if (mode === "outgoing") {
-      socket?.emit("call:invite", { toUserId, callId: conversationId, kind });
-      const offer = await pc.createOffer({});
-      await pc.setLocalDescription(offer);
-      socket?.emit("call:offer", { toUserId, callId: conversationId, sdp: offer });
+        const offer = await pc.createOffer({});
+        await pc.setLocalDescription(offer);
+        socket?.emit("call:offer", { toUserId, callId: conversationId, sdp: offer });
+      }
+
+      socket?.on("call:accept", async () => {
+        // ✅ L'appelé a décroché : on coupe la tonalité, la connexion WebRTC
+        // se finalisera via l'échange offer/answer (status passera à
+        // "connected" dès que ontrack se déclenchera).
+        stopRingback();
+      });
+
+      socket?.on("call:answer", async ({ sdp }) => {
+        await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+      });
+
+      socket?.on("call:offer", async ({ sdp }) => {
+        // cas de l'appelé: reçoit l'offre, répond
+        await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket?.emit("call:answer", { toUserId, callId: conversationId, sdp: answer });
+      });
+
+      socket?.on("call:ice-candidate", async ({ candidate }) => {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (err) {
+          console.warn("Erreur ICE candidate:", err);
+        }
+      });
+
+      socket?.on("call:decline", () => {
+        setStatus("ended");
+        cleanup();
+        router.back();
+      });
+
+      socket?.on("call:end", () => {
+        setStatus("ended");
+        cleanup();
+        router.back();
+      });
+    } catch (err) {
+      console.error("Erreur configuration de l'appel:", err);
+      cleanup();
+      router.back();
     }
-
-    socket?.on("call:accept", async () => {
-      // rien à faire ici côté appelant, on attend "call:answer"
-    });
-
-    socket?.on("call:answer", async ({ sdp }) => {
-      await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-    });
-
-    socket?.on("call:offer", async ({ sdp }) => {
-      // cas de l'appelé: reçoit l'offre, répond
-      await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket?.emit("call:answer", { toUserId, callId: conversationId, sdp: answer });
-    });
-
-    socket?.on("call:ice-candidate", async ({ candidate }) => {
-      try {
-        await pc.addIceCandidate(new RTCIceCandidate(candidate));
-      } catch (err) {
-        console.warn("Erreur ICE candidate:", err);
-      }
-    });
-
-    socket?.on("call:decline", () => {
-      setStatus("ended");
-      cleanup();
-      router.back();
-    });
-
-    socket?.on("call:end", () => {
-      setStatus("ended");
-      cleanup();
-      router.back();
-    });
   };
 
   const cleanup = () => {
+    if (cleanedUpRef.current) return;
+    cleanedUpRef.current = true;
+
+    stopRingback();
     localStream?.getTracks().forEach((t: any) => t.stop());
     pcRef.current?.close();
     pcRef.current = null;
@@ -187,7 +262,11 @@ export default function CallScreen() {
       {/* Top status */}
       <View style={[styles.topBar, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.statusLabel}>
-          {status === "calling" ? "Appel en cours..." : "Connecté"}
+          {status === "calling"
+            ? mode === "outgoing"
+              ? t("callInProgress")
+              : t("callConnecting")
+            : t("callConnected")}
         </Text>
         {status === "connected" && (
           <Text style={styles.durationLabel}>{formatDuration(durationSec)}</Text>

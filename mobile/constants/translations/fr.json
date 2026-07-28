@@ -697,7 +697,56 @@
   "stockStatus_in_stock": "En stock",
   "stockStatus_incoming": "Arrivage",
   "stockStatus_out_of_stock": "Rupture de stock",
-  "stockStatus_on_order_48h": "Sur commande 48h"
+  "stockStatus_on_order_48h": "Sur commande 48h",
+   "menuTitle": "Menu rapide",
+    "quit": "Quitter",
+
+    "detailedOrders": "Commandes détaillées",
+    "chat": "Chat",
+ 
+    "devisRequests": "Demandes de devis",
+    "browseByCategory": "PARCOURIR PAR CATÉGORIE",
+   
+    "messages": "Messages",
+    "noConversations": "Aucune conversation pour le moment",
+    "tapToStart": "Appuyez sur + pour en démarrer une",
+    "newConversation": "Nouvelle conversation",
+    "chooseAdmin": "Choisissez un administrateur",
+    "online": "En ligne",
+    "offline": "Hors ligne",
+    "noOtherAdmin": "Aucun autre administrateur",
+   
+    "startConversation": "Démarrer la conversation",
+    "voiceMessage": "Message vocal",
+    "loadMessagesError": "Impossible de charger les messages",
+    "editError": "Échec de la modification",
+    "sendError": "Échec de l'envoi",
+    "tapToRetry": "Appuyez sur le message pour réessayer",
+    "voiceSendError": "Échec de l'envoi du message vocal",
+    "conversation": "Conversation",
+    "noMessagesYet": "Aucun message pour l'instant",
+    "sendFirstMessage": "Envoyez le premier message ↓",
+    "typing": "en train d'écrire...",
+    "writeMessage": "Écrire un message...",
+    "editingMessage": "Modification du message",
+    "deletedMessage": "Message supprimé",
+    "call": "Appel",
+    "deleteMessageTitle": "Supprimer le message",
+    "deleteMessageBody": "Cette action est irréversible.",
+  
+    "micNotAuthorized": "Micro non autorisé",
+    "recordingStartError": "Impossible de démarrer l'enregistrement",
+    "deleteError": "Échec de la suppression",
+    "edited": "Modifié",
+    "callInProgress": "Appel en cours...",
+    "connecting": "Connexion...",
+    "connected": "Connecté",
+    "administrator": "Administrateur",
+
+  "noConversationsYet": "Aucune conversation pour le moment",
+  "tapPlusToStart": "Appuyez sur + pour en démarrer une",
+ 
+  "noOtherAdmins": "Aucun autre administrateur"
 
   
 }
