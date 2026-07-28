@@ -175,7 +175,18 @@ export const sendMessage = async (req: Request, res: Response) => {
   try {
     const me = req.user as any;
     const { id } = req.params;
-    const { type = "text", content } = req.body as { type?: string; content?: string };
+    // ✅ NOUVEAU : clientTempId est un identifiant généré côté client (tempId)
+    // qu'on renvoie tel quel dans la réponse ET dans l'événement socket. Ça
+    // permet au front de réconcilier de façon fiable le message optimiste
+    // avec le message réel, peu importe si la réponse HTTP ou l'événement
+    // socket "message:new" arrive en premier (avant, ça pouvait produire un
+    // doublon ou un message optimiste qui restait bloqué "en attente").
+    // Ce champ n'est PAS persisté en base, juste transmis dans cette requête.
+    const { type = "text", content, clientTempId } = req.body as {
+      type?: string;
+      content?: string;
+      clientTempId?: string;
+    };
 
     const conversation = await Conversation.findById(id);
     if (!conversation) {
@@ -193,18 +204,33 @@ export const sendMessage = async (req: Request, res: Response) => {
       }
       messageData.content = content.trim();
     } else if (["image", "video", "file", "audio"].includes(type)) {
-      // ✅ Le vocal utilise exactement ce même chemin (type="audio"), déjà supporté côté backend.
       if (!req.file) {
         return res.status(400).json({ success: false, message: "Fichier requis" });
       }
-      const resourceType = type === "image" ? "image" : type === "video" ? "video" : "raw";
+
+      // ✅ FIX: Cloudinary n'a PAS de resource_type "audio" dédié — l'audio doit
+      // passer par le moteur "video" (c'est ce qui provoquait le 500 sur les
+      // messages vocaux : ils partaient en "raw", que Cloudinary rejette souvent
+      // pour des extensions type .m4a/.mp3).
+      const resourceType =
+        type === "image" ? "image" : type === "video" || type === "audio" ? "video" : "raw";
+
       const uploadResult: any = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           { folder: "shop-mobile/chat", resource_type: resourceType },
-          (error, result) => (error ? reject(error) : resolve(result))
+          (error, result) => {
+            if (error) {
+              // ✅ Log complet de l'erreur Cloudinary pour diagnostiquer plus vite
+              // la prochaine fois (au lieu de juste error.message générique).
+              console.error("CLOUDINARY UPLOAD ERROR:", error);
+              return reject(error);
+            }
+            resolve(result);
+          }
         );
         stream.end(req.file!.buffer);
       });
+
       messageData.fileUrl = uploadResult.secure_url;
       messageData.fileName = req.file.originalname;
       messageData.fileMimeType = req.file.mimetype;
@@ -216,6 +242,12 @@ export const sendMessage = async (req: Request, res: Response) => {
 
     const message = await Message.create(messageData);
     await message.populate("sender", "name image");
+
+    // ✅ Attache clientTempId en mémoire (pas sauvegardé en base) au document
+    // avant de l'envoyer, pour que le front puisse réconcilier son message
+    // optimiste que ce soit via la réponse HTTP ou via le socket.
+    const messageWithTempId = message.toObject();
+    if (clientTempId) (messageWithTempId as any).clientTempId = clientTempId;
 
     const preview =
       type === "text" ? content!.trim().slice(0, 120) : `[${type}]`;
@@ -237,12 +269,14 @@ export const sendMessage = async (req: Request, res: Response) => {
     conversation.participants.forEach((p) => {
       io.to(`user:${p.toString()}`).emit("message:new", {
         conversationId: id,
-        message,
+        message: messageWithTempId,
       });
     });
 
-    res.status(201).json({ success: true, data: message });
+    res.status(201).json({ success: true, data: messageWithTempId });
   } catch (error: any) {
+    // ✅ Log complet (avec stack) pour toute erreur d'envoi de message, pas
+    // seulement les erreurs d'upload — utile si un autre 500 réapparaît.
     console.error("SEND MESSAGE ERROR:", error);
     res.status(500).json({ success: false, message: error.message });
   }

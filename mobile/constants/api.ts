@@ -7,21 +7,20 @@ const LOCAL_API_URL = Platform.select({
   default: "http://localhost:3000/api",
 });
 
-const NO_CACHE_RESOURCES = ["users", "support", "cart", "devis", "settings","chatAdmin",];
+const NO_CACHE_RESOURCES = ["users", "support", "cart", "devis", "settings", "chatAdmin"];
 
 const cache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
 
 const api = axios.create({
-  baseURL:LOCAL_API_URL,
-  timeout: 10000,
+  baseURL: LOCAL_API_URL,
+  timeout: 20000,
 });
 
 const isExcludedFromCache = (url: string) =>
   NO_CACHE_RESOURCES.some((r) => url.includes(r));
 
 const getResourceName = (url: string) => url.replace(/^\//, "").split("/")[0];
-
 
 const getCacheKey = (config: any) => {
   const authHeader = config.headers?.Authorization || "anonymous";
@@ -70,7 +69,6 @@ api.interceptors.response.use((response) => {
     const resource = getResourceName(url);
 
     cache.forEach((_, key) => {
-   
       if (key.includes(`::/${resource}`)) {
         cache.delete(key);
       }
@@ -78,7 +76,6 @@ api.interceptors.response.use((response) => {
   }
   return response;
 });
-
 
 export const clearCache = (resource?: string) => {
   if (resource) {

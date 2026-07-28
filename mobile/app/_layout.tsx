@@ -26,8 +26,8 @@ export default function RootLayout() {
             publishableKey={publishableKey}
             tokenCache={tokenCache}
           >
-            <SocketProvider>
-              <ClerkLoaded>
+            <ClerkLoaded>
+              <SocketProvider>
                 <StripeProvider
                   publishableKey={stripePublishableKey}
                   merchantIdentifier="merchant.com.helmihamdi.mobile"
@@ -42,8 +42,8 @@ export default function RootLayout() {
                     </CartProvider>
                   </NotificationProvider>
                 </StripeProvider>
-              </ClerkLoaded>
-            </SocketProvider>
+              </SocketProvider>
+            </ClerkLoaded>
           </ClerkProvider>
         </CurrencyProvider>
       </LanguageProvider>

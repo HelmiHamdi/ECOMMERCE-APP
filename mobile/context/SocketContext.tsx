@@ -14,36 +14,66 @@ const SOCKET_URL = "http://192.168.194.136:3000";
 interface SocketContextValue {
   socket: Socket | null;
   onlineUserIds: Set<string>;
+  connected: boolean;
 }
 
 const SocketContext = createContext<SocketContextValue>({
   socket: null,
   onlineUserIds: new Set(),
+  connected: false,
 });
 
 export const useSocket = () => useContext(SocketContext);
 
 export function SocketProvider({ children }: { children: ReactNode }) {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
-  const socketRef = useRef<Socket | null>(null);
+
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [connected, setConnected] = useState(false);
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
+
+  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
     let isMounted = true;
+    let socketInstance: Socket | null = null;
 
     const connect = async () => {
-      if (!user) return;
+ 
+      if (!isLoaded || !isSignedIn || !user) return;
       const token = await getToken();
       if (!token || !isMounted) return;
 
-      const socket = io(SOCKET_URL, {
+      console.log("🔌 Connexion socket en cours...");
+
+      socketInstance = io(SOCKET_URL, {
         path: "/socket.io",
         auth: { token },
         transports: ["websocket"],
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
       });
 
-      socket.on("presence:update", ({ userId, online }) => {
+      socketInstance.on("connect", () => {
+        if (!isMounted) return;
+        console.log("✅ Socket connecté :", socketInstance?.id);
+        setConnected(true);
+      });
+
+      socketInstance.on("disconnect", (reason) => {
+        if (!isMounted) return;
+        console.log("❌ Socket déconnecté :", reason);
+        setConnected(false);
+      });
+
+      socketInstance.on("connect_error", (err) => {
+        console.error("⚠️ Erreur connexion socket:", err.message);
+      });
+
+      socketInstance.on("presence:update", ({ userId, online }) => {
         setOnlineUserIds((prev) => {
           const next = new Set(prev);
           if (online) next.add(userId);
@@ -52,7 +82,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
         });
       });
 
-      socketRef.current = socket;
+      socketRef.current = socketInstance;
+      if (isMounted) setSocket(socketInstance);
     };
 
     connect();
@@ -61,11 +92,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       isMounted = false;
       socketRef.current?.disconnect();
       socketRef.current = null;
+      setSocket(null);
+      setConnected(false);
     };
-  }, [user?.id]);
+  }, [isLoaded, isSignedIn, user?.id]);
 
   return (
-    <SocketContext.Provider value={{ socket: socketRef.current, onlineUserIds }}>
+    <SocketContext.Provider value={{ socket, onlineUserIds, connected }}>
       {children}
     </SocketContext.Provider>
   );

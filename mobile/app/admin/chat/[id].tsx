@@ -12,7 +12,6 @@ import {
   Modal,
   Pressable,
   Alert,
-  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
@@ -22,6 +21,7 @@ import * as DocumentPicker from "expo-document-picker";
 import { Audio } from "expo-av";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
+import EmojiPicker from "rn-emoji-keyboard"; // ✅ NOUVEAU : clavier emoji complet (npx expo install rn-emoji-keyboard)
 import api from "@/constants/api";
 import { useSocket } from "@/context/SocketContext";
 
@@ -29,12 +29,6 @@ import { COLORS } from "@/constants";
 import { useMyMongoUser } from "@/app/hooks/useMyMongoUser";
 
 const genTempId = () => `temp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-const EMOJIS = [
-  "😀", "😁", "😂", "🤣", "😊", "😍", "😘", "😜", "🤔", "😅",
-  "😇", "🙂", "😉", "😢", "😭", "😡", "👍", "👏", "🙏", "🎉",
-  "❤️", "🔥", "💯", "✅", "👋", "🤝", "😴", "😎", "🥳", "🤩",
-];
 
 // Petit lecteur audio réutilisable pour les messages vocaux
 function AudioBubble({ uri, mine }: { uri: string; mine: boolean }) {
@@ -113,6 +107,11 @@ export default function ChatScreen() {
   const [recordSeconds, setRecordSeconds] = useState(0);
   const recordingRef = useRef<Audio.Recording | null>(null);
   const recordTimerRef = useRef<any>(null);
+  // ✅ FIX ("Only one Recording object..."): verrou synchrone qui empêche un
+  // second appel à startRecording() de partir avant que le state isRecording
+  // ait fini de se mettre à jour (React state n'est pas synchrone), ce qui
+  // pouvait déclencher deux préparations d'enregistrement en parallèle.
+  const recordingLockRef = useRef(false);
 
   const listRef = useRef<FlatList>(null);
   const typingTimeout = useRef<any>(null);
@@ -161,9 +160,22 @@ export default function ChatScreen() {
     loadMessages();
   }, [loadMessages]);
 
+  // ✅ FIX (message "parfois ne s'affiche pas" / doublons) : on réconcilie
+  // maintenant aussi via clientTempId, renvoyé par le serveur dans l'event
+  // socket. Si un message optimiste (tempId) correspondant existe déjà, on le
+  // remplace au lieu d'ajouter une deuxième entrée — peu importe que ce soit
+  // la réponse HTTP ou l'événement socket qui arrive en premier.
   const addMessageIfNew = useCallback((message: any) => {
     setMessages((prev) => {
       if (prev.some((m) => m._id === message._id)) return prev;
+      if (message.clientTempId) {
+        const optimisticIndex = prev.findIndex((m) => m.tempId === message.clientTempId);
+        if (optimisticIndex !== -1) {
+          const next = [...prev];
+          next[optimisticIndex] = message;
+          return next;
+        }
+      }
       return [...prev, message];
     });
   }, []);
@@ -184,7 +196,6 @@ export default function ChatScreen() {
     const onConversationRemoved = ({ conversationId: cid }: any) => {
       if (cid === conversationId) router.back();
     };
-    // ✅ NOUVEAU : édition / suppression en temps réel
     const onMessageEdited = ({ conversationId: cid, message }: any) => {
       if (cid !== conversationId) return;
       setMessages((prev) => prev.map((m) => (m._id === message._id ? message : m)));
@@ -280,13 +291,20 @@ export default function ChatScreen() {
     try {
       const token = await getToken();
       if (!token || !conversationId) throw new Error("no token");
+      // ✅ clientTempId envoyé au serveur pour réconciliation fiable (voir addMessageIfNew)
       const res = await api.post(
         `/chatAdmin/conversations/${conversationId}/messages`,
-        { type: "text", content },
+        { type: "text", content, clientTempId: tempId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const newMessage = res.data?.data;
-      setMessages((prev) => prev.map((m) => (m.tempId === tempId ? newMessage : m)));
+      // Le socket a peut-être déjà remplacé ce tempId (voir addMessageIfNew) ;
+      // dans ce cas on ne fait rien pour éviter de recréer une entrée.
+      setMessages((prev) => {
+        const stillPending = prev.some((m) => m.tempId === tempId);
+        if (!stillPending) return prev;
+        return prev.map((m) => (m.tempId === tempId ? newMessage : m));
+      });
     } catch (err) {
       console.error("Erreur envoi message:", err);
       setMessages((prev) =>
@@ -302,23 +320,124 @@ export default function ChatScreen() {
     }
   };
 
+  // ✅ FIX PRINCIPAL (retard perçu) : envoi générique avec aperçu optimiste immédiat
+  // pour image / fichier / audio, au lieu d'attendre la fin de l'upload Cloudinary
+  // avant d'afficher quoi que ce soit. On garde localUri/fileName/mimeType sur le
+  // message optimiste pour pouvoir relancer l'upload en cas d'échec (retrySend).
+  const sendMediaMessage = async ({
+    type,
+    uri,
+    name,
+    mimeType,
+  }: {
+    type: "image" | "file" | "audio";
+    uri: string;
+    name: string;
+    mimeType: string;
+  }) => {
+    const tempId = genTempId();
+    const optimisticMsg = {
+      _id: tempId,
+      tempId,
+      type,
+      // Pour l'aperçu immédiat, on utilise l'URI locale (le composant AudioBubble
+      // et l'Image acceptent aussi bien une URI locale qu'une URL distante).
+      fileUrl: uri,
+      fileName: name,
+      localUri: uri,
+      mimeType,
+      sender: { _id: myId },
+      createdAt: new Date().toISOString(),
+      pending: true,
+    };
+    setMessages((prev) => [...prev, optimisticMsg]);
+
+    try {
+      const token = await getToken();
+      if (!token || !conversationId) throw new Error("no token");
+
+      const formData = new FormData();
+      formData.append("type", type);
+      formData.append("clientTempId", tempId); // ✅ pour réconciliation fiable
+      formData.append("file", { uri, name, type: mimeType } as any);
+
+      const res = await api.post(
+        `/chatAdmin/conversations/${conversationId}/messages`,
+        formData,
+        { headers: { Authorization: `Bearer ${token}` }, timeout: 30000 }
+      );
+      const newMessage = res.data?.data;
+      setMessages((prev) => {
+        const stillPending = prev.some((m) => m.tempId === tempId);
+        if (!stillPending) return prev;
+        return prev.map((m) => (m.tempId === tempId ? newMessage : m));
+      });
+    } catch (err) {
+      console.error(`Erreur envoi ${type}:`, err);
+      setMessages((prev) =>
+        prev.map((m) => (m.tempId === tempId ? { ...m, pending: false, failed: true } : m))
+      );
+      Toast.show({
+        type: "error",
+        text1: "Échec de l'envoi",
+        text2: "Appuyez sur le message pour réessayer",
+      });
+    }
+  };
+
   const retrySend = async (msg: any) => {
     if (!msg.tempId) return;
+
+    // Texte : comportement inchangé
+    if (msg.type === "text") {
+      setMessages((prev) =>
+        prev.map((m) => (m.tempId === msg.tempId ? { ...m, pending: true, failed: false } : m))
+      );
+      try {
+        const token = await getToken();
+        if (!token || !conversationId) throw new Error("no token");
+        const res = await api.post(
+          `/chatAdmin/conversations/${conversationId}/messages`,
+          { type: msg.type, content: msg.content },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const newMessage = res.data?.data;
+        setMessages((prev) => prev.map((m) => (m.tempId === msg.tempId ? newMessage : m)));
+      } catch (err) {
+        console.error("Erreur retry:", err);
+        setMessages((prev) =>
+          prev.map((m) => (m.tempId === msg.tempId ? { ...m, pending: false, failed: true } : m))
+        );
+        Toast.show({ type: "error", text1: "Échec de l'envoi" });
+      }
+      return;
+    }
+
+    // ✅ NOUVEAU : retry pour image / fichier / audio, en réutilisant l'URI locale
+    // conservée sur le message optimiste au moment du premier envoi.
+    if (!msg.localUri) return;
     setMessages((prev) =>
       prev.map((m) => (m.tempId === msg.tempId ? { ...m, pending: true, failed: false } : m))
     );
     try {
       const token = await getToken();
       if (!token || !conversationId) throw new Error("no token");
+      const formData = new FormData();
+      formData.append("type", msg.type);
+      formData.append("file", {
+        uri: msg.localUri,
+        name: msg.fileName,
+        type: msg.mimeType || "application/octet-stream",
+      } as any);
       const res = await api.post(
         `/chatAdmin/conversations/${conversationId}/messages`,
-        { type: msg.type, content: msg.content },
-        { headers: { Authorization: `Bearer ${token}` } }
+        formData,
+        { headers: { Authorization: `Bearer ${token}` }, timeout: 30000 }
       );
       const newMessage = res.data?.data;
       setMessages((prev) => prev.map((m) => (m.tempId === msg.tempId ? newMessage : m)));
     } catch (err) {
-      console.error("Erreur retry:", err);
+      console.error("Erreur retry média:", err);
       setMessages((prev) =>
         prev.map((m) => (m.tempId === msg.tempId ? { ...m, pending: false, failed: true } : m))
       );
@@ -364,31 +483,14 @@ export default function ChatScreen() {
     if (result.canceled) return;
     const asset = result.assets[0];
 
-    const formData = new FormData();
-    formData.append("type", "image");
-    formData.append("file", {
+    // ✅ FIX : on affiche l'image immédiatement (optimiste) au lieu d'attendre
+    // la fin de l'upload Cloudinary.
+    await sendMediaMessage({
+      type: "image",
       uri: asset.uri,
       name: asset.fileName || `image_${Date.now()}.jpg`,
-      type: asset.mimeType || "image/jpeg",
-    } as any);
-
-    const token = await getToken();
-    if (!token || !conversationId) return;
-    try {
-      const res = await api.post(
-        `/chatAdmin/conversations/${conversationId}/messages`,
-        formData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          timeout: 30000,
-        }
-      );
-      const newMessage = res.data?.data;
-      if (newMessage) addMessageIfNew(newMessage);
-    } catch (err) {
-      console.error("Erreur envoi image:", err);
-      Toast.show({ type: "error", text1: "Échec de l'envoi de l'image" });
-    }
+      mimeType: asset.mimeType || "image/jpeg",
+    });
   };
 
   const pickDocument = async () => {
@@ -396,35 +498,23 @@ export default function ChatScreen() {
     if (result.canceled) return;
     const asset = result.assets[0];
 
-    const formData = new FormData();
-    formData.append("type", "file");
-    formData.append("file", {
+    // ✅ FIX : idem, aperçu optimiste immédiat pour les fichiers.
+    await sendMediaMessage({
+      type: "file",
       uri: asset.uri,
       name: asset.name,
-      type: asset.mimeType || "application/octet-stream",
-    } as any);
-
-    const token = await getToken();
-    if (!token || !conversationId) return;
-    try {
-      const res = await api.post(
-        `/chatAdmin/conversations/${conversationId}/messages`,
-        formData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          timeout: 30000,
-        }
-      );
-      const newMessage = res.data?.data;
-      if (newMessage) addMessageIfNew(newMessage);
-    } catch (err) {
-      console.error("Erreur envoi fichier:", err);
-      Toast.show({ type: "error", text1: "Échec de l'envoi du fichier" });
-    }
+      mimeType: asset.mimeType || "application/octet-stream",
+    });
   };
 
-  // ✅ NOUVEAU : messages vocaux
+  // ✅ Messages vocaux
   const startRecording = async () => {
+    // ✅ FIX ("Only one Recording object can be prepared at a given time"):
+    // verrou synchrone en plus du state isRecording (qui, lui, ne se met à
+    // jour qu'au prochain render). Un double-tap rapide sur le bouton micro
+    // pouvait déclencher deux createAsync() en parallèle sans ce verrou.
+    if (recordingLockRef.current || recordingRef.current) return;
+    recordingLockRef.current = true;
     try {
       const perm = await Audio.requestPermissionsAsync();
       if (!perm.granted) {
@@ -442,6 +532,11 @@ export default function ChatScreen() {
     } catch (err) {
       console.error("Erreur démarrage enregistrement:", err);
       Toast.show({ type: "error", text1: "Impossible de démarrer l'enregistrement" });
+      // ✅ On s'assure qu'aucune référence orpheline ne reste, sinon le
+      // prochain essai échoue aussi avec "Only one Recording...".
+      recordingRef.current = null;
+    } finally {
+      recordingLockRef.current = false;
     }
   };
 
@@ -456,6 +551,7 @@ export default function ChatScreen() {
     } catch (err) {
       console.error("Erreur annulation enregistrement:", err);
     } finally {
+      // ✅ Toujours nettoyé, même si stopAndUnloadAsync a levé une erreur.
       recordingRef.current = null;
     }
   };
@@ -463,32 +559,25 @@ export default function ChatScreen() {
   const stopRecordingAndSend = async () => {
     const recording = recordingRef.current;
     if (!recording) return;
+    // ✅ On libère la référence immédiatement (avant l'upload) pour que le
+    // bouton micro redevienne utilisable tout de suite, même pendant l'envoi.
+    recordingRef.current = null;
     try {
       if (recordTimerRef.current) clearInterval(recordTimerRef.current);
       setIsRecording(false);
       setRecordSeconds(0);
       await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
-      recordingRef.current = null;
       if (!uri) return;
 
-      const formData = new FormData();
-      formData.append("type", "audio");
-      formData.append("file", {
+      // ✅ Aperçu optimiste immédiat pour le vocal aussi (bulle "en cours
+      // d'envoi" au lieu de rien pendant l'upload).
+      await sendMediaMessage({
+        type: "audio",
         uri,
         name: `voice_${Date.now()}.m4a`,
-        type: "audio/m4a",
-      } as any);
-
-      const token = await getToken();
-      if (!token || !conversationId) return;
-      const res = await api.post(
-        `/chatAdmin/conversations/${conversationId}/messages`,
-        formData,
-        { headers: { Authorization: `Bearer ${token}` }, timeout: 30000 }
-      );
-      const newMessage = res.data?.data;
-      if (newMessage) addMessageIfNew(newMessage);
+        mimeType: "audio/m4a",
+      });
     } catch (err) {
       console.error("Erreur envoi message vocal:", err);
       Toast.show({ type: "error", text1: "Échec de l'envoi du message vocal" });
@@ -728,21 +817,6 @@ export default function ChatScreen() {
           </View>
         )}
 
-        {/* Sélecteur d'emojis */}
-        {showEmoji && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.emojiBar}
-          >
-            {EMOJIS.map((e) => (
-              <TouchableOpacity key={e} onPress={() => insertEmoji(e)} style={styles.emojiBtn}>
-                <Text style={{ fontSize: 26 }}>{e}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
-
         {/* Input bar */}
         <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
           {isRecording ? (
@@ -760,12 +834,8 @@ export default function ChatScreen() {
             </View>
           ) : (
             <>
-              <TouchableOpacity onPress={() => setShowEmoji((v) => !v)} style={styles.inputIconBtn}>
-                <Ionicons
-                  name={showEmoji ? "happy" : "happy-outline"}
-                  size={22}
-                  color={COLORS.primary}
-                />
+              <TouchableOpacity onPress={() => setShowEmoji(true)} style={styles.inputIconBtn}>
+                <Ionicons name="happy-outline" size={22} color={COLORS.primary} />
               </TouchableOpacity>
               <TouchableOpacity onPress={pickImage} style={styles.inputIconBtn}>
                 <Ionicons name="image-outline" size={22} color={COLORS.primary} />
@@ -801,6 +871,14 @@ export default function ChatScreen() {
           )}
         </View>
       </KeyboardAvoidingView>
+
+      {/* ✅ NOUVEAU : clavier emoji complet (recherche + toutes les catégories Unicode),
+          remplace l'ancienne barre de 30 emojis fixes. */}
+      <EmojiPicker
+        open={showEmoji}
+        onClose={() => setShowEmoji(false)}
+        onEmojiSelected={(emojiObject) => insertEmoji(emojiObject.emoji)}
+      />
 
       {/* Menu Modifier / Supprimer */}
       <Modal
@@ -934,14 +1012,6 @@ const styles = StyleSheet.create({
     borderTopColor: "#eee",
   },
   editBannerText: { flex: 1, marginLeft: 8, color: COLORS.primary, fontWeight: "600", fontSize: 12.5 },
-  emojiBar: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-  },
-  emojiBtn: { paddingHorizontal: 6, paddingVertical: 4 },
   inputBar: {
     flexDirection: "row",
     alignItems: "flex-end",
