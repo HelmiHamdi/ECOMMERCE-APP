@@ -82,12 +82,18 @@ export default function AdminTabsLayout() {
       labelKey: t("users") ?? "Utilisateurs",
       route: "/admin/users",
     },
-  {
-    id: "orders-list",
-    icon: "file-tray-full-outline",
-    labelKey: t("ordersList") ?? "Commandes détaillées",
-    route: "/admin/orders-list",
-  },
+    {
+      id: "orders-list",
+      icon: "file-tray-full-outline",
+      labelKey: t("ordersList") ?? "Commandes détaillées",
+      route: "/admin/orders-list",
+    },
+    {
+      id: "chat",
+      icon: "chatbubbles-outline",
+      labelKey: t("chat") ?? "Messages",
+      route: "/admin/chat",
+    },
     {
       id: "gifs",
       icon: "film-outline",
@@ -179,15 +185,15 @@ export default function AdminTabsLayout() {
             ),
           }}
         />
-       <Tabs.Screen
-  name="chat"
-  options={{
-    title: t("chat") ?? "Messages",
-    tabBarIcon: ({ color, size }) => (
-      <Ionicons name="chatbubbles-outline" size={size} color={color} />
-    ),
-  }}
-/>
+
+        {/* Chat retiré de la tab bar mais route toujours accessible via le menu rapide */}
+        <Tabs.Screen
+          name="chat"
+          options={{
+            href: null,
+          }}
+        />
+
         <Tabs.Screen
           name="more"
           listeners={{

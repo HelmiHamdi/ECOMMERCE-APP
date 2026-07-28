@@ -8,19 +8,23 @@ import {
   RefreshControl,
   Modal,
   Pressable,
+  StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
-import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useAuth } from "@clerk/clerk-expo";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import api from "@/constants/api";
 import { useSocket } from "@/context/SocketContext";
+import { useMyMongoUser } from "@/app/hooks/useMyMongoUser";
 import { COLORS } from "@/constants";
 
 export default function AdminChatListScreen() {
   const { getToken } = useAuth();
-  const { user } = useUser();
+  const { myId } = useMyMongoUser(); // ✅ id Mongo réel, pas l'id Clerk
   const router = useRouter();
   const { socket, onlineUserIds } = useSocket();
+  const insets = useSafeAreaInsets();
 
   const [conversations, setConversations] = useState<any[]>([]);
   const [admins, setAdmins] = useState<any[]>([]);
@@ -63,7 +67,6 @@ export default function AdminChatListScreen() {
     }, [loadConversations])
   );
 
-  // Écoute temps réel: nouveau message -> remonte la conversation en tête + met à jour l'aperçu
   useEffect(() => {
     if (!socket) return;
 
@@ -79,7 +82,7 @@ export default function AdminChatListScreen() {
         conv.lastMessage =
           message.type === "text" ? message.content : `[${message.type}]`;
         conv.lastMessageAt = message.createdAt;
-        if (message.sender?._id !== user?.id) {
+        if (message.sender?._id !== myId) {
           conv.unreadCount = (conv.unreadCount || 0) + 1;
         }
         updated.splice(idx, 1);
@@ -87,7 +90,6 @@ export default function AdminChatListScreen() {
       });
     };
 
-    // La conversation d'un admin retiré disparaît instantanément
     const onConversationRemoved = ({ conversationId }: any) => {
       setConversations((prev) => prev.filter((c) => c._id !== conversationId));
     };
@@ -99,15 +101,17 @@ export default function AdminChatListScreen() {
       socket.off("message:new", onNewMessage);
       socket.off("conversation:removed", onConversationRemoved);
     };
-  }, [socket, user?.id, loadConversations]);
+  }, [socket, myId, loadConversations]);
 
+  // ✅ Corrigé : on compare avec myId (Mongo), plus jamais avec l'id Clerk.
+  // C'est ce qui garantissait auparavant de retomber tout le temps sur le même admin.
   const getOtherParticipant = (conv: any) =>
-    conv.participants?.find((p: any) => p._id !== user?.id);
+    conv.participants?.find((p: any) => p._id !== myId);
 
   const openConversation = (conv: any) => {
     const other = getOtherParticipant(conv);
     router.push({
-      pathname: `/admin/chatAdmin/${conv._id}` as any,
+      pathname: `/admin/chat/${conv._id}` as any,
       params: { otherId: other?._id },
     });
   };
@@ -123,7 +127,7 @@ export default function AdminChatListScreen() {
       );
       setNewChatVisible(false);
       router.push({
-        pathname: `/admin/chatAdmin/${res.data.data._id}` as any,
+        pathname: `/admin/chat/${res.data.data._id}` as any,
         params: { otherId: adminId },
       });
     } catch (err) {
@@ -131,8 +135,22 @@ export default function AdminChatListScreen() {
     }
   };
 
+  const formatPreviewTime = (iso?: string) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const today = new Date();
+    const sameDay = d.toDateString() === today.toDateString();
+    return sameDay
+      ? d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+      : d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+  };
+
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={[styles.root, { paddingTop: insets.top }]}>
+      <View style={styles.pageHeader}>
+        <Text style={styles.pageTitle}>Messages</Text>
+      </View>
+
       <FlatList
         data={conversations}
         keyExtractor={(item) => item._id}
@@ -143,15 +161,19 @@ export default function AdminChatListScreen() {
               setRefreshing(true);
               loadConversations();
             }}
+            tintColor={COLORS.primary}
           />
         }
-        contentContainerStyle={{ padding: 12 }}
+        contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           !loading ? (
-            <View style={{ alignItems: "center", marginTop: 80 }}>
+            <View style={styles.emptyState}>
               <Ionicons name="chatbubbles-outline" size={48} color="#ccc" />
-              <Text style={{ color: "#999", marginTop: 8 }}>
+              <Text style={styles.emptyStateText}>
                 Aucune conversation pour le moment
+              </Text>
+              <Text style={styles.emptyStateSubtext}>
+                Appuyez sur + pour en démarrer une
               </Text>
             </View>
           ) : null
@@ -159,63 +181,43 @@ export default function AdminChatListScreen() {
         renderItem={({ item }) => {
           const other = getOtherParticipant(item);
           const isOnline = other && onlineUserIds.has(other._id);
+          const hasUnread = item.unreadCount > 0;
           return (
             <TouchableOpacity
               onPress={() => openConversation(item)}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                paddingVertical: 12,
-                borderBottomWidth: 1,
-                borderBottomColor: "#f0f0f0",
-              }}
+              activeOpacity={0.7}
+              style={styles.row}
             >
               <View>
                 <Image
                   source={{ uri: other?.image || "https://placehold.co/48" }}
-                  style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: "#eee" }}
+                  style={styles.rowAvatar}
                 />
-                {isOnline && (
-                  <View
-                    style={{
-                      position: "absolute",
-                      bottom: 0,
-                      right: 0,
-                      width: 12,
-                      height: 12,
-                      borderRadius: 6,
-                      backgroundColor: "#22c55e",
-                      borderWidth: 2,
-                      borderColor: "#fff",
-                    }}
-                  />
-                )}
+                {isOnline && <View style={styles.rowOnlineDot} />}
               </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={{ fontWeight: "700", fontSize: 15 }}>
-                  {other?.name || other?.email || "Admin"}
-                </Text>
-                <Text numberOfLines={1} style={{ color: "#888", marginTop: 2 }}>
-                  {item.lastMessage || "Démarrer la conversation"}
-                </Text>
-              </View>
-              {item.unreadCount > 0 && (
-                <View
-                  style={{
-                    backgroundColor: COLORS.primary,
-                    borderRadius: 10,
-                    minWidth: 20,
-                    height: 20,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    paddingHorizontal: 5,
-                  }}
-                >
-                  <Text style={{ color: "#fff", fontSize: 11, fontWeight: "700" }}>
-                    {item.unreadCount}
+              <View style={styles.rowBody}>
+                <View style={styles.rowTopLine}>
+                  <Text style={styles.rowName} numberOfLines={1}>
+                    {other?.name || other?.email || "Admin"}
+                  </Text>
+                  <Text style={styles.rowTime}>
+                    {formatPreviewTime(item.lastMessageAt)}
                   </Text>
                 </View>
-              )}
+                <View style={styles.rowBottomLine}>
+                  <Text
+                    numberOfLines={1}
+                    style={[styles.rowPreview, hasUnread && styles.rowPreviewUnread]}
+                  >
+                    {item.lastMessage || "Démarrer la conversation"}
+                  </Text>
+                  {hasUnread && (
+                    <View style={styles.unreadBadge}>
+                      <Text style={styles.unreadBadgeText}>{item.unreadCount}</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
             </TouchableOpacity>
           );
         }}
@@ -226,59 +228,60 @@ export default function AdminChatListScreen() {
           loadAdmins();
           setNewChatVisible(true);
         }}
-        style={{
-          position: "absolute",
-          bottom: 24,
-          right: 24,
-          width: 56,
-          height: 56,
-          borderRadius: 28,
-          backgroundColor: COLORS.primary,
-          alignItems: "center",
-          justifyContent: "center",
-          elevation: 6,
-        }}
+        style={[styles.fab, { bottom: insets.bottom + 90 }]}
+        activeOpacity={0.85}
       >
         <Ionicons name="add" size={28} color="#fff" />
       </TouchableOpacity>
 
-      <Modal visible={newChatVisible} transparent animationType="fade">
-        <Pressable
-          style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "flex-end" }}
-          onPress={() => setNewChatVisible(false)}
-        >
+      <Modal visible={newChatVisible} transparent animationType="slide">
+        <Pressable style={styles.modalOverlay} onPress={() => setNewChatVisible(false)}>
           <Pressable
-            style={{
-              backgroundColor: "#fff",
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              padding: 20,
-              maxHeight: "60%",
-            }}
+            style={[styles.modalSheet, { paddingBottom: insets.bottom + 16 }]}
             onPress={(e) => e.stopPropagation()}
           >
-            <Text style={{ fontWeight: "700", fontSize: 16, marginBottom: 16 }}>
-              Nouvelle conversation
-            </Text>
+            <View style={styles.modalHandle} />
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>Nouvelle conversation</Text>
+              <TouchableOpacity onPress={() => setNewChatVisible(false)}>
+                <Ionicons name="close" size={24} color="#888" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalSubtitle}>Choisissez un administrateur</Text>
+
             <FlatList
               data={admins}
               keyExtractor={(a) => a._id}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => startNewChat(item._id)}
-                  style={{ flexDirection: "row", alignItems: "center", paddingVertical: 10 }}
-                >
-                  <Image
-                    source={{ uri: item.image || "https://placehold.co/40" }}
-                    style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "#eee" }}
-                  />
-                  <Text style={{ marginLeft: 12, fontWeight: "600" }}>
-                    {item.name || item.email}
-                  </Text>
-                </TouchableOpacity>
-              )}
+              contentContainerStyle={{ paddingTop: 8, paddingBottom: 12 }}
+              renderItem={({ item }) => {
+                const isOnline = onlineUserIds.has(item._id);
+                return (
+                  <TouchableOpacity
+                    onPress={() => startNewChat(item._id)}
+                    activeOpacity={0.7}
+                    style={styles.adminRow}
+                  >
+                    <View>
+                      <Image
+                        source={{ uri: item.image || "https://placehold.co/44" }}
+                        style={styles.adminAvatar}
+                      />
+                      {isOnline && <View style={styles.rowOnlineDot} />}
+                    </View>
+                    <View style={{ marginLeft: 12, flex: 1 }}>
+                      <Text style={styles.adminName}>{item.name || item.email}</Text>
+                      <Text style={styles.adminStatus}>
+                        {isOnline ? "En ligne" : "Hors ligne"}
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color="#c4c4c8" />
+                  </TouchableOpacity>
+                );
+              }}
               ListEmptyComponent={
-                <Text style={{ color: "#999" }}>Aucun autre administrateur</Text>
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyStateText}>Aucun autre administrateur</Text>
+                </View>
               }
             />
           </Pressable>
@@ -287,3 +290,113 @@ export default function AdminChatListScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: "#fff" },
+  pageHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  pageTitle: { fontSize: 24, fontWeight: "800", color: "#111" },
+  listContent: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 120 },
+  emptyState: { alignItems: "center", marginTop: 80 },
+  emptyStateText: { color: "#999", marginTop: 8, fontWeight: "600" },
+  emptyStateSubtext: { color: "#c2c2c6", fontSize: 12, marginTop: 4 },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f4f4f6",
+  },
+  rowAvatar: { width: 50, height: 50, borderRadius: 25, backgroundColor: "#eee" },
+  rowOnlineDot: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#22c55e",
+    borderWidth: 2,
+    borderColor: "#fff",
+  },
+  rowBody: { flex: 1, marginLeft: 12 },
+  rowTopLine: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  rowName: { fontWeight: "700", fontSize: 15, color: "#111", flexShrink: 1 },
+  rowTime: { fontSize: 11, color: "#aaa", marginLeft: 6 },
+  rowBottomLine: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 3,
+  },
+  rowPreview: { color: "#8a8a8e", fontSize: 13, flex: 1, marginRight: 8 },
+  rowPreviewUnread: { color: "#333", fontWeight: "600" },
+  unreadBadge: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 5,
+  },
+  unreadBadgeText: { color: "#fff", fontSize: 11, fontWeight: "700" },
+  fab: {
+    position: "absolute",
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: COLORS.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "flex-end",
+  },
+  modalSheet: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    height: "85%",
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#e0e0e4",
+    alignSelf: "center",
+    marginBottom: 14,
+  },
+  modalHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  modalTitle: { fontWeight: "800", fontSize: 18, color: "#111" },
+  modalSubtitle: { color: "#9a9a9e", fontSize: 13, marginTop: 4 },
+  adminRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f4f4f6",
+  },
+  adminAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: "#eee" },
+  adminName: { fontWeight: "700", fontSize: 14.5, color: "#111" },
+  adminStatus: { fontSize: 12, color: "#9a9a9e", marginTop: 2 },
+});

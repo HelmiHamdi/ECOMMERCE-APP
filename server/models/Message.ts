@@ -1,8 +1,6 @@
 import mongoose, { Document, Types } from "mongoose";
 import { IMessage } from "../types/index.js";
 
-
-
 const messageSchema = new mongoose.Schema<IMessage>(
   {
     conversation: {
@@ -31,6 +29,11 @@ const messageSchema = new mongoose.Schema<IMessage>(
       enum: ["missed", "answered", "declined", "ended"],
     },
     callDurationSec: { type: Number, default: 0 },
+
+    // ✅ NOUVEAU : édition / suppression
+    edited: { type: Boolean, default: false },
+    editedAt: { type: Date },
+    isDeleted: { type: Boolean, default: false },
 
     readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     deletedFor: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],

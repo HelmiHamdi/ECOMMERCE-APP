@@ -9,8 +9,7 @@ import React, {
 import { io, Socket } from "socket.io-client";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 
-
-const SOCKET_URL = "http://192.168.194.136:8081";
+const SOCKET_URL = "http://192.168.194.136:3000";
 
 interface SocketContextValue {
   socket: Socket | null;

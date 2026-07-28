@@ -176,24 +176,26 @@ export interface IMessage extends Document {
   conversation: Types.ObjectId;
   sender: Types.ObjectId;
   type: MessageType;
-
-
+ 
   content?: string;
-
-
+ 
   fileUrl?: string;
   fileName?: string;
   fileMimeType?: string;
   fileSize?: number;
   thumbnailUrl?: string;
-
  
   callKind?: CallKind;
   callStatus?: CallStatus;
   callDurationSec?: number;
-
+ 
+  // ✅ NOUVEAU
+  edited?: boolean;
+  editedAt?: Date;
+  isDeleted?: boolean;
+ 
   readBy: Types.ObjectId[];
-  deletedFor: Types.ObjectId[]; 
+  deletedFor: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
