@@ -9,7 +9,10 @@ import React, {
 import { io, Socket } from "socket.io-client";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 
-const SOCKET_URL = "http://192.168.194.136:3000";
+
+const SOCKET_URL = __DEV__
+  ? "http://192.168.194.136:3000"
+  : "https://ineshop-socket.onrender.com";
 
 interface SocketContextValue {
   socket: Socket | null;
@@ -45,7 +48,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       const token = await getToken();
       if (!token || !isMounted) return;
 
-      console.log("🔌 Connexion socket en cours...");
+      console.log("🔌 Connexion socket en cours vers", SOCKET_URL);
 
       socketInstance = io(SOCKET_URL, {
         path: "/socket.io",
