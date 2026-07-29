@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express, { Request, Response } from 'express';
 import cors from "cors";
+import compression from "compression";
 import connectDB from "./config/db.js";
 import { clerkMiddleware } from "@clerk/express";
 import { clerkWebhook } from "./controllers/webhooks.js";
@@ -19,7 +20,6 @@ import ChatRouter from "./routers/chatRoute.js";
 import NotificationRouter from "./routers/notificationRoute.js";
 import { backfillOrderItemNames } from "./scripts/backfillOrderItemNames.js";
 import { cacheMiddleware } from "./middleware/cache.js";
-import compression from "compression";
 import PaymentRouter from "./routers/paymentRoute.js";
 import { scheduleDailyReminder } from "./scripts/dailyReminder.js";
 import NewsletterRouter from "./routers/newsletterRoutes.js";
@@ -29,8 +29,6 @@ import GifRouter from "./routers/gifRoute.js";
 import DevisRouter from "./routers/devisRouter.js";
 import SettingsRouter from "./routers/settingsRouter.js";
 import ChatAdminRouter from "./routers/chatAdminRoute.js";
-
-
 
 const app = express();
 console.time("connectDB");
@@ -79,9 +77,7 @@ app.use("/api/chatAdmin", ChatAdminRouter);
 await makeAdmin();
 await backfillOrderItemNames();
 
-
 scheduleDailyReminder();
-
 
 app.listen(port, () => {
     console.log(`API Server is running at http://localhost:${port}`);

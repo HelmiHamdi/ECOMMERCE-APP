@@ -35,10 +35,6 @@ export default function CallScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
 
-  // ✅ NOUVEAU : on récupère aussi le nom/photo Mongo de l'utilisateur connecté
-  // pour les transmettre dans "call:invite" (affichés côté destinataire sur
-  // l'écran "appel entrant"). Le hook peut ne pas exposer name/image selon ta
-  // version -> fallback sur les infos Clerk pour ne jamais planter.
   const myMongo = useMyMongoUser() as any;
   const myName = myMongo?.name || myMongo?.myName || user?.fullName || user?.firstName || t("adminDefaultName");
   const myImage = myMongo?.image || myMongo?.myImage || user?.imageUrl;
@@ -52,12 +48,14 @@ export default function CallScreen() {
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const timerRef = useRef<any>(null);
-  // ✅ NOUVEAU : référence vers le son "ça sonne" (ringback), joué UNIQUEMENT
-  // côté appelant (mode "outgoing") tant que l'appelé n'a pas décroché.
   const ringbackRef = useRef<Audio.Sound | null>(null);
-  // ✅ Verrou pour éviter de lancer/arrêter cleanup() deux fois (double appel
-  // possible entre l'événement socket call:end et l'appui manuel sur raccrocher).
   const cleanedUpRef = useRef(false);
+  // ✅ NOUVEAU : file d'attente pour les ICE candidates reçues AVANT que le
+  // remoteDescription soit posé (ça arrivait souvent côté appelé, qui reçoit
+  // parfois des candidates juste après l'offre mais avant d'avoir fini
+  // setRemoteDescription -> addIceCandidate plantait silencieusement).
+  const pendingCandidatesRef = useRef<any[]>([]);
+  const remoteDescSetRef = useRef(false);
 
   useEffect(() => {
     setupCall();
@@ -80,8 +78,6 @@ export default function CallScreen() {
     }
   }, [status]);
 
-  // ✅ NOUVEAU : tonalité "ça sonne" jouée côté appelant, en boucle, jusqu'à
-  // ce que l'appel soit accepté (status devient "connected") ou raccroché.
   const playRingback = async () => {
     if (mode !== "outgoing") return;
     try {
@@ -109,6 +105,19 @@ export default function CallScreen() {
     }
   };
 
+  // ✅ NOUVEAU : vide la file d'attente ICE une fois le remoteDescription posé
+  const flushPendingCandidates = async (pc: RTCPeerConnection) => {
+    const queued = pendingCandidatesRef.current;
+    pendingCandidatesRef.current = [];
+    for (const candidate of queued) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (err) {
+        console.warn("Erreur ICE candidate (queue):", err);
+      }
+    }
+  };
+
   const setupCall = async () => {
     try {
       const stream = await mediaDevices.getUserMedia({
@@ -122,7 +131,7 @@ export default function CallScreen() {
 
       stream.getTracks().forEach((track: any) => pc.addTrack(track, stream));
 
-      // @ts-ignore - événement ontrack disponible via react-native-webrtc
+      // @ts-ignore
       pc.ontrack = (event: any) => {
         setRemoteStream(event.streams[0]);
         setStatus("connected");
@@ -139,9 +148,13 @@ export default function CallScreen() {
         }
       };
 
+      // ✅ FIX PRINCIPAL DES APPELS : côté appelant, on n'envoie PLUS l'offre
+      // SDP tout de suite. Avant, l'offre partait immédiatement après
+      // "call:invite", mais le destinataire ne monte son CallScreen (et donc
+      // son listener "call:offer") qu'APRÈS avoir appuyé sur "Accepter" ->
+      // l'offre partait dans le vide, jamais reçue -> l'appel ne connectait
+      // jamais. Maintenant on attend "call:accept" avant de créer l'offre.
       if (mode === "outgoing") {
-        // ✅ On transmet notre nom/photo pour l'écran "appel entrant" côté
-        // destinataire (voir IncomingCallContext), + on lance la tonalité.
         socket?.emit("call:invite", {
           toUserId,
           callId: conversationId,
@@ -151,31 +164,49 @@ export default function CallScreen() {
         });
         playRingback();
 
-        const offer = await pc.createOffer({});
-        await pc.setLocalDescription(offer);
-        socket?.emit("call:offer", { toUserId, callId: conversationId, sdp: offer });
+        socket?.once("call:accept", async () => {
+          stopRingback();
+          try {
+            const offer = await pc.createOffer({});
+            await pc.setLocalDescription(offer);
+            socket?.emit("call:offer", { toUserId, callId: conversationId, sdp: offer });
+          } catch (err) {
+            console.error("Erreur création offre:", err);
+          }
+        });
       }
 
-      socket?.on("call:accept", async () => {
-        // ✅ L'appelé a décroché : on coupe la tonalité, la connexion WebRTC
-        // se finalisera via l'échange offer/answer (status passera à
-        // "connected" dès que ontrack se déclenchera).
-        stopRingback();
-      });
-
       socket?.on("call:answer", async ({ sdp }) => {
-        await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+          remoteDescSetRef.current = true;
+          await flushPendingCandidates(pc);
+        } catch (err) {
+          console.error("Erreur setRemoteDescription (answer):", err);
+        }
       });
 
       socket?.on("call:offer", async ({ sdp }) => {
         // cas de l'appelé: reçoit l'offre, répond
-        await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        socket?.emit("call:answer", { toUserId, callId: conversationId, sdp: answer });
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+          remoteDescSetRef.current = true;
+          await flushPendingCandidates(pc);
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          socket?.emit("call:answer", { toUserId, callId: conversationId, sdp: answer });
+        } catch (err) {
+          console.error("Erreur traitement offre entrante:", err);
+        }
       });
 
+      // ✅ FIX : si une candidate ICE arrive avant que le remoteDescription
+      // soit posé, on la met en attente au lieu de risquer une erreur muette.
       socket?.on("call:ice-candidate", async ({ candidate }) => {
+        if (!remoteDescSetRef.current) {
+          pendingCandidatesRef.current.push(candidate);
+          return;
+        }
         try {
           await pc.addIceCandidate(new RTCIceCandidate(candidate));
         } catch (err) {
@@ -259,7 +290,6 @@ export default function CallScreen() {
         </View>
       )}
 
-      {/* Top status */}
       <View style={[styles.topBar, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.statusLabel}>
           {status === "calling"
@@ -273,7 +303,6 @@ export default function CallScreen() {
         )}
       </View>
 
-      {/* Bottom controls */}
       <View style={[styles.controlsBar, { paddingBottom: insets.bottom + 24 }]}>
         <TouchableOpacity
           onPress={() => setSpeakerOn((s) => !s)}

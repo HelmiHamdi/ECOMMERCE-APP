@@ -4,12 +4,10 @@ import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
 import User from "../models/User.js";
 import cloudinary from "../config/cloudinary.js";
-import { getIO, getSocketIdsForUser } from "../sockets/chatSocket.js";
+import { emitToRooms } from "../services/socketRelay.js";
 
 // import { sendPushNotification } from "../services/pushService.js";
 
-// ✅ NOUVEAU : renvoie le profil Mongo de l'admin actuellement connecté.
-// Indispensable côté front pour comparer sender._id avec le "vrai" id (et non l'id Clerk).
 export const getMe = async (req: Request, res: Response) => {
   try {
     const me = req.user as any;
@@ -57,9 +55,6 @@ export const getMyConversations = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ NOUVEAU : détails d'UNE conversation (participants complets).
-// Le ChatScreen l'utilise pour afficher fiablement le nom/avatar de l'AUTRE admin,
-// au lieu de deviner à partir des messages (ce qui causait le bug d'affichage).
 export const getConversationById = async (req: Request, res: Response) => {
   try {
     const me = req.user as any;
@@ -152,10 +147,8 @@ export const getMessages = async (req: Request, res: Response) => {
       .populate("sender", "name image")
       .lean();
 
-    // ✅ On répond direct, sans attendre le "mark as read" -> chargement instantané
     res.json({ success: true, data: messages.reverse(), page });
 
-    // ✅ Mise à jour "lu" en arrière-plan (n'impacte plus le temps de réponse)
     Message.updateMany(
       { conversation: id, sender: { $ne: me._id }, readBy: { $ne: me._id } },
       { $addToSet: { readBy: me._id } }
@@ -233,24 +226,24 @@ export const sendMessage = async (req: Request, res: Response) => {
     const messageWithTempId = message.toObject();
     if (clientTempId) (messageWithTempId as any).clientTempId = clientTempId;
 
-    // ✅ FIX PRINCIPAL (retard des messages) : on émet le socket et on répond
-    // au client TOUT DE SUITE après la création du message, sans attendre la
-    // mise à jour des métadonnées de la conversation (lastMessage, unreadCount).
-    // Avant, ce conversation.save() bloquait la réponse HTTP ET l'émission
-    // socket pour CHAQUE message, ce qui causait un délai perceptible.
-    const io = getIO();
+    // ✅ FIX PRINCIPAL DU RETARD/ÉCHEC D'ENVOI : avant, ce fichier appelait
+    // getIO() directement, mais socket.io n'est JAMAIS initialisé côté Vercel
+    // (il tourne sur Render, dans socket-server.ts). Donc getIO() plantait à
+    // chaque envoi -> erreur 500 renvoyée au client alors que le message
+    // était déjà sauvé -> l'app croyait à un échec, proposait "réessayer" ->
+    // doublons en DB, et l'autre admin ne voyait rien tant qu'il ne
+    // rechargeait pas l'écran manuellement.
+    // Maintenant on relaye l'event vers Render via HTTP, sans bloquer/casser
+    // la réponse HTTP principale si le relay échoue.
     const participantIds = conversation.participants.map((p) => p.toString());
-    participantIds.forEach((p) => {
-      io.to(`user:${p}`).emit("message:new", {
-        conversationId: id,
-        message: messageWithTempId,
-      });
-    });
+    emitToRooms(
+      participantIds.map((p) => `user:${p}`),
+      "message:new",
+      { conversationId: id, message: messageWithTempId }
+    );
 
     res.status(201).json({ success: true, data: messageWithTempId });
 
-    // ✅ Mise à jour de la conversation (aperçu, compteur non-lu) en arrière-plan,
-    // sans impacter le temps de réponse ni le délai d'affichage du message.
     (async () => {
       try {
         const preview = type === "text" ? content!.trim().slice(0, 120) : `[${type}]`;
@@ -277,7 +270,6 @@ export const sendMessage = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ NOUVEAU : modification d'un message texte (seulement par son auteur).
 export const editMessage = async (req: Request, res: Response) => {
   try {
     const me = req.user as any;
@@ -310,12 +302,10 @@ export const editMessage = async (req: Request, res: Response) => {
 
     const conversation = await Conversation.findById(message.conversation).lean();
     if (conversation) {
-      const io = getIO();
-      conversation.participants.forEach((p: any) => {
-        io.to(`user:${p.toString()}`).emit("message:edited", {
-          conversationId: message.conversation.toString(),
-          message,
-        });
+      const rooms = conversation.participants.map((p: any) => `user:${p.toString()}`);
+      emitToRooms(rooms, "message:edited", {
+        conversationId: message.conversation.toString(),
+        message,
       });
     }
 
@@ -326,8 +316,6 @@ export const editMessage = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ NOUVEAU : suppression d'un message (seulement par son auteur), suppression "douce"
-// pour que l'autre admin voie "Message supprimé" en temps réel.
 export const deleteMessage = async (req: Request, res: Response) => {
   try {
     const me = req.user as any;
@@ -350,12 +338,10 @@ export const deleteMessage = async (req: Request, res: Response) => {
 
     const conversation = await Conversation.findById(message.conversation).lean();
     if (conversation) {
-      const io = getIO();
-      conversation.participants.forEach((p: any) => {
-        io.to(`user:${p.toString()}`).emit("message:deleted", {
-          conversationId: message.conversation.toString(),
-          messageId: message._id.toString(),
-        });
+      const rooms = conversation.participants.map((p: any) => `user:${p.toString()}`);
+      emitToRooms(rooms, "message:deleted", {
+        conversationId: message.conversation.toString(),
+        messageId: message._id.toString(),
       });
     }
 
@@ -382,17 +368,13 @@ export const purgeConversationsForDemotedUser = async (userId: string) => {
   const conversations = await Conversation.find({ participants: userId });
   if (conversations.length === 0) return;
 
-  const io = getIO();
   const ids = conversations.map((c) => c._id);
 
   await Message.deleteMany({ conversation: { $in: ids } });
   await Conversation.deleteMany({ _id: { $in: ids } });
 
   conversations.forEach((c) => {
-    c.participants.forEach((p) => {
-      io.to(`user:${p.toString()}`).emit("conversation:removed", {
-        conversationId: c._id.toString(),
-      });
-    });
+    const rooms = c.participants.map((p) => `user:${p.toString()}`);
+    emitToRooms(rooms, "conversation:removed", { conversationId: c._id.toString() });
   });
 };
