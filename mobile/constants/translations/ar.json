@@ -702,7 +702,11 @@
   "stockStatus_on_order_48h": "عند الطلب (48 ساعة)",
   "menuTitle": "القائمة السريعة",
   "quit": "خروج",
-
+  "conversationDefaultName": "محادثة",
+  "writeMessagePlaceholder": "اكتب رسالة...",
+  "messageDeleted": "تم حذف هذه الرسالة",
+  "selectStartDate": "اختر تاريخ البدء",
+  "selectEndDate": "اختر تاريخ الانتهاء",
   "noConversationsYet": "لا توجد محادثات حتى الآن",
   "tapPlusToStart": "اضغط على + لبدء محادثة",
 

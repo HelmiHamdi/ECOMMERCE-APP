@@ -6,9 +6,9 @@ import React, {
   useState,
   ReactNode,
 } from "react";
+import { AppState, AppStateStatus } from "react-native";
 import { io, Socket } from "socket.io-client";
 import { useAuth, useUser } from "@clerk/clerk-expo";
-
 
 const SOCKET_URL = __DEV__
   ? "http://192.168.194.136:3000"
@@ -43,7 +43,6 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     let socketInstance: Socket | null = null;
 
     const connect = async () => {
- 
       if (!isLoaded || !isSignedIn || !user) return;
       const token = await getToken();
       if (!token || !isMounted) return;
@@ -53,11 +52,14 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       socketInstance = io(SOCKET_URL, {
         path: "/socket.io",
         auth: { token },
-        transports: ["websocket"],
+        // ✅ FIX : fallback en polling si le websocket pur échoue
+        // (réseaux mobiles avec proxy, changement 4G/WiFi, etc.)
+        transports: ["websocket", "polling"],
         reconnection: true,
         reconnectionAttempts: Infinity,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
+        reconnectionDelay: 500,
+        reconnectionDelayMax: 3000,
+        timeout: 10000,
       });
 
       socketInstance.on("connect", () => {
@@ -99,6 +101,25 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       setConnected(false);
     };
   }, [isLoaded, isSignedIn, user?.id]);
+
+  // ✅ FIX PRINCIPAL (messages qui n'arrivent pas) : quand l'app revient au
+  // premier plan (l'utilisateur rouvre l'app après l'avoir mise en arrière-plan
+  // ou après le sleep de Render), on force une reconnexion si le socket n'est
+  // plus connecté. Sans ça, le socket peut rester "mort" en silence et aucun
+  // nouveau message n'arrive tant que l'app n'est pas complètement relancée.
+  useEffect(() => {
+    const handleAppStateChange = (nextState: AppStateStatus) => {
+      if (nextState === "active" && socketRef.current) {
+        if (!socketRef.current.connected) {
+          console.log("🔄 App au premier plan — reconnexion socket forcée");
+          socketRef.current.connect();
+        }
+      }
+    };
+
+    const subscription = AppState.addEventListener("change", handleAppStateChange);
+    return () => subscription.remove();
+  }, []);
 
   return (
     <SocketContext.Provider value={{ socket, onlineUserIds, connected }}>

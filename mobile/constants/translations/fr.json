@@ -746,7 +746,12 @@
   "noConversationsYet": "Aucune conversation pour le moment",
   "tapPlusToStart": "Appuyez sur + pour en démarrer une",
  
-  "noOtherAdmins": "Aucun autre administrateur"
+  "noOtherAdmins": "Aucun autre administrateur",
+   "conversationDefaultName": "Conversation",
+  "writeMessagePlaceholder": "Écrivez un message...",
+  "messageDeleted": "Ce message a été supprimé",
+  "selectStartDate": "Sélectionner la date de début",
+  "selectEndDate": "Sélectionner la date de fin"
 
   
 }

@@ -705,7 +705,11 @@
   "stockStatus_on_order_48h": "Auf Bestellung (48h)",
    "menuTitle": "Schnellmenü",
     "quit": "Beenden",
-    
+     "conversationDefaultName": "Unterhaltung",
+  "writeMessagePlaceholder": "Nachricht schreiben...",
+  "messageDeleted": "Diese Nachricht wurde gelöscht",
+  "selectStartDate": "Startdatum auswählen",
+  "selectEndDate": "Enddatum auswählen", 
   "noConversationsYet": "Noch keine Unterhaltungen",
   "tapPlusToStart": "Tippe auf +, um eine zu starten",
 

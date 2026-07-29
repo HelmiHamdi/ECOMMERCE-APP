@@ -228,6 +228,20 @@ export default function ChatScreen() {
       socket.off("message:deleted", onMessageDeleted);
     };
   }, [socket, conversationId, router, addMessageIfNew]);
+  useEffect(() => {
+    if (!socket) return;
+
+    const onReconnect = () => {
+      console.log("🔄 Socket reconnecté — rattrapage des messages");
+      loadMessages();
+    };
+
+    socket.on("connect", onReconnect);
+
+    return () => {
+      socket.off("connect", onReconnect);
+    };
+  }, [socket, loadMessages]);
 
   const handleTyping = (val: string) => {
     setText(val);

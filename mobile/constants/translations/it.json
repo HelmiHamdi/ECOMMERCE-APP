@@ -701,7 +701,11 @@
   "stockStatus_on_order_48h": "Su ordinazione (48h)",
   "menuTitle": "Menu rapido",
   "quit": "Esci",
-
+  "conversationDefaultName": "Conversazione",
+  "writeMessagePlaceholder": "Scrivi un messaggio...",
+  "messageDeleted": "Questo messaggio è stato eliminato",
+  "selectStartDate": "Seleziona data di inizio",
+  "selectEndDate": "Seleziona data di fine",
   "noConversationsYet": "Nessuna conversazione al momento",
   "tapPlusToStart": "Tocca + per iniziarne una",
 

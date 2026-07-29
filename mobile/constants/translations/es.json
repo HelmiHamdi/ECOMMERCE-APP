@@ -702,7 +702,11 @@
   "stockStatus_on_order_48h": "Bajo pedido (48h)",
    "menuTitle": "Menú rápido",
     "quit": "Salir",
-
+  "conversationDefaultName": "Conversación",
+  "writeMessagePlaceholder": "Escribe un mensaje...",
+  "messageDeleted": "Este mensaje fue eliminado",
+  "selectStartDate": "Seleccionar fecha de inicio",
+  "selectEndDate": "Seleccionar fecha de fin",
   "noConversationsYet": "Aún no hay conversaciones",
   "tapPlusToStart": "Toca + para iniciar una",
 

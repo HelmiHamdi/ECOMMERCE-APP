@@ -701,7 +701,11 @@
   "stockStatus_on_order_48h": "Order (48h)",
   "menuTitle": "Quick Menu",
   "quit": "Quit",
-
+"conversationDefaultName": "Conversation",
+  "writeMessagePlaceholder": "Write a message...",
+  "messageDeleted": "This message was deleted",
+  "selectStartDate": "Select start date",
+  "selectEndDate": "Select end date",
   "noConversationsYet": "No conversations yet",
   "tapPlusToStart": "Tap + to start one",
 
