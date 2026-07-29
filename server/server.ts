@@ -16,21 +16,20 @@ import WishlistRouter from "./routers/wishlistRoute.js";
 import RatingRouter from "./routers/ratingRoute.js";
 import BannerRouter from "./routers/bannerRoute.js";
 import ChatRouter from "./routers/chatRoute.js";
-import NotificationRouter from "./routers/notificationRoute.js"; 
+import NotificationRouter from "./routers/notificationRoute.js";
 import { backfillOrderItemNames } from "./scripts/backfillOrderItemNames.js";
 import { cacheMiddleware } from "./middleware/cache.js";
 import compression from "compression";
 import PaymentRouter from "./routers/paymentRoute.js";
-import { scheduleDailyReminder } from "./scripts/dailyReminder.js"; 
+import { scheduleDailyReminder } from "./scripts/dailyReminder.js";
 import NewsletterRouter from "./routers/newsletterRoutes.js";
 import OfferRouter from "./routers/offerRoutes.js";
 import SupportRouter from "./routers/supportRoutes.js";
 import GifRouter from "./routers/gifRoute.js";
 import DevisRouter from "./routers/devisRouter.js";
 import SettingsRouter from "./routers/settingsRouter.js";
-import http from "http";
-import { initChatSocket } from "./sockets/chatSocket.js";
 import ChatAdminRouter from "./routers/chatAdminRoute.js";
+
 
 
 const app = express();
@@ -44,33 +43,31 @@ try {
 }
 console.timeEnd("connectDB");
 
-app.post('/api/clerk', express.raw({type: "application/json"}), clerkWebhook)
+app.post('/api/clerk', express.raw({ type: "application/json" }), clerkWebhook)
 
 app.use(cors())
 app.use(compression());
 app.use(express.json());
 app.use(clerkMiddleware());
-app.use(cacheMiddleware); 
-
+app.use(cacheMiddleware);
 
 const port = process.env.PORT || 3000;
-
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Server is Live!');
 });
-app.use("/api/products",ProductRouter)
-app.use("/api/cart",CartRouter)
-app.use("/api/orders",OrderRouter)
-app.use("/api/addresses",AddressRouter)
-app.use("/api/admin",AdminRouter)
-app.use("/api/users",UserRouter)
+app.use("/api/products", ProductRouter)
+app.use("/api/cart", CartRouter)
+app.use("/api/orders", OrderRouter)
+app.use("/api/addresses", AddressRouter)
+app.use("/api/admin", AdminRouter)
+app.use("/api/users", UserRouter)
 app.use("/api/wishlist", WishlistRouter);
 app.use("/api/chat", ChatRouter);
 app.use("/api/ratings", RatingRouter);
 app.use("/api/banners", BannerRouter);
 app.use("/api/payments", PaymentRouter);
-app.use("/api/notifications", NotificationRouter); 
+app.use("/api/notifications", NotificationRouter);
 app.use("/api/newsletter", NewsletterRouter);
 app.use("/api/offers", OfferRouter);
 app.use("/api/support", SupportRouter);
@@ -78,16 +75,14 @@ app.use("/api/gifs", GifRouter);
 app.use("/api/devis", DevisRouter);
 app.use("/api/settings", SettingsRouter);
 app.use("/api/chatAdmin", ChatAdminRouter);
-await makeAdmin();
 
+await makeAdmin();
 await backfillOrderItemNames();
 
- //await seedProducts()
 
-scheduleDailyReminder(); 
+scheduleDailyReminder();
 
-const server = http.createServer(app);
-initChatSocket(server);
-server.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
+
+app.listen(port, () => {
+    console.log(`API Server is running at http://localhost:${port}`);
 });

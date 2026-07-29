@@ -70,9 +70,7 @@ export const initChatSocket = (server: HttpServer) => {
       io.to(`user:${toUserId}`).emit("message:read", { conversationId, byUserId: userId });
     });
 
-    // ✅ FIX : on relaie maintenant le nom/photo de l'appelant pour que
-    // l'écran "appel entrant" côté destinataire affiche qui appelle
-    // (au lieu de juste un id), indispensable pour l'UX type Messenger.
+
     socket.on("call:invite", ({ toUserId, callId, kind }) => {
       io.to(`user:${toUserId}`).emit("call:invite", {
         fromUserId: userId,

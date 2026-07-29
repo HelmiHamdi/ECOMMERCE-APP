@@ -6,7 +6,9 @@
     "start": "tsx server.ts",
     "dev": "nodemon --exec ts-node server.ts",
     "server": "nodemon --exec tsx server.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "start:socket": "tsx socket-server.ts",
+    "dev:socket": "nodemon --exec tsx socket-server.ts"
   },
   "type": "module",
   "keywords": [],
