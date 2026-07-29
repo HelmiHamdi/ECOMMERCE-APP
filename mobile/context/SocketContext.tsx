@@ -12,7 +12,7 @@ import { useAuth, useUser } from "@clerk/clerk-expo";
 
 const SOCKET_URL = __DEV__
   ? "http://192.168.194.136:3000"
-  : "https://ineshop-socket.onrender.com";
+  : "https://ineshop-socket.onrender.com/";
 
 interface SocketContextValue {
   socket: Socket | null;
