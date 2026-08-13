@@ -2,12 +2,12 @@ import axios from "axios";
 import { Platform } from "react-native";
 
 const LOCAL_API_URL = Platform.select({
-  android: "http://192.168.194.136:3000/api",
-  ios: "http://192.168.194.136:3000/api",
+  android: "http://192.168.100.108:3000/api",
+  ios: "http://192.168.100.108:3000/api",
   default: "http://localhost:3000/api",
 });
 
-const NO_CACHE_RESOURCES = ["users", "support", "cart", "devis", "settings", "chatAdmin"];
+const NO_CACHE_RESOURCES = ["users", "support", "cart", "devis", "settings", "notes"];
 
 const cache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
@@ -19,7 +19,7 @@ export const registerTokenGetter = (fn: TokenGetter) => {
 };
 
 const api = axios.create({
-  baseURL: "https://shop-mobile-server.vercel.app/api",
+  baseURL: LOCAL_API_URL,
   timeout: 20000,
 });
 

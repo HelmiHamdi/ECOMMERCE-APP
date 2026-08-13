@@ -197,3 +197,40 @@ export interface DevisPayload {
 export interface AppSettings {
   devisEnabled: boolean;
 }
+export type NoteType = "note" | "meeting";
+export type ReminderFrequency = "none" | "daily" | "hourly";
+
+export interface Note {
+  _id: string;
+  title: string;
+  content: string;
+  type: NoteType;
+  createdBy: {
+    _id: string;
+    name: string;
+    image?: string;
+  };
+  meetingLink?: string | null;
+  meetingDate?: string | null;
+  reminderFrequency: ReminderFrequency;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateNotePayload {
+  title: string;
+  content?: string;
+  type: NoteType;
+  meetingLink?: string;
+  meetingDate?: string;
+  reminderFrequency?: ReminderFrequency;
+}
+
+export interface UpdateNotePayload {
+  title?: string;
+  content?: string;
+  type?: NoteType;
+  meetingLink?: string | null;
+  meetingDate?: string;
+  reminderFrequency?: ReminderFrequency;
+}

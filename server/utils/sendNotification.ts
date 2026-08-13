@@ -10,7 +10,9 @@ type NotificationType =
   | "order"
   | "general"
   | "support"
-  | "devis"; // 👈 AJOUT
+  | "devis"
+  | "note"
+  | "meeting_reminder";
 
 interface PushMessage {
   to: string;
@@ -181,6 +183,55 @@ export const sendAdminNotification = async (
 };
 
 /**
+ * Envoie une notification à TOUS les admins SAUF un (celui qui vient
+ * de faire l'action, pour ne pas se notifier lui-même).
+ * Utilisée pour les créations de notes/réunions.
+ */
+export const sendAdminNotificationExcluding = async (
+  excludeUserId: string,
+  title: string,
+  body: string,
+  type: NotificationType = "general",
+  data?: Record<string, any>
+) => {
+  try {
+    const admins = await User.find(
+      { role: "admin", _id: { $ne: excludeUserId } },
+      "_id expoPushToken"
+    );
+    if (admins.length === 0) return;
+
+    const notifDocs = admins.map((a) => ({
+      user: a._id,
+      title,
+      body,
+      type,
+      data: data || {},
+    }));
+    await Notification.insertMany(notifDocs);
+
+    const tokens = admins
+      .map((a) => a.expoPushToken)
+      .filter((t): t is string => !!t);
+
+    const messages: PushMessage[] = tokens.map((to) => ({
+      to,
+      sound: "default",
+      title,
+      body,
+      data: data || {},
+    }));
+
+    for (let i = 0; i < messages.length; i += EXPO_PUSH_BATCH_SIZE) {
+      const batch = messages.slice(i, i + EXPO_PUSH_BATCH_SIZE);
+      await sendExpoPushBatch(batch);
+    }
+  } catch (error) {
+    console.error("SEND ADMIN NOTIFICATION EXCLUDING ERROR:", error);
+  }
+};
+
+/**
  * Notification spécifique : nouveau produit ajouté par l'admin.
  * Appelée depuis productController.createProduct.
  */
@@ -221,5 +272,47 @@ export const sendDailyReminderNotification = async () => {
     "On t'a manqué ? 👋",
     "Jette un œil aux nouveautés et offres du jour !",
     "daily_reminder"
+  );
+};
+
+/**
+ * Notification : un admin crée une note ou une réunion.
+ * Envoyée à TOUS les autres admins (pas à l'auteur).
+ */
+export const sendNewNoteNotification = async (
+  noteTitle: string,
+  noteId: string,
+  noteType: "note" | "meeting",
+  authorName: string,
+  excludeUserId: string
+) => {
+  const title =
+    noteType === "meeting"
+      ? `Nouvelle réunion : ${noteTitle}`
+      : `Nouvelle note : ${noteTitle}`;
+  const body = `Ajoutée par ${authorName}`;
+
+  await sendAdminNotificationExcluding(excludeUserId, title, body, "note", {
+    noteId,
+    noteType,
+  });
+};
+
+/**
+ * Rappel de réunion, déclenché par le cron job (meetingReminders.ts).
+ * Envoyé à TOUS les admins.
+ */
+export const sendMeetingReminderNotification = async (
+  meetingTitle: string,
+  noteId: string,
+  meetingLink: string | null | undefined,
+  timeLeftLabel: string,
+  organizerName: string
+) => {
+  await sendAdminNotification(
+    `Rappel réunion : ${meetingTitle}`,
+    `Dans ${timeLeftLabel} · organisée par ${organizerName}`,
+    "meeting_reminder",
+    { noteId, meetingLink: meetingLink || null }
   );
 };

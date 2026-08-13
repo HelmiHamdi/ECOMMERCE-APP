@@ -28,7 +28,9 @@ import SupportRouter from "./routers/supportRoutes.js";
 import GifRouter from "./routers/gifRoute.js";
 import DevisRouter from "./routers/devisRouter.js";
 import SettingsRouter from "./routers/settingsRouter.js";
-import ChatAdminRouter from "./routers/chatAdminRoute.js";
+import NoteRouter from "./routers/noteRoute.js";
+import { scheduleMeetingReminders } from "./scripts/meetingReminders.js";
+
 
 const app = express();
 console.time("connectDB");
@@ -72,12 +74,14 @@ app.use("/api/support", SupportRouter);
 app.use("/api/gifs", GifRouter);
 app.use("/api/devis", DevisRouter);
 app.use("/api/settings", SettingsRouter);
-app.use("/api/chatAdmin", ChatAdminRouter);
+app.use("/api/notes", NoteRouter);
+
 
 await makeAdmin();
 await backfillOrderItemNames();
 
 scheduleDailyReminder();
+scheduleMeetingReminders();
 
 app.listen(port, () => {
     console.log(`API Server is running at http://localhost:${port}`);

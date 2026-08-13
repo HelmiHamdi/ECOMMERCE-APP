@@ -12,9 +12,9 @@ import ChatBot from "@/components/ChatBot";
 import { NotificationProvider } from "@/context/NotificationContext";
 import { StripeProvider } from "@stripe/stripe-react-native";
 import { CurrencyProvider } from "@/context/CurrencyContext";
-import { SocketProvider } from "@/context/SocketContext";
+
 import AuthTokenBridge from "@/components/AuthTokenBridge";
-import { IncomingCallProvider } from "@/context/IncomingCallContext";
+
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 const stripePublishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!;
@@ -30,10 +30,8 @@ export default function RootLayout() {
           >
             <ClerkLoaded>
               <AuthTokenBridge />
-              <SocketProvider>
-                {/* ✅ NOUVEAU : gère la sonnerie + l'écran "appel entrant"
-                    partout dans l'app, même si on n'est pas déjà sur /call */}
-                <IncomingCallProvider>
+           
+            
                   <StripeProvider
                     publishableKey={stripePublishableKey}
                     merchantIdentifier="merchant.com.helmihamdi.mobile"
@@ -48,8 +46,8 @@ export default function RootLayout() {
                       </CartProvider>
                     </NotificationProvider>
                   </StripeProvider>
-                </IncomingCallProvider>
-              </SocketProvider>
+           
+         
             </ClerkLoaded>
           </ClerkProvider>
         </CurrencyProvider>

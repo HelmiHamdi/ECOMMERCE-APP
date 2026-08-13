@@ -3,7 +3,7 @@ import User from "../models/User.js";
 import Product from "../models/Products.js";
 import Order from "../models/Order.js";
 import { invalidateCache } from "../middleware/cache.js";
-import { purgeConversationsForDemotedUser } from "./chatAdminController.js";
+
 
 export const getDashboardStats = async (req: Request, res: Response) => {
   try {
@@ -119,10 +119,6 @@ export const updateUserRole = async (req: Request, res: Response) => {
 
     targetUser.role = role;
     await targetUser.save();
-
-    if (role === "user") {
-      await purgeConversationsForDemotedUser(targetUser._id.toString());
-    }
     invalidateCache("admin/users");
 
     res.json({

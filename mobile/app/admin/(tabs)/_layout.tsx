@@ -89,12 +89,6 @@ export default function AdminTabsLayout() {
       route: "/admin/orders-list",
     },
     {
-      id: "chat",
-      icon: "chatbubbles-outline",
-      labelKey: t("chat") ?? "Messages",
-      route: "/admin/chat",
-    },
-    {
       id: "gifs",
       icon: "film-outline",
       labelKey: t("gifs") ?? "Gifs",
@@ -186,13 +180,7 @@ export default function AdminTabsLayout() {
           }}
         />
 
-        {/* Chat retiré de la tab bar mais route toujours accessible via le menu rapide */}
-        <Tabs.Screen
-          name="chat"
-          options={{
-            href: null,
-          }}
-        />
+     
 
         <Tabs.Screen
           name="more"
