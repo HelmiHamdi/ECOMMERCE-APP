@@ -112,6 +112,12 @@ export default function AdminTabsLayout() {
       labelKey: t("manageDevis") ?? "Demandes de devis",
       route: "/admin/devis",
     },
+  {
+    id: "notes",
+    icon: "reader-outline",
+    labelKey: t("notes") ?? "Bloc-notes",
+    route: "/admin/notes",
+  },
   ];
 
   const CATEGORY_ACTIONS = CATEGORIES.map((cat) => ({

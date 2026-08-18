@@ -751,5 +751,41 @@
   "callInProgress": "Calling...",
   "connecting": "Connecting...",
   "connected": "Connected",
-  "administrator": "Administrator"
+  "administrator": "Administrator",
+  "notes": "Notes",
+  "notesAll": "All",
+   "joinMeeting": "Join the meeting",
+  "cannotOpenLink": "Unable to open this link. Please check its format.",
+  "notesNote": "Notes",
+  "notesMeeting": "Meetings",
+  "noNotesFound": "No notes yet",
+  "note": "Note",
+  "meeting": "Meeting",
+  "createdBy": "Created by",
+
+  "content": "Content",
+  "meetingLink": "Meeting link",
+  "openLink": "Open link",
+  "dateAndTime": "Date and time",
+ 
+  "reminder": "Reminder",
+  "reminderNone": "None",
+  "reminderDaily": "Daily",
+  "reminderHourly": "Hourly",
+
+  "cannotLoadNote": "Unable to load this note",
+
+  "noteUpdated": "Note updated",
+ 
+  "deleteNoteTitle": "Delete",
+  "deleteNoteConfirm": "Are you sure you want to delete this note?",
+  
+  "newNote": "New note",
+  "noteTitlePlaceholder": "Note title",
+  "noteContentPlaceholder": "Write your note...",
+  "selectMeetingDate": "Select the meeting date",
+  "cannotCreateNote": "Unable to create the note",
+  "createMeeting": "Create meeting",
+  "createNote": "Create note"
+
 }

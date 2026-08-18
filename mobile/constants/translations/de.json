@@ -755,5 +755,42 @@
     "callInProgress": "Anruf läuft...",
     "connecting": "Verbindung wird hergestellt...",
     "connected": "Verbunden",
-    "administrator": "Administrator"
+    "administrator": "Administrator",
+
+  "joinMeeting": "An der Besprechung teilnehmen",
+  "cannotOpenLink": "Dieser Link kann nicht geöffnet werden. Bitte überprüfen Sie das Format.",
+  "notes": "Notizen",
+  "notesAll": "Alle",
+  "notesNote": "Notizen",
+  "notesMeeting": "Meetings",
+  "noNotesFound": "Noch keine Notizen",
+  "note": "Notiz",
+  "meeting": "Meeting",
+  "createdBy": "Erstellt von",
+
+  "content": "Inhalt",
+  "meetingLink": "Meeting-Link",
+  "openLink": "Link öffnen",
+  "dateAndTime": "Datum und Uhrzeit",
+
+  "reminder": "Erinnerung",
+  "reminderNone": "Keine",
+  "reminderDaily": "Täglich",
+  "reminderHourly": "Stündlich",
+ 
+  "cannotLoadNote": "Diese Notiz konnte nicht geladen werden",
+  
+  "noteUpdated": "Notiz aktualisiert",
+
+  "deleteNoteTitle": "Löschen",
+  "deleteNoteConfirm": "Möchten Sie diese Notiz wirklich löschen?",
+  
+  "newNote": "Neue Notiz",
+  "noteTitlePlaceholder": "Titel der Notiz",
+  "noteContentPlaceholder": "Notiz schreiben...",
+  "selectMeetingDate": "Wählen Sie das Meeting-Datum",
+  "cannotCreateNote": "Notiz konnte nicht erstellt werden",
+  "createMeeting": "Meeting erstellen",
+  "createNote": "Notiz erstellen"
+
 }

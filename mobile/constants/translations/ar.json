@@ -745,7 +745,8 @@
   "call": "مكالمة",
   "deleteMessageTitle": "حذف الرسالة",
   "deleteMessageBody": "لا يمكن التراجع عن هذا الإجراء.",
-
+"joinMeeting": "الانضمام إلى الاجتماع",
+  "cannotOpenLink": "تعذر فتح هذا الرابط. يرجى التحقق من صيغته.",
   "micNotAuthorized": "الميكروفون غير مصرح به",
   "recordingStartError": "تعذر بدء التسجيل",
   "deleteError": "فشل الحذف",
@@ -753,5 +754,41 @@
   "callInProgress": "جارٍ الاتصال...",
   "connecting": "جارٍ الاتصال...",
   "connected": "متصل",
-  "administrator": "المسؤول"
+  "administrator": "المسؤول",
+  
+  "notes": "الملاحظات",
+  "notesAll": "الكل",
+  "notesNote": "ملاحظات",
+  "notesMeeting": "اجتماعات",
+  "noNotesFound": "لا توجد ملاحظات حالياً",
+  "note": "ملاحظة",
+  "meeting": "اجتماع",
+  "createdBy": "أُنشئت بواسطة",
+ 
+  "content": "المحتوى",
+  "meetingLink": "رابط الاجتماع",
+  "openLink": "فتح الرابط",
+  "dateAndTime": "التاريخ والوقت",
+  
+  "reminder": "التذكير",
+  "reminderNone": "بدون",
+  "reminderDaily": "يومياً",
+  "reminderHourly": "كل ساعة",
+
+  "cannotLoadNote": "تعذر تحميل هذه الملاحظة",
+
+  
+  "noteUpdated": "تم تحديث الملاحظة",
+  
+  "deleteNoteTitle": "حذف",
+  "deleteNoteConfirm": "هل تريد فعلاً حذف هذه الملاحظة؟",
+
+  "newNote": "ملاحظة جديدة",
+  "noteTitlePlaceholder": "عنوان الملاحظة",
+  "noteContentPlaceholder": "اكتب ملاحظتك...",
+  "selectMeetingDate": "اختر تاريخ الاجتماع",
+  "cannotCreateNote": "تعذر إنشاء الملاحظة",
+  "createMeeting": "إنشاء اجتماع",
+  "createNote": "إنشاء ملاحظة"
+
 }

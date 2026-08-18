@@ -751,7 +751,43 @@
   "writeMessagePlaceholder": "Écrivez un message...",
   "messageDeleted": "Ce message a été supprimé",
   "selectStartDate": "Sélectionner la date de début",
-  "selectEndDate": "Sélectionner la date de fin"
+  "selectEndDate": "Sélectionner la date de fin",
+  "joinMeeting": "Rejoindre la réunion",
+  "cannotOpenLink": "Impossible d'ouvrir ce lien. Vérifiez son format.",
+  "notes": "Notes",
+  "notesAll": "Toutes",
+  "notesNote": "Notes",
+  "notesMeeting": "Réunions",
+  "noNotesFound": "Aucune note pour le moment",
+  "note": "Note",
+  "meeting": "Réunion",
+  "createdBy": "Créée par",
+  
+  "content": "Contenu",
+  "meetingLink": "Lien de réunion",
+  "openLink": "Ouvrir le lien",
+  "dateAndTime": "Date et heure",
+ 
+  "reminder": "Rappel",
+  "reminderNone": "Aucun",
+  "reminderDaily": "Chaque jour",
+  "reminderHourly": "Chaque heure",
+ 
+  "cannotLoadNote": "Impossible de charger cette note",
+ 
+  "noteUpdated": "Note mise à jour",
+ 
+  "deleteNoteTitle": "Supprimer",
+  "deleteNoteConfirm": "Voulez-vous vraiment supprimer cette note ?",
+  
+  "newNote": "Nouvelle note",
+  "noteTitlePlaceholder": "Titre de la note",
+  "noteContentPlaceholder": "Écrire votre note...",
+  "selectMeetingDate": "Sélectionnez la date de la réunion",
+  "cannotCreateNote": "Impossible de créer la note",
+  "createMeeting": "Créer la réunion",
+  "createNote": "Créer la note"
+
 
   
 }

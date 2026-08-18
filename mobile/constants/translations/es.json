@@ -752,7 +752,43 @@
     "callInProgress": "Llamando...",
     "connecting": "Conectando...",
     "connected": "Conectado",
-    "administrator": "Administrador"
+    "administrator": "Administrador",
+  "joinMeeting": "Unirse a la reunión",
+  "cannotOpenLink": "No se pudo abrir este enlace. Verifica su formato.",
+  "notes": "Notas",
+  "notesAll": "Todas",
+  "notesNote": "Notas",
+  "notesMeeting": "Reuniones",
+  "noNotesFound": "Aún no hay notas",
+  "note": "Nota",
+  "meeting": "Reunión",
+  "createdBy": "Creada por",
+
+  "content": "Contenido",
+  "meetingLink": "Enlace de la reunión",
+  "openLink": "Abrir enlace",
+  "dateAndTime": "Fecha y hora",
+
+  "reminder": "Recordatorio",
+  "reminderNone": "Ninguno",
+  "reminderDaily": "Cada día",
+  "reminderHourly": "Cada hora",
+
+  "cannotLoadNote": "No se pudo cargar esta nota",
+
+  "noteUpdated": "Nota actualizada",
+
+  "deleteNoteTitle": "Eliminar",
+  "deleteNoteConfirm": "¿Seguro que quieres eliminar esta nota?",
+  
+  "newNote": "Nueva nota",
+  "noteTitlePlaceholder": "Título de la nota",
+  "noteContentPlaceholder": "Escribe tu nota...",
+  "selectMeetingDate": "Selecciona la fecha de la reunión",
+  "cannotCreateNote": "No se pudo crear la nota",
+  "createMeeting": "Crear reunión",
+  "createNote": "Crear nota"
+
 
 
 }

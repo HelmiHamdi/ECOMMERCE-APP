@@ -1,6 +1,53 @@
 import { Request, Response } from "express";
+import sanitizeHtml from "sanitize-html";
 import Note from "../models/Note.js";
 import { sendNewNoteNotification } from "../utils/sendNotification.js";
+import { invalidateCache } from "../middleware/cache.js";
+
+/* ---------------------------------------------------------
+   Sanitisation du HTML riche envoyé par l'éditeur mobile.
+   Autorise toutes les balises/styles utilisés par la barre
+   d'outils (titres, gras, couleurs personnalisées, liens,
+   listes, citations, code, checklists, etc.)
+--------------------------------------------------------- */
+const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: [
+    "p", "br", "b", "strong", "i", "em", "u", "s", "strike", "sub", "sup",
+    "ul", "ol", "li", "span", "div", "a",
+    "h1", "h2", "h3", "h4", "h5", "h6",
+    "blockquote", "code", "pre", "hr", "input",
+  ],
+  allowedAttributes: {
+    span: ["style"],
+    p: ["style"],
+    div: ["style"],
+    li: ["style"],
+    a: ["href", "target", "rel"],
+    input: ["type", "checked", "disabled"],
+    "*": ["style"],
+  },
+  allowedStyles: {
+    "*": {
+      color: [/^#[0-9a-fA-F]{3,6}$/, /^rgb\(/, /^rgba\(/, /^transparent$/],
+      "background-color": [/^#[0-9a-fA-F]{3,6}$/, /^rgb\(/, /^rgba\(/, /^transparent$/],
+      "font-size": [/^\d+(\.\d+)?(px|pt|em)$/],
+      "font-family": [/.*/],
+      "text-align": [/^(left|right|center|justify)$/],
+      "font-weight": [/.*/],
+      "font-style": [/.*/],
+      "text-decoration": [/.*/],
+      "margin-left": [/^\d+(\.\d+)?(px|em)$/],
+      "vertical-align": [/^(sub|super)$/],
+    },
+  },
+  allowedSchemes: ["http", "https", "mailto"],
+  transformTags: {
+    a: sanitizeHtml.simpleTransform("a", { rel: "noopener noreferrer", target: "_blank" }),
+  },
+};
+
+const cleanContent = (content: string | undefined | null): string =>
+  content ? sanitizeHtml(content, SANITIZE_OPTIONS) : "";
 
 export const getAllNotes = async (req: Request, res: Response) => {
   try {
@@ -46,7 +93,7 @@ export const createNote = async (req: Request, res: Response) => {
 
     const note = await Note.create({
       title: title.trim(),
-      content: content?.trim() || "",
+      content: cleanContent(content),
       type: type === "meeting" ? "meeting" : "note",
       createdBy: currentUser._id,
       meetingLink: type === "meeting" ? meetingLink || null : null,
@@ -56,18 +103,24 @@ export const createNote = async (req: Request, res: Response) => {
 
     const populated = await note.populate("createdBy", "name image");
 
-    await sendNewNoteNotification(
+    invalidateCache("/api/notes");
+
+    res.status(201).json({ success: true, data: populated });
+
+    sendNewNoteNotification(
       note.title,
       note._id.toString(),
       note.type,
       currentUser.name || "Un admin",
       currentUser._id.toString()
-    );
-
-    res.status(201).json({ success: true, data: populated });
+    ).catch((notifError: any) => {
+      console.error("SEND NOTIFICATION ERROR (non bloquant):", notifError);
+    });
   } catch (error: any) {
     console.error("CREATE NOTE ERROR:", error);
-    res.status(500).json({ success: false, message: error.message });
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, message: error.message });
+    }
   }
 };
 
@@ -94,7 +147,7 @@ export const updateNote = async (req: Request, res: Response) => {
     const { title, content, type, meetingLink, meetingDate, reminderFrequency } = req.body;
 
     if (title !== undefined) note.title = title.trim();
-    if (content !== undefined) note.content = content.trim();
+    if (content !== undefined) note.content = cleanContent(content);
     if (type !== undefined) note.type = type;
 
     if (note.type === "meeting") {
@@ -112,6 +165,8 @@ export const updateNote = async (req: Request, res: Response) => {
 
     await note.save();
     const populated = await note.populate("createdBy", "name image");
+
+    invalidateCache("/api/notes");
 
     res.json({ success: true, data: populated });
   } catch (error: any) {
@@ -141,6 +196,9 @@ export const deleteNote = async (req: Request, res: Response) => {
     }
 
     await note.deleteOne();
+
+    invalidateCache("/api/notes");
+
     res.json({ success: true, message: "Note supprimée" });
   } catch (error: any) {
     console.error("DELETE NOTE ERROR:", error);
