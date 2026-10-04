@@ -745,7 +745,15 @@
 
   "noConversationsYet": "Aucune conversation pour le moment",
   "tapPlusToStart": "Appuyez sur + pour en démarrer une",
- 
+ "statistics": "Statistiques",
+"last7Days": "7 derniers jours",
+"noData": "Aucune donnée disponible",
+"revenueTrend": "Revenus de la semaine",
+"ordersPerDay": "Commandes de la semaine",
+"ordersByStatus": "Répartition des commandes",
+"topProducts": "Produits les plus vendus",
+"sold": "vendus",
+"noTopProducts": "Aucun produit vendu cette semaine",
   "noOtherAdmins": "Aucun autre administrateur",
    "conversationDefaultName": "Conversation",
   "writeMessagePlaceholder": "Écrivez un message...",

@@ -43,6 +43,96 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// ================================================================
+// ✅ STATISTIQUES GRAPHIQUES (courbes / diagrammes du dashboard)
+// Retourne :
+//  - dailyStats       : revenus + nb commandes des 7 derniers jours
+//                        (jours sans commande inclus avec valeur 0,
+//                        pour que la courbe ne saute pas de dates)
+//  - statusBreakdown  : répartition des commandes par statut
+//  - topProducts      : top 5 des produits les plus vendus (quantité)
+// ================================================================
+export const getDashboardCharts = async (req: Request, res: Response) => {
+  try {
+    const DAYS = 7;
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - (DAYS - 1));
+    startDate.setHours(0, 0, 0, 0);
+
+    const [dailyRaw, statusRaw, topProductsRaw] = await Promise.all([
+      // Revenus + nb commandes par jour (7 derniers jours, hors annulées)
+      Order.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate },
+            orderStatus: { $ne: "cancelled" },
+          },
+        },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            revenue: { $sum: "$totalAmount" },
+            orders: { $sum: 1 },
+          },
+        },
+      ]),
+
+      // Répartition de TOUTES les commandes par statut (vue globale)
+      Order.aggregate([
+        { $group: { _id: "$orderStatus", count: { $sum: 1 } } },
+      ]),
+
+      // Top 5 produits les plus vendus (par quantité, hors commandes annulées)
+      Order.aggregate([
+        { $match: { orderStatus: { $ne: "cancelled" } } },
+        { $unwind: "$items" },
+        {
+          $group: {
+            _id: { $ifNull: ["$items.name", "Produit"] },
+            qty: { $sum: "$items.quantity" },
+          },
+        },
+        { $sort: { qty: -1 } },
+        { $limit: 5 },
+      ]),
+    ]);
+
+    // On remplit les 7 jours même sans commande, pour avoir une courbe continue
+    const dailyMap = new Map(dailyRaw.map((d: any) => [d._id, d]));
+    const dailyStats: { date: string; revenue: number; orders: number }[] = [];
+
+    for (let i = 0; i < DAYS; i++) {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      const key = d.toISOString().slice(0, 10); // "YYYY-MM-DD"
+      const found = dailyMap.get(key) as any;
+      dailyStats.push({
+        date: key,
+        revenue: found?.revenue || 0,
+        orders: found?.orders || 0,
+      });
+    }
+
+    const statusBreakdown = statusRaw.map((s: any) => ({
+      status: s._id || "unknown",
+      count: s.count,
+    }));
+
+    const topProducts = topProductsRaw.map((p: any) => ({
+      name: p._id,
+      qty: p.qty,
+    }));
+
+    res.json({
+      success: true,
+      data: { dailyStats, statusBreakdown, topProducts },
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
     if (!req.user || req.user.role !== "admin") {
