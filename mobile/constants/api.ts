@@ -7,7 +7,16 @@ const LOCAL_API_URL = Platform.select({
   default: "http://localhost:3000/api",
 });
 
-const NO_CACHE_RESOURCES = ["users", "support", "cart", "devis", "settings", "notes"];
+// ✅ "admin" ajouté : stats et charts dépendent des commandes, produits, utilisateurs
+const NO_CACHE_RESOURCES = [
+  "users",
+  "support",
+  "cart",
+  "devis",
+  "settings",
+  "notes",
+  "admin",
+];
 
 const cache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000;
@@ -19,9 +28,11 @@ export const registerTokenGetter = (fn: TokenGetter) => {
 };
 
 const api = axios.create({
-  baseURL: LOCAL_API_URL,
+  baseURL: "https://shop-mobile-server.vercel.app/api",
   timeout: 20000,
 });
+
+const CACHE_STATUS_TEXT = "OK (cache)";
 
 const isExcludedFromCache = (url: string) =>
   NO_CACHE_RESOURCES.some((r) => url.includes(r));
@@ -33,6 +44,7 @@ const getCacheKey = (config: any) => {
   return `${authHeader}::${config.url}${JSON.stringify(config.params || {})}`;
 };
 
+// Lecture du cache
 api.interceptors.request.use((config) => {
   const isExcluded = isExcludedFromCache(config.url || "");
 
@@ -44,7 +56,7 @@ api.interceptors.request.use((config) => {
         Promise.resolve({
           data: cached.data,
           status: 200,
-          statusText: "OK (cache)",
+          statusText: CACHE_STATUS_TEXT,
           headers: {},
           config,
         });
@@ -53,16 +65,24 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Écriture du cache (uniquement pour les vraies réponses réseau)
 api.interceptors.response.use((response) => {
   const isExcluded = isExcludedFromCache(response.config.url || "");
+  // ✅ Fix TTL glissant : on ne recache pas une réponse qui vient déjà du cache
+  const fromCache = response.statusText === CACHE_STATUS_TEXT;
 
-  if (response.config.method?.toLowerCase() === "get" && !isExcluded) {
+  if (
+    response.config.method?.toLowerCase() === "get" &&
+    !isExcluded &&
+    !fromCache
+  ) {
     const key = getCacheKey(response.config);
     cache.set(key, { data: response.data, timestamp: Date.now() });
   }
   return response;
 });
 
+// Invalidation après une modification
 api.interceptors.response.use((response) => {
   const method = response.config.method?.toLowerCase();
   if (
@@ -83,7 +103,7 @@ api.interceptors.response.use((response) => {
   return response;
 });
 
-
+// Refresh du token sur 401
 api.interceptors.response.use(
   (response) => response,
   async (error) => {

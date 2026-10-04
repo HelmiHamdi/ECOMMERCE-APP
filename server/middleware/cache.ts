@@ -7,16 +7,17 @@ const EXCLUDED_PREFIXES = [
   "/api/users",
   "/api/cart",
   "/api/addresses",
-  "/api/notes", // 👈 AJOUT — les notes ne doivent JAMAIS être servies depuis le cache serveur
+  "/api/notes", // les notes ne doivent JAMAIS être servies depuis le cache serveur
+  "/api/admin", // ✅ stats et charts dépendent des commandes, produits, utilisateurs
 ];
 
-const EXCLUDED_PATTERNS = [
-  /\/invoice/,
-];
+const EXCLUDED_PATTERNS = [/\/invoice/];
 
-const getCacheKey = (req: Request) => {
-  const userId = (req.user as any)?._id?.toString() || "anonymous";
-  return `${userId}::${req.originalUrl}`;
+// ✅ Pas d'utilisateur identifié => pas de clé => pas de cache
+// (évite de servir des données privées à quelqu'un d'autre)
+const getCacheKey = (req: Request): string | null => {
+  const userId = (req.user as any)?._id?.toString();
+  return userId ? `${userId}::${req.originalUrl}` : null;
 };
 
 export const cacheMiddleware = (
@@ -35,6 +36,8 @@ export const cacheMiddleware = (
   }
 
   const key = getCacheKey(req);
+  if (!key) return next();
+
   const cached = cache.get(key);
 
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {

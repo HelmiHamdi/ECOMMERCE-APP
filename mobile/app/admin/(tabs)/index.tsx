@@ -1,5 +1,7 @@
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+
+
+import { useRouter, useFocusEffect } from "expo-router";
+import React, { useState, useCallback } from "react";
 import {
     ScrollView,
     Text,
@@ -101,10 +103,12 @@ export default function AdminDashboard() {
         }
     };
 
-    useEffect(() => {
-        fetchStats();
-        fetchCharts();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            fetchStats();
+            fetchCharts();
+        }, [])
+    );
 
     const onRefresh = () => {
         setRefreshing(true);
